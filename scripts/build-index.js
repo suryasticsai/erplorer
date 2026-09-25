@@ -2,7 +2,6 @@
 /**
  * ERplorer multi-language index builder.
  * Scans Java, Node.js, Python, SQL, YAML, JSON, properties, and notebooks.
- * Emits search-index.json.
  */
 const fs = require('fs');
 const path = require('path');
@@ -11,13 +10,11 @@ const ROOT_DIR = process.env.ERPLORER_SCAN || '.';
 const TEST_RESULTS = './test-results.json';
 const OUTPUT = './search-index.json';
 
-// Directories to skip
 const SKIP_DIRS = new Set([
   'node_modules', '.git', 'dist', 'build', 'target', 'out',
   '.next', '.cache', 'coverage', 'venv', '.venv', '__pycache__'
 ]);
 
-// Language → file extensions
 const EXT_LANG = {
   '.js':'js', '.mjs':'js', '.cjs':'js', '.jsx':'js',
   '.ts':'ts', '.tsx':'ts',
@@ -31,8 +28,6 @@ const EXT_LANG = {
   '.ipynb':'notebook'
 };
 
-// Per-language error patterns.
-// Each pattern must have at least one capture group.
 const PATTERNS = {
   js: [
     /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g
@@ -45,12 +40,8 @@ const PATTERNS = {
     /LOG(?:GER)?\.(?:error|warn|severe|log)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi,
     /logger\.(?:error|warn|severe|log)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi
   ],
-  kotlin: [
-    /throw \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g
-  ],
-  groovy: [
-    /throw new \w*(?:Exception|Error)\s*\(\s*'([^']+)'/g
-  ],
+  kotlin: [ /throw \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g ],
+  groovy: [ /throw new \w*(?:Exception|Error)\s*\(\s*'([^']+)'/g ],
   python: [
     /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g,
     /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g,
@@ -61,18 +52,10 @@ const PATTERNS = {
     /SIGNAL\s+SQLSTATE\s+'[^']*'\s+SET\s+MESSAGE_TEXT\s*=\s*'([^']+)'/gi,
     /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g
   ],
-  scala: [
-    /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g
-  ],
-  yaml: [
-    /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim
-  ],
-  properties: [
-    /^\s*[\w.-]*error[\w.-]*\s*[:=]\s*(.+)$/gim
-  ],
-  json: [
-    /"(?:error|message|reason|failure)"\s*:\s*"([^"]+)"/g
-  ]
+  scala: [ /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g ],
+  yaml: [ /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim ],
+  properties: [ /^\s*[\w.-]*error[\w.-]*\s*[:=]\s*(.+)$/gim ],
+  json: [ /"(?:error|message|reason|failure)"\s*:\s*"([^"]+)"/g ]
 };
 
 function walk(dir, files = []) {
@@ -89,9 +72,7 @@ function walk(dir, files = []) {
 }
 
 function firstCapture(match) {
-  for (let i = 1; i < match.length; i++) {
-    if (match[i]) return match[i];
-  }
+  for (let i = 1; i < match.length; i++) if (match[i]) return match[i];
   return null;
 }
 
@@ -107,7 +88,6 @@ function indexFile(file, index) {
 
   let count = 0;
 
-  // Special case: Jupyter notebooks — extract Python source
   if (lang === 'notebook') {
     try {
       const nb = JSON.parse(content);
@@ -131,11 +111,10 @@ function indexFile(file, index) {
           }
         });
       });
-      return count;
-    } catch { return 0; }
+    } catch {}
+    return count;
   }
 
-  // Regular file
   const lines = content.split('\n');
   const patterns = PATTERNS[lang] || [];
 
@@ -150,7 +129,6 @@ function indexFile(file, index) {
       const start = Math.max(0, lineNum - 3);
       const end = Math.min(lines.length, lineNum + 2);
 
-      // Classify by extension
       let type = 'code';
       if (['java','kotlin','groovy','scala'].includes(lang)) type = 'java-error';
       else if (lang === 'python') type = 'python-error';
@@ -174,14 +152,12 @@ function indexFile(file, index) {
 
 function indexTestResults(index) {
   if (!fs.existsSync(TEST_RESULTS)) return 0;
-
   let results;
   try { results = JSON.parse(fs.readFileSync(TEST_RESULTS, 'utf-8')); } catch { return 0; }
   let count = 0;
 
   function walkSuites(suite, inheritedFile = '') {
     const filePath = suite.file || inheritedFile;
-
     for (const spec of suite.specs || []) {
       for (const test of spec.tests || []) {
         for (const result of test.results || []) {

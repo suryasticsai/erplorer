@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ERplorer — Error Resolution Explorer</title>
+
+<!-- Favicon: uses the same logo file at the repo root -->
+<link rel="icon" type="image/png" href="erplorer-logo.png">
+<link rel="apple-touch-icon" href="erplorer-logo.png">
+
+<style>
+  :root {
+    --ink: #0F172A;
+    --slate: #1E293B;
+    --mist: #94A3B8;
+    --paper: #F8FAFC;
+    --signal: #F59E0B;
+    --error: #EF4444;
+    --code: #3B82F6;
+    --test: #8B5CF6;
+    --border: #E2E8F0;
+    --muted: #64748B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    color: var(--ink);
+    line-height: 1.55;
+    background: var(--paper);
+  }
+
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 0.4rem;
+  }
+  .header img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    border-radius: 10px;
+  }
+  .header h1 {
+    font-size: 1.55rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+  .header h1 .er {
+    color: var(--signal);
+  }
+  .subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.75rem;
+    margin-left: 60px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0.25rem;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 1.75rem;
+  }
+  .tab {
+    padding: 0.75rem 1.25rem;
+    cursor: pointer;
+    border: none;
+    background: none;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: var(--muted);
+    border-bottom: 3px solid transparent;
+    margin-bottom: -2px;
+    transition: 0.15s;
+  }
+  .tab:hover { color: var(--signal); }
+  .tab.active {
+    color: var(--signal);
+    border-bottom-color: var(--signal);
+    font-weight: 600;
+  }
+
+  /* Panels */
+  .panel { display: none; }
+  .panel.active { display: block; animation: fade 0.2s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  /* Search */
+  input[type=text] {
+    width: 100%;
+    padding: 1rem 1.15rem;
+    font-size: 1.05rem;
+    font-family: inherit;
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    outline: none;
+    background: white;
+    transition: 0.15s;
+  }
+  input[type=text]:focus {
+    border-color: var(--signal);
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+  }
+  input[type=password] {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    font-size: 1rem;
+    font-family: inherit;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    outline: none;
+  }
+  input[type=password]:focus { border-color: var(--signal); }
+
+  /* Results */
+  .result {
+    border: 1px solid var(--border);
+    background: white;
+    padding: 1rem 1.15rem;
+    margin-top: 0.85rem;
+    border-radius: 10px;
+    transition: 0.15s;
+  }
+  .result:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
+  .result.error { border-left: 4px solid var(--error); }
+  .result.code { border-left: 4px solid var(--code); }
+  .result.test-failure { border-left: 4px solid var(--test); }
+  .meta {
+    font-size: 0.85rem;
+    color: var(--slate);
+    margin-bottom: 0.55rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .meta strong { font-family: ui-monospace, "SF Mono", monospace; font-weight: 600; }
+  .badge {
+    background: #F1F5F9;
+    padding: 2px 9px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    font-weight: 600;
+    color: var(--slate);
+  }
+  .snippet {
+    background: var(--paper);
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.83rem;
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.65;
+    color: var(--slate);
+  }
+  .highlight { background: #FEF3C7; padding: 0 2px; border-radius: 2px; }
+
+  /* Status */
+  .status {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.85rem;
+    background: #F1F5F9;
+    border-radius: 8px;
+  }
+  .status code { background: #E2E8F0; padding: 1px 5px; border-radius: 3px; font-size: 0.82rem; }
+  .spinner {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid var(--border);
+    border-top-color: var(--signal);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Drop zone */
+  .drop {
+    border: 2px dashed #CBD5E1;
+    border-radius: 12px;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: 0.2s;
+    background: white;
+  }
+  .drop:hover, .drop.over {
+    border-color: var(--signal);
+    background: #FFFBEB;
+    color: var(--slate);
+  }
+  .drop strong { display: block; font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--ink); }
+  .drop span { font-size: 0.9rem; }
+
+  /* Buttons */
+  button {
+    padding: 0.65rem 1.25rem;
+    border: none;
+    border-radius: 8px;
+    background: var(--signal);
+    color: white;
+    font-size: 0.9rem;
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: 0.15s;
+  }
+  button:hover { background: #D97706; }
+  button.secondary {
+    background: #F1F5F9;
+    color: var(--slate);
+  }
+  button.secondary:hover { background: #E2E8F0; }
+
+  /* Preview */
+  .preview {
+    background: var(--ink);
+    color: #CBD5E1;
+    padding: 1.25rem 1.4rem;
+    border-radius: 10px;
+    font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.8rem;
+    overflow-x: auto;
+    white-space: pre;
+    margin-top: 1rem;
+    max-height: 420px;
+    line-height: 1.65;
+  }
+
+  /* Grid */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+  .spec-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    background: white;
+  }
+  .spec-card strong { font-size: 0.9rem; display: block; }
+  .spec-card .steps { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
+  .spec-card button { margin-top: 0.75rem; width: 100%; }
+
+  /* Errors */
+  .error-list {
+    color: #B91C1C;
+    background: #FEF2F2;
+    padding: 1rem 1.25rem;
+    border-radius: 10px;
+    margin-top: 1rem;
+    border-left: 4px solid var(--error);
+  }
+  .error-list ul { margin-left: 1.25rem; margin-top: 0.5rem; }
+  .error-list li { font-size: 0.9rem; }
+
+  /* Schema hint */
+  .schema-hint {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-top: 1.25rem;
+    padding: 0.85rem 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .schema-hint code {
+    background: #F1F5F9;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: ui-monospace, monospace;
+    color: var(--slate);
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.8rem;
+    color: var(--muted);
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .footer a { color: var(--signal); text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<!-- Header with logo -->
+<div class="header">
+  <img src="erplorer-logo.png" alt="ERplorer logo">
+  <h1><span class="er">ER</span>plorer</h1>
+</div>
+<p class="subtitle">Error Resolution Explorer — from error message to source line.</p>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" data-tab="explorer">Error Explorer</button>
+  <button class="tab" data-tab="generator">Excel → Playwright</button>
+  <button class="tab" data-tab="settings">⚙️ Settings</button>
+</div>
+
+<!-- Explorer -->
+<div class="panel active" id="panel-explorer">
+  <div id="index-status" class="status"><span class="spinner"></span>Loading search index...</div>
+  <input type="text" id="search-input" placeholder="Paste an error message or search code..." autofocus>
+  <div id="results"></div>
+</div>
+
+<!-- Generator -->
+<div class="panel" id="panel-generator">
+  <div class="drop" id="drop-zone">
+    <strong>📂 Drop an .xlsx file here</strong>
+    <span>or click to browse</span>
+  </div>
+  <input type="file" id="file-input" accept=".xlsx" style="display:none;">
+  <div id="gen-output"></div>
+  <div class="schema-hint">
+    <strong>Excel schema:</strong> Columns <code>id</code>, <code>scenario</code>, <code>step</code>, <code>action</code>, <code>selector</code>, <code>value</code>, <code>expected</code>.<br>
+    <strong>Valid actions:</strong> <code>goto</code>, <code>fill</code>, <code>click</code>, <code>expectText</code>, <code>expectVisible</code>, <code>expectUrl</code>, <code>wait</code>.
+  </div>
+</div>
+
+<!-- Settings -->
+<div class="panel" id="panel-settings">
+  <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
+    Paste a Personal Access Token to enable live GitHub API queries. Stored in <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">sessionStorage</code> only — cleared when you close this tab.
+  </p>
+  <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
+  <div style="margin-top:1rem; display:flex; gap:0.5rem;">
+    <button onclick="saveToken()">Save Token</button>
+    <button class="secondary" onclick="clearToken()">Clear Token</button>
+  </div>
+  <div id="token-status" class="status" style="margin-top:1rem;"></div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>ERplorer — Error Resolution Explorer</span>
+  <span>Built with vanilla JS · Zero build step · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
+</div>
+
+<!-- CDN libraries -->
+<script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<script>
+// ============================================================
+// 1. OCTOKIT (async ESM)
+// ============================================================
+let OctokitClass = null;
+(async () => {
+  try {
+    const mod = await import("https://esm.sh/@octokit/rest");
+    OctokitClass = mod.Octokit;
+    console.log("✅ Octokit loaded");
+  } catch (err) {
+    console.warn("⚠️ Octokit unavailable:", err.message);
+  }
+})();
+
+function getOctokit() {
+  if (!OctokitClass) return null;
+  const token = sessionStorage.getItem('gh_token');
+  return new OctokitClass(token ? { auth: token } : {});
+}
+
+// ============================================================
+// 2. SEARCH INDEX
+// ============================================================
+let flexIndex = null;
+let documents = [];
+
+async function loadIndex() {
+  const status = document.getElementById('index-status');
+  try {
+    const res = await fetch('search-index.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    documents = await res.json();
+
+    flexIndex = new FlexSearch.Document({
+      document: { id: 'id', index: ['text'], store: true },
+      tokenize: 'forward',
+      resolution: 9,
+      cache: true
+    });
+
+    documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
+    status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries.`;
+  } catch (err) {
+    status.innerHTML = `⚠️ No <code>search-index.json</code> found. The generator still works.<br><small style="color:#94A3B8">${err.message}</small>`;
+  }
+}
+loadIndex();
+
+// ============================================================
+// 3. SEARCH
+// ============================================================
+const searchInput = document.getElementById('search-input');
+const resultsEl = document.getElementById('results');
+let debounce;
+
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(runSearch, 180);
+});
+
+function runSearch() {
+  const q = searchInput.value.trim();
+  resultsEl.innerHTML = '';
+  if (q.length < 2 || !flexIndex) return;
+
+  const raw = flexIndex.search(q, { enrich: true });
+  const hits = raw.flatMap(r => r.result).slice(0, 20);
+
+  if (!hits.length) {
+    resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>';
+    return;
+  }
+
+  hits.forEach(({ id }) => {
+    const doc = documents[id];
+    const el = document.createElement('div');
+    el.className = `result ${doc.type || 'code'}`;
+
+    let snippet = doc.context || doc.text || '';
+    const regex = new RegExp(`(${escapeRegex(q)})`, 'gi');
+    snippet = escapeHtml(snippet).replace(regex, '<span class="highlight">$1</span>');
+
+    el.innerHTML = `
+      <div class="meta">
+        <strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}
+        <span class="badge">${doc.type || 'code'}</span>
+        ${doc.testTitle ? `<em>— ${escapeHtml(doc.testTitle)}</em>` : ''}
+      </div>
+      <div class="snippet">${snippet}</div>
+    `;
+    resultsEl.appendChild(el);
+  });
+}
+
+function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ============================================================
+// 4. TABS
+// ============================================================
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
+  });
+});
+
+// ============================================================
+// 5. EXCEL → PLAYWRIGHT
+// ============================================================
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const genOut = document.getElementById('gen-output');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('over');
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+      renderGenerated(rows, file.name);
+    } catch (err) {
+      genOut.innerHTML = `<div class="error-list">❌ Failed to parse: ${escapeHtml(err.message)}</div>`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderGenerated(rows, filename) {
+  const cases = {};
+  const errors = [];
+  const validActions = ['goto', 'fill', 'click', 'expectText', 'expectVisible', 'expectUrl', 'wait'];
+
+  rows.forEach((row, i) => {
+    if (!row.id) return;
+    if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
+    if (!validActions.includes(row.action)) {
+      errors.push(`Row ${i + 2}: unknown action "${row.action}". Valid: ${validActions.join(', ')}`);
+      return;
+    }
+    cases[row.id].steps.push(row);
+  });
+
+  if (errors.length) {
+    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+    return;
+  }
+
+  const specs = Object.values(cases).map(tc => ({
+    name: `${tc.id}.spec.js`,
+    code: buildSpec(tc, filename),
+    stepCount: tc.steps.length
+  }));
+
+  if (!specs.length) {
+    genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found in the file.</p>';
+    return;
+  }
+
+  genOut.innerHTML = `
+    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} spec file(s)</h3>
+    <div class="grid">
+      ${specs.map((s, i) => `
+        <div class="spec-card">
+          <strong>${escapeHtml(s.name)}</strong>
+          <div class="steps">${s.stepCount} step${s.stepCount === 1 ? '' : 's'}</div>
+          <button class="secondary" data-spec="${i}">⬇️ Download</button>
+        </div>
+      `).join('')}
+    </div>
+    <h4 style="margin-top:1.75rem;">Preview: ${escapeHtml(specs[0].name)}</h4>
+    <div class="preview">${escapeHtml(specs[0].code)}</div>
+  `;
+
+  genOut.querySelectorAll('button[data-spec]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const spec = specs[parseInt(btn.dataset.spec)];
+      downloadFile(spec.name, spec.code);
+    });
+  });
+}
+
+function buildSpec(tc, sourceFile) {
+  const lines = tc.steps.map(s => {
+    const { action, selector = '', value = '', expected = '' } = s;
+    switch (action) {
+      case 'goto':          return `  await page.goto('${value}');`;
+      case 'fill':          return `  await page.fill('${selector}', '${value}');`;
+      case 'click':         return `  await page.click('${selector}');`;
+      case 'expectText':    return `  await expect(page.locator('${selector}')).toContainText('${expected || value}');`;
+      case 'expectVisible': return `  await expect(page.locator('${selector}')).toBeVisible();`;
+      case 'expectUrl':     return `  await expect(page).toHaveURL(/${value}/);`;
+      case 'wait':          return `  await page.waitForTimeout(${Number(value) || 1000});`;
+      default:              return `  // TODO: unsupported action "${action}"`;
+    }
+  }).join('\n');
+
+  return `// AUTO-GENERATED from ${sourceFile} — do not edit manually
+const { test, expect } = require('@playwright/test');
+
+test('${tc.id}: ${tc.scenario}', async ({ page }) => {
+${lines}
+});
+`;
+}
+
+function downloadFile(name, content) {
+  const blob = new Blob([content], { type: 'text/javascript' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+// ============================================================
+// 6. SETTINGS / TOKEN
+// ============================================================
+function saveToken() {
+  const token = document.getElementById('token-input').value.trim();
+  if (token) {
+    sessionStorage.setItem('gh_token', token);
+    document.getElementById('token-status').innerHTML = '✅ Token saved to sessionStorage.';
+  }
+}
+function clearToken() {
+  sessionStorage.removeItem('gh_token');
+  document.getElementById('token-input').value = '';
+  document.getElementById('token-status').innerHTML = '🗑️ Token cleared.';
+}
+(function () {
+  const existing = sessionStorage.getItem('gh_token');
+  if (existing) {
+    document.getElementById('token-input').value = existing;
+    document.getElementById('token-status').innerHTML = '✅ Token loaded from session.';
+  }
+})();
+</script>
+</body>
+</html>

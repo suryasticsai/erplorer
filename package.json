@@ -1,0 +1,10 @@
+{
+  "name": "erplorer",
+  "version": "1.0.0",
+  "description": "Error Resolution Explorer — from error message to source line.",
+  "private": true,
+  "scripts": {
+    "build-index": "node scripts/build-index.js",
+    "serve": "npx serve ."
+  }
+}

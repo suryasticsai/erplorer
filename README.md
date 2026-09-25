@@ -161,6 +161,5 @@ MIT — see LICENSE for details.
 <p align="center">
   <a href="https://suryasticsai.github.io/erplorer/"><strong>🚀 Try ERplorer now</strong></a>
 </p>
-```
 
  

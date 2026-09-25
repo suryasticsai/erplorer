@@ -1,6 +1,11 @@
 <h1 align="center">
+   __           _                     
+  /__\ __ _ __ | | ___  _ __ ___ _ __ 
+ /_\| '__| '_ \| |/ _ \| '__/ _ \ '__|
+//__| |  | |_) | | (_) | | |  __/ |   
+\__/|_|  | .__/|_|\___/|_|  \___|_|   
+         |_|                          
   <img src="https://img.shields.io/badge/ER-Error%20Resolution-F59E0B?style=flat-square" alt="ER">
-  ERplorer
 </h1>
 
 <p align="center">

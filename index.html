@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ERplorer — Error Resolution Explorer</title>
 
-<!-- Favicon: uses the same logo file at the repo root -->
 <link rel="icon" type="image/png" href="erplorer-logo.png">
 <link rel="apple-touch-icon" href="erplorer-logo.png">
 
@@ -34,274 +33,157 @@
     background: var(--paper);
   }
 
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    margin-bottom: 0.4rem;
-  }
-  .header img {
-    width: 48px;
-    height: 48px;
-    object-fit: contain;
-    border-radius: 10px;
-  }
-  .header h1 {
-    font-size: 1.55rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-  }
-  .header h1 .er {
-    color: var(--signal);
-  }
-  .subtitle {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-bottom: 1.75rem;
-    margin-left: 60px;
-  }
+  .header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.4rem; }
+  .header img { width: 48px; height: 48px; object-fit: contain; border-radius: 10px; }
+  .header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; }
+  .header h1 .er { color: var(--signal); }
+  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.75rem; margin-left: 60px; }
 
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 0.25rem;
-    border-bottom: 2px solid var(--border);
-    margin-bottom: 1.75rem;
-  }
+  .tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border); margin-bottom: 1.75rem; }
   .tab {
-    padding: 0.75rem 1.25rem;
-    cursor: pointer;
-    border: none;
-    background: none;
-    font-size: 0.95rem;
-    font-family: inherit;
-    color: var(--muted);
-    border-bottom: 3px solid transparent;
-    margin-bottom: -2px;
-    transition: 0.15s;
+    padding: 0.75rem 1.25rem; cursor: pointer; border: none; background: none;
+    font-size: 0.95rem; font-family: inherit; color: var(--muted);
+    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.15s;
   }
   .tab:hover { color: var(--signal); }
-  .tab.active {
-    color: var(--signal);
-    border-bottom-color: var(--signal);
-    font-weight: 600;
-  }
+  .tab.active { color: var(--signal); border-bottom-color: var(--signal); font-weight: 600; }
 
-  /* Panels */
   .panel { display: none; }
   .panel.active { display: block; animation: fade 0.2s ease; }
   @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
-  /* Search */
   input[type=text] {
-    width: 100%;
-    padding: 1rem 1.15rem;
-    font-size: 1.05rem;
-    font-family: inherit;
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    outline: none;
-    background: white;
-    transition: 0.15s;
+    width: 100%; padding: 1rem 1.15rem; font-size: 1.05rem; font-family: inherit;
+    border: 2px solid var(--border); border-radius: 12px; outline: none;
+    background: white; transition: 0.15s;
   }
-  input[type=text]:focus {
-    border-color: var(--signal);
-    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
-  }
+  input[type=text]:focus { border-color: var(--signal); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12); }
   input[type=password] {
-    width: 100%;
-    padding: 0.9rem 1rem;
-    font-size: 1rem;
-    font-family: inherit;
-    border: 2px solid var(--border);
-    border-radius: 10px;
-    outline: none;
+    width: 100%; padding: 0.9rem 1rem; font-size: 1rem; font-family: inherit;
+    border: 2px solid var(--border); border-radius: 10px; outline: none;
   }
   input[type=password]:focus { border-color: var(--signal); }
 
-  /* Results */
   .result {
-    border: 1px solid var(--border);
-    background: white;
-    padding: 1rem 1.15rem;
-    margin-top: 0.85rem;
-    border-radius: 10px;
-    transition: 0.15s;
+    border: 1px solid var(--border); background: white; padding: 1rem 1.15rem;
+    margin-top: 0.85rem; border-radius: 10px; transition: 0.15s;
   }
   .result:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
   .result.error { border-left: 4px solid var(--error); }
   .result.code { border-left: 4px solid var(--code); }
   .result.test-failure { border-left: 4px solid var(--test); }
   .meta {
-    font-size: 0.85rem;
-    color: var(--slate);
-    margin-bottom: 0.55rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    flex-wrap: wrap;
+    font-size: 0.85rem; color: var(--slate); margin-bottom: 0.55rem;
+    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   }
   .meta strong { font-family: ui-monospace, "SF Mono", monospace; font-weight: 600; }
   .badge {
-    background: #F1F5F9;
-    padding: 2px 9px;
-    border-radius: 5px;
-    font-size: 0.68rem;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    font-weight: 600;
-    color: var(--slate);
+    background: #F1F5F9; padding: 2px 9px; border-radius: 5px;
+    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px;
+    font-weight: 600; color: var(--slate);
   }
   .snippet {
-    background: var(--paper);
-    padding: 0.85rem 1rem;
-    border-radius: 8px;
-    overflow-x: auto;
-    font-family: ui-monospace, "SF Mono", monospace;
-    font-size: 0.83rem;
-    white-space: pre-wrap;
-    word-break: break-word;
-    line-height: 1.65;
-    color: var(--slate);
+    background: var(--paper); padding: 0.85rem 1rem; border-radius: 8px;
+    overflow-x: auto; font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.83rem; white-space: pre-wrap; word-break: break-word;
+    line-height: 1.65; color: var(--slate);
   }
   .highlight { background: #FEF3C7; padding: 0 2px; border-radius: 2px; }
 
-  /* Status */
   .status {
-    font-size: 0.85rem;
-    color: var(--muted);
-    margin-top: 0.75rem;
-    padding: 0.6rem 0.85rem;
-    background: #F1F5F9;
-    border-radius: 8px;
+    font-size: 0.85rem; color: var(--muted); margin-top: 0.75rem;
+    padding: 0.6rem 0.85rem; background: #F1F5F9; border-radius: 8px;
   }
   .status code { background: #E2E8F0; padding: 1px 5px; border-radius: 3px; font-size: 0.82rem; }
   .spinner {
-    display: inline-block;
-    width: 12px; height: 12px;
-    border: 2px solid var(--border);
-    border-top-color: var(--signal);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-    margin-right: 6px;
-    vertical-align: middle;
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid var(--border); border-top-color: var(--signal);
+    border-radius: 50%; animation: spin 0.6s linear infinite;
+    margin-right: 6px; vertical-align: middle;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Drop zone */
   .drop {
-    border: 2px dashed #CBD5E1;
-    border-radius: 12px;
-    padding: 3rem 2rem;
-    text-align: center;
-    color: var(--muted);
-    cursor: pointer;
-    transition: 0.2s;
-    background: white;
+    border: 2px dashed #CBD5E1; border-radius: 12px; padding: 3rem 2rem;
+    text-align: center; color: var(--muted); cursor: pointer;
+    transition: 0.2s; background: white;
   }
-  .drop:hover, .drop.over {
-    border-color: var(--signal);
-    background: #FFFBEB;
-    color: var(--slate);
-  }
+  .drop:hover, .drop.over { border-color: var(--signal); background: #FFFBEB; color: var(--slate); }
   .drop strong { display: block; font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--ink); }
   .drop span { font-size: 0.9rem; }
+  .drop .formats {
+    display: inline-flex; gap: 0.5rem; margin-top: 0.85rem;
+  }
+  .format-pill {
+    background: var(--paper); color: var(--slate); padding: 3px 10px;
+    border-radius: 6px; font-size: 0.75rem; font-weight: 600;
+    font-family: ui-monospace, monospace; letter-spacing: 0.3px;
+  }
 
-  /* Buttons */
   button {
-    padding: 0.65rem 1.25rem;
-    border: none;
-    border-radius: 8px;
-    background: var(--signal);
-    color: white;
-    font-size: 0.9rem;
-    font-family: inherit;
-    font-weight: 500;
-    cursor: pointer;
-    transition: 0.15s;
+    padding: 0.65rem 1.25rem; border: none; border-radius: 8px;
+    background: var(--signal); color: white; font-size: 0.9rem;
+    font-family: inherit; font-weight: 500; cursor: pointer; transition: 0.15s;
   }
   button:hover { background: #D97706; }
-  button.secondary {
-    background: #F1F5F9;
-    color: var(--slate);
-  }
+  button.secondary { background: #F1F5F9; color: var(--slate); }
   button.secondary:hover { background: #E2E8F0; }
+  button.ghost {
+    background: transparent; color: var(--signal);
+    border: 1px solid var(--signal); padding: 0.55rem 1rem;
+  }
+  button.ghost:hover { background: #FFFBEB; color: var(--signal); }
 
-  /* Preview */
   .preview {
-    background: var(--ink);
-    color: #CBD5E1;
-    padding: 1.25rem 1.4rem;
-    border-radius: 10px;
-    font-family: ui-monospace, "SF Mono", monospace;
-    font-size: 0.8rem;
-    overflow-x: auto;
-    white-space: pre;
-    margin-top: 1rem;
-    max-height: 420px;
-    line-height: 1.65;
+    background: var(--ink); color: #CBD5E1; padding: 1.25rem 1.4rem;
+    border-radius: 10px; font-family: ui-monospace, "SF Mono", monospace;
+    font-size: 0.8rem; overflow-x: auto; white-space: pre;
+    margin-top: 1rem; max-height: 420px; line-height: 1.65;
   }
 
-  /* Grid */
   .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem;
-    margin-top: 1rem;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1rem; margin-top: 1rem;
   }
   .spec-card {
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 1rem;
-    background: white;
+    border: 1px solid var(--border); border-radius: 10px;
+    padding: 1rem; background: white;
   }
   .spec-card strong { font-size: 0.9rem; display: block; }
   .spec-card .steps { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
   .spec-card button { margin-top: 0.75rem; width: 100%; }
 
-  /* Errors */
   .error-list {
-    color: #B91C1C;
-    background: #FEF2F2;
-    padding: 1rem 1.25rem;
-    border-radius: 10px;
-    margin-top: 1rem;
-    border-left: 4px solid var(--error);
+    color: #B91C1C; background: #FEF2F2; padding: 1rem 1.25rem;
+    border-radius: 10px; margin-top: 1rem; border-left: 4px solid var(--error);
   }
   .error-list ul { margin-left: 1.25rem; margin-top: 0.5rem; }
   .error-list li { font-size: 0.9rem; }
 
-  /* Schema hint */
   .schema-hint {
-    font-size: 0.82rem;
-    color: var(--muted);
-    margin-top: 1.25rem;
-    padding: 0.85rem 1rem;
-    background: white;
-    border-radius: 8px;
+    font-size: 0.82rem; color: var(--muted); margin-top: 1.25rem;
+    padding: 0.85rem 1rem; background: white; border-radius: 8px;
     border: 1px solid var(--border);
   }
   .schema-hint code {
-    background: #F1F5F9;
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    font-family: ui-monospace, monospace;
-    color: var(--slate);
+    background: #F1F5F9; padding: 1px 6px; border-radius: 4px;
+    font-size: 0.8rem; font-family: ui-monospace, monospace; color: var(--slate);
   }
+  .schema-hint .row { margin-bottom: 0.5rem; }
+  .schema-hint .row:last-child { margin-bottom: 0; }
 
-  /* Footer */
+  .template-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 1rem; flex-wrap: wrap; margin-top: 1rem;
+    padding: 0.85rem 1rem; background: #FFFBEB;
+    border: 1px solid #FDE68A; border-radius: 8px;
+  }
+  .template-bar span { font-size: 0.85rem; color: var(--slate); }
+
   .footer {
-    margin-top: 3rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border);
-    font-size: 0.8rem;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
+    font-size: 0.8rem; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
   }
   .footer a { color: var(--signal); text-decoration: none; }
   .footer a:hover { text-decoration: underline; }
@@ -309,17 +191,15 @@
 </head>
 <body>
 
-<!-- Header with logo -->
 <div class="header">
   <img src="erplorer-logo.png" alt="ERplorer logo">
   <h1><span class="er">ER</span>plorer</h1>
 </div>
 <p class="subtitle">Error Resolution Explorer — from error message to source line.</p>
 
-<!-- Tabs -->
 <div class="tabs">
   <button class="tab active" data-tab="explorer">Error Explorer</button>
-  <button class="tab" data-tab="generator">Excel → Playwright</button>
+  <button class="tab" data-tab="generator">Excel / CSV → Playwright</button>
   <button class="tab" data-tab="settings">⚙️ Settings</button>
 </div>
 
@@ -333,14 +213,31 @@
 <!-- Generator -->
 <div class="panel" id="panel-generator">
   <div class="drop" id="drop-zone">
-    <strong>📂 Drop an .xlsx file here</strong>
+    <strong>📂 Drop a test case file here</strong>
     <span>or click to browse</span>
+    <div class="formats">
+      <span class="format-pill">.XLSX</span>
+      <span class="format-pill">.XLS</span>
+      <span class="format-pill">.CSV</span>
+    </div>
   </div>
-  <input type="file" id="file-input" accept=".xlsx" style="display:none;">
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none;">
+
+  <div class="template-bar">
+    <span>💡 New here? Download a starter template to see the required columns.</span>
+    <div style="display:flex; gap:0.5rem;">
+      <button class="ghost" onclick="downloadTemplate('csv')">⬇️ CSV template</button>
+      <button class="ghost" onclick="downloadTemplate('tsv')">⬇️ TSV template</button>
+    </div>
+  </div>
+
   <div id="gen-output"></div>
+
   <div class="schema-hint">
-    <strong>Excel schema:</strong> Columns <code>id</code>, <code>scenario</code>, <code>step</code>, <code>action</code>, <code>selector</code>, <code>value</code>, <code>expected</code>.<br>
-    <strong>Valid actions:</strong> <code>goto</code>, <code>fill</code>, <code>click</code>, <code>expectText</code>, <code>expectVisible</code>, <code>expectUrl</code>, <code>wait</code>.
+    <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code> (comma-separated), <code>.tsv</code> (tab-separated)</div>
+    <div class="row"><strong>Required columns:</strong> <code>id</code>, <code>scenario</code>, <code>step</code>, <code>action</code>, <code>selector</code>, <code>value</code>, <code>expected</code></div>
+    <div class="row"><strong>Valid actions:</strong> <code>goto</code>, <code>fill</code>, <code>click</code>, <code>expectText</code>, <code>expectVisible</code>, <code>expectUrl</code>, <code>wait</code></div>
+    <div class="row"><strong>CSV tip:</strong> Wrap values containing commas in double quotes — e.g. <code>"Welcome, admin"</code></div>
   </div>
 </div>
 
@@ -358,13 +255,11 @@
   <div id="token-status" class="status" style="margin-top:1rem;"></div>
 </div>
 
-<!-- Footer -->
 <div class="footer">
   <span>ERplorer — Error Resolution Explorer</span>
   <span>Built with vanilla JS · Zero build step · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
 </div>
 
-<!-- CDN libraries -->
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
@@ -481,11 +376,13 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// 5. EXCEL → PLAYWRIGHT
+// 5. FILE → PLAYWRIGHT (Excel / CSV / TSV)
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const genOut = document.getElementById('gen-output');
+
+const ACCEPTED_EXTENSIONS = ['xlsx', 'xls', 'csv', 'tsv', 'txt'];
 
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
@@ -497,19 +394,50 @@ dropZone.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
+function getExtension(name) {
+  return name.split('.').pop().toLowerCase();
+}
+
 function handleFile(file) {
+  const ext = getExtension(file.name);
+  if (!ACCEPTED_EXTENSIONS.includes(ext)) {
+    genOut.innerHTML = `<div class="error-list">❌ Unsupported file type ".${escapeHtml(ext)}". Please upload one of: ${ACCEPTED_EXTENSIONS.map(e => '.' + e).join(', ')}</div>`;
+    return;
+  }
+
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet);
+      let workbook;
+
+      if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
+        // Read as text — pass raw string to SheetJS so it handles the delimiter
+        const text = e.target.result;
+        workbook = XLSX.read(text, { type: 'string', raw: false });
+      } else {
+        // Binary Excel formats
+        workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+      }
+
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+      if (!rows.length) {
+        genOut.innerHTML = '<div class="error-list">❌ No rows found in the file. Check that the first sheet has a header row.</div>';
+        return;
+      }
+
       renderGenerated(rows, file.name);
     } catch (err) {
-      genOut.innerHTML = `<div class="error-list">❌ Failed to parse: ${escapeHtml(err.message)}</div>`;
+      genOut.innerHTML = `<div class="error-list">❌ Failed to parse <strong>${escapeHtml(file.name)}</strong>: ${escapeHtml(err.message)}</div>`;
     }
   };
-  reader.readAsArrayBuffer(file);
+
+  if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
+    reader.readAsText(file, 'utf-8');
+  } else {
+    reader.readAsArrayBuffer(file);
+  }
 }
 
 function renderGenerated(rows, filename) {
@@ -519,16 +447,23 @@ function renderGenerated(rows, filename) {
 
   rows.forEach((row, i) => {
     if (!row.id) return;
-    if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
+    // Coerce everything to string, trim whitespace
+    Object.keys(row).forEach(k => { row[k] = String(row[k] ?? '').trim(); });
+
+    if (!row.action) {
+      errors.push(`Row ${i + 2}: missing action`);
+      return;
+    }
     if (!validActions.includes(row.action)) {
       errors.push(`Row ${i + 2}: unknown action "${row.action}". Valid: ${validActions.join(', ')}`);
       return;
     }
+    if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
     cases[row.id].steps.push(row);
   });
 
   if (errors.length) {
-    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors in ${escapeHtml(filename)}:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
     return;
   }
 
@@ -544,7 +479,7 @@ function renderGenerated(rows, filename) {
   }
 
   genOut.innerHTML = `
-    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} spec file(s)</h3>
+    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} spec file(s) from ${escapeHtml(filename)}</h3>
     <div class="grid">
       ${specs.map((s, i) => `
         <div class="spec-card">
@@ -561,37 +496,38 @@ function renderGenerated(rows, filename) {
   genOut.querySelectorAll('button[data-spec]').forEach(btn => {
     btn.addEventListener('click', () => {
       const spec = specs[parseInt(btn.dataset.spec)];
-      downloadFile(spec.name, spec.code);
+      downloadFile(spec.name, spec.code, 'text/javascript');
     });
   });
 }
 
 function buildSpec(tc, sourceFile) {
+  const esc = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
   const lines = tc.steps.map(s => {
     const { action, selector = '', value = '', expected = '' } = s;
     switch (action) {
-      case 'goto':          return `  await page.goto('${value}');`;
-      case 'fill':          return `  await page.fill('${selector}', '${value}');`;
-      case 'click':         return `  await page.click('${selector}');`;
-      case 'expectText':    return `  await expect(page.locator('${selector}')).toContainText('${expected || value}');`;
-      case 'expectVisible': return `  await expect(page.locator('${selector}')).toBeVisible();`;
-      case 'expectUrl':     return `  await expect(page).toHaveURL(/${value}/);`;
+      case 'goto':          return `  await page.goto('${esc(value)}');`;
+      case 'fill':          return `  await page.fill('${esc(selector)}', '${esc(value)}');`;
+      case 'click':         return `  await page.click('${esc(selector)}');`;
+      case 'expectText':    return `  await expect(page.locator('${esc(selector)}')).toContainText('${esc(expected || value)}');`;
+      case 'expectVisible': return `  await expect(page.locator('${esc(selector)}')).toBeVisible();`;
+      case 'expectUrl':     return `  await expect(page).toHaveURL(/${esc(value)}/);`;
       case 'wait':          return `  await page.waitForTimeout(${Number(value) || 1000});`;
-      default:              return `  // TODO: unsupported action "${action}"`;
+      default:              return `  // TODO: unsupported action "${esc(action)}"`;
     }
   }).join('\n');
 
   return `// AUTO-GENERATED from ${sourceFile} — do not edit manually
 const { test, expect } = require('@playwright/test');
 
-test('${tc.id}: ${tc.scenario}', async ({ page }) => {
+test('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page }) => {
 ${lines}
 });
 `;
 }
 
-function downloadFile(name, content) {
-  const blob = new Blob([content], { type: 'text/javascript' });
+function downloadFile(name, content, mime = 'text/plain') {
+  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = name;
@@ -600,7 +536,47 @@ function downloadFile(name, content) {
 }
 
 // ============================================================
-// 6. SETTINGS / TOKEN
+// 6. TEMPLATE DOWNLOAD
+// ============================================================
+const TEMPLATE_ROWS = [
+  ['id','scenario','step','action','selector','value','expected'],
+  ['TC001','Login with valid credentials','1','goto','','/login',''],
+  ['TC001','Login with valid credentials','2','fill','#username','admin',''],
+  ['TC001','Login with valid credentials','3','fill','#password','secret123',''],
+  ['TC001','Login with valid credentials','4','click','button[type=submit]','',''],
+  ['TC001','Login with valid credentials','5','expectText','.dashboard','','Welcome admin'],
+  ['TC002','Logout from dashboard','1','goto','','/dashboard',''],
+  ['TC002','Logout from dashboard','2','click','#logout-btn','',''],
+  ['TC002','Logout from dashboard','3','expectUrl','','/login',''],
+  ['TC003','Search for a product','1','goto','','/search',''],
+  ['TC003','Search for a product','2','fill','#search-box','laptop',''],
+  ['TC003','Search for a product','3','click','#search-submit','',''],
+  ['TC003','Search for a product','4','expectText','.results','','Found 12 results']
+];
+
+function csvEscape(v) {
+  const s = String(v ?? '');
+  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
+    return '"' + s.replace(/"/g, '""') + '"';
+  }
+  return s;
+}
+
+function downloadTemplate(format) {
+  const isTsv = format === 'tsv';
+  const delim = isTsv ? '\t' : ',';
+  const ext = isTsv ? 'tsv' : 'csv';
+  const mime = isTsv ? 'text/tab-separated-values' : 'text/csv';
+
+  const body = TEMPLATE_ROWS
+    .map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(','))
+    .join('\n');
+
+  downloadFile(`TEMPLATE.${ext}`, body, mime);
+}
+
+// ============================================================
+// 7. SETTINGS / TOKEN
 // ============================================================
 function saveToken() {
   const token = document.getElementById('token-input').value.trim();

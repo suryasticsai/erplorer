@@ -10,7 +10,7 @@
   :root {
     --ink:#0F172A; --slate:#1E293B; --paper:#F8FAFC; --signal:#F59E0B;
     --error:#EF4444; --code:#3B82F6; --test:#8B5CF6; --api:#10B981;
-    --data:#06B6D4; --border:#E2E8F0; --muted:#64748B;
+    --data:#06B6D4; --border:#E2E8F0; --muted:#64748B; --ai:#8B5CF6;
   }
   * { box-sizing:border-box; margin:0; padding:0; }
   body {
@@ -37,6 +37,18 @@
   .panel.active { display:block; animation:fade 0.2s ease; }
   @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
+  .mode-toggle {
+    display:inline-flex; background:#F1F5F9; border-radius:10px; padding:4px;
+    margin-bottom:1rem; gap:2px;
+  }
+  .mode-btn {
+    padding:0.5rem 1rem; border:none; background:transparent; cursor:pointer;
+    border-radius:7px; font-size:0.85rem; font-family:inherit; font-weight:500;
+    color:var(--muted); transition:0.15s;
+  }
+  .mode-btn.active { background:white; color:var(--signal); box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+  .mode-btn:disabled { opacity:0.4; cursor:not-allowed; }
+
   input[type=text] {
     width:100%; padding:1rem 1.15rem; font-size:1.05rem; font-family:inherit;
     border:2px solid var(--border); border-radius:12px; outline:none;
@@ -49,6 +61,35 @@
   }
   input[type=password]:focus { border-color:var(--signal); }
 
+  .search-row { display:flex; gap:0.5rem; align-items:stretch; }
+  .search-row input { flex:1; }
+  .search-row button { padding:0 1.5rem; }
+
+  textarea {
+    width:100%; min-height:120px; padding:0.85rem;
+    border:2px solid var(--border); border-radius:8px;
+    font-family:ui-monospace,monospace; font-size:0.82rem;
+    outline:none; resize:vertical;
+  }
+  textarea:focus { border-color:var(--signal); }
+
+  .ai-answer {
+    margin-top:1rem; padding:1.25rem 1.4rem; background:white;
+    border:1px solid var(--border); border-left:4px solid var(--ai);
+    border-radius:10px; font-size:0.95rem; line-height:1.7;
+    white-space:pre-wrap; word-break:break-word;
+  }
+  .ai-answer.loading { color:var(--muted); font-style:italic; }
+  .ai-answer code {
+    background:#F1F5F9; padding:1px 6px; border-radius:4px;
+    font-family:ui-monospace,monospace; font-size:0.85rem;
+  }
+  .ai-hint {
+    font-size:0.82rem; color:var(--muted); margin-top:0.75rem;
+    padding:0.6rem 0.85rem; background:#FAFAFA; border-radius:6px;
+    border:1px dashed var(--border);
+  }
+
   .result {
     border:1px solid var(--border); background:white; padding:1rem 1.15rem;
     margin-top:0.85rem; border-radius:10px; transition:0.15s;
@@ -60,6 +101,11 @@
   .result.api-error     { border-left:4px solid var(--api); }
   .result.data-error    { border-left:4px solid var(--data); }
   .result.config-error  { border-left:4px solid #F97316; }
+  .result.java-error    { border-left:4px solid #B91C1C; }
+  .result.python-error  { border-left:4px solid #0891B2; }
+  .result.sql-error     { border-left:4px solid #7C3AED; }
+  .result.notebook-error{ border-left:4px solid #DB2777; }
+  .result.crawled       { border-left:4px solid #EC4899; }
 
   .meta { font-size:0.85rem; color:var(--slate); margin-bottom:0.55rem;
           display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
@@ -112,6 +158,8 @@
   button.secondary:hover { background:#E2E8F0; }
   button.ghost { background:transparent; color:var(--signal); border:1px solid var(--signal); padding:0.55rem 1rem; }
   button.ghost:hover { background:#FFFBEB; }
+  button.ai { background:var(--ai); }
+  button.ai:hover { background:#7C3AED; }
 
   .preview {
     background:var(--ink); color:#CBD5E1; padding:1.25rem 1.4rem;
@@ -152,6 +200,11 @@
   }
   .template-bar span { font-size:0.85rem; color:var(--slate); }
 
+  details summary { cursor:pointer; font-size:0.85rem; color:var(--muted); padding:0.5rem 0; list-style:none; }
+  details summary::-webkit-details-marker { display:none; }
+  details summary::before { content:'▸ '; display:inline-block; transition:transform 0.15s; }
+  details[open] summary::before { transform:rotate(90deg); }
+
   .footer {
     margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
     font-size:0.8rem; color:var(--muted);
@@ -175,14 +228,64 @@
   <button class="tab" data-tab="settings">⚙️ Settings</button>
 </div>
 
-<!-- Explorer -->
+<!-- ============ EXPLORER ============ -->
 <div class="panel active" id="panel-explorer">
   <div id="index-status" class="status"><span class="spinner"></span>Loading search index...</div>
-  <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
-  <div id="results"></div>
+
+  <div class="mode-toggle" style="margin-top:1rem;">
+    <button class="mode-btn active" data-mode="exact" onclick="setMode('exact')">🔍 Exact search</button>
+    <button class="mode-btn" data-mode="ai" id="ai-mode-btn" onclick="setMode('ai')" disabled>💬 Ask AI</button>
+  </div>
+
+  <!-- Exact search mode -->
+  <div id="mode-exact">
+    <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
+    <div id="results"></div>
+  </div>
+
+  <!-- AI mode -->
+  <div id="mode-ai" style="display:none;">
+    <div class="search-row">
+      <input type="text" id="nl-input" placeholder="Ask in plain English: 'Show Java errors in auth module'">
+      <button class="ai" onclick="askNatural()">Ask</button>
+    </div>
+    <div class="ai-hint">
+      Examples: <em>"List all SQL errors"</em> · <em>"Which file has the most errors?"</em> · <em>"Show config errors"</em>
+    </div>
+    <div id="nl-answer"></div>
+  </div>
+
+  <!-- ===== Add Content Section ===== -->
+  <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
+    <h3 style="font-size:1rem; margin-bottom:0.75rem;">➕ Add more content to search</h3>
+
+    <div class="search-row" style="margin-bottom:0.5rem;">
+      <input type="text" id="crawl-url" placeholder="Tier 1 · Crawl a URL (https://docs.example.com)">
+      <button class="ghost" onclick="tryTier1Crawl()">🕷️ Crawl</button>
+    </div>
+
+    <div class="search-row" style="margin-bottom:0.5rem;">
+      <input type="text" id="repo-scan" placeholder="Tier 2 · Scan a GitHub repo (owner/repo)">
+      <button class="ghost" onclick="tryTier2Repo()">🐙 Scan repo</button>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
+      <button class="ghost" onclick="tryTier3Folder()" style="flex:1;">📁 Tier 3 · Open folder</button>
+      <button class="ghost" onclick="tryTier3File()" style="flex:1;">📄 Or drop files</button>
+      <input type="file" id="tier3-file" multiple style="display:none;">
+    </div>
+
+    <details style="margin-bottom:0.5rem;">
+      <summary>📋 Tier 4 · Paste text manually (always works)</summary>
+      <textarea id="tier4-text" placeholder="Paste any text, stack trace, error log, or file content..."></textarea>
+      <button class="secondary" onclick="tryTier4Paste()" style="margin-top:0.5rem;">Add to index</button>
+    </details>
+
+    <div id="add-status" class="status" style="margin-top:0.75rem; display:none;"></div>
+  </div>
 </div>
 
-<!-- Generator -->
+<!-- ============ GENERATOR ============ -->
 <div class="panel" id="panel-generator">
   <div class="drop" id="drop-zone">
     <strong>📂 Drop a test case file here</strong>
@@ -209,21 +312,14 @@
   <div class="schema-hint">
     <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code> <code>.xls</code> <code>.csv</code> <code>.tsv</code></div>
     <div class="row"><strong>Columns:</strong> <code>id</code> <code>scenario</code> <code>step</code> <code>action</code> <code>method</code> <code>url</code> <code>headers</code> <code>body</code> <code>selector</code> <code>value</code> <code>expected</code> <code>jsonpath</code></div>
-
-    <div class="row"><strong>🧪 UI actions (Playwright):</strong><br>
-      <code>goto</code> · <code>fill</code> · <code>click</code> · <code>expectText</code> · <code>expectVisible</code> · <code>expectUrl</code> · <code>wait</code>
-    </div>
-    <div class="row"><strong>🔌 API actions (Postman-style, Playwright request):</strong><br>
-      <code>apiRequest</code> · <code>expectStatus</code> · <code>expectJson</code> · <code>expectHeader</code>
-    </div>
-    <div class="row"><strong>📊 Data actions (Databricks / SQL, pytest):</strong><br>
-      <code>runSql</code> · <code>expectRowCount</code> · <code>expectNoNulls</code> · <code>expectUnique</code> · <code>expectValue</code>
-    </div>
-    <div class="row"><strong>CSV tip:</strong> Wrap values containing commas or quotes in double quotes — e.g. <code>"Welcome, admin"</code></div>
+    <div class="row"><strong>🧪 UI actions:</strong> <code>goto</code> <code>fill</code> <code>click</code> <code>expectText</code> <code>expectVisible</code> <code>expectUrl</code> <code>wait</code></div>
+    <div class="row"><strong>🔌 API actions:</strong> <code>apiRequest</code> <code>expectStatus</code> <code>expectJson</code> <code>expectHeader</code></div>
+    <div class="row"><strong>📊 Data actions:</strong> <code>runSql</code> <code>expectRowCount</code> <code>expectNoNulls</code> <code>expectUnique</code> <code>expectValue</code></div>
+    <div class="row"><strong>CSV tip:</strong> Wrap values with commas or quotes in double quotes — e.g. <code>"Welcome, admin"</code></div>
   </div>
 </div>
 
-<!-- Settings -->
+<!-- ============ SETTINGS ============ -->
 <div class="panel" id="panel-settings">
   <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
   <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
@@ -236,15 +332,24 @@
     <button class="secondary" onclick="clearToken()">Clear Token</button>
   </div>
   <div id="token-status" class="status" style="margin-top:1rem;"></div>
+
+  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI Assistant</h3>
+  <p style="color:var(--muted); font-size:0.9rem;">
+    The "Ask AI" tab uses <a href="https://github.com/suryasticsai/Consoleena" target="_blank" style="color:var(--signal)">Consoleena</a>
+    for natural language queries. It runs entirely in your browser — no data leaves your machine except the query text sent to the
+    configured LLM endpoint.
+  </p>
+  <div id="consoleena-status" class="status" style="margin-top:1rem;">⏳ Checking Consoleena...</div>
 </div>
 
 <div class="footer">
   <span>ERplorer — Error Resolution Explorer</span>
-  <span>Built with vanilla JS · Zero build step · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
+  <span>Built with vanilla JS · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
 </div>
 
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/suryasticsai/Consoleena@main/consoleena.min.js" onerror="window.__consoleenaFailed=true"></script>
 
 <script>
 // ============================================================
@@ -279,18 +384,26 @@ async function loadIndex() {
     });
     documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
 
-    // Show breakdown by type
     const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
     const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
     status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
+
+    window.erplorerIndex = documents;
+    tryConsoleenaInit();
   } catch (err) {
-    status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator still works.<br><small style="color:#94A3B8">${err.message}</small>`;
+    status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator and Add Content still work.<br><small style="color:#94A3B8">${err.message}</small>`;
+    documents = [];
+    flexIndex = new FlexSearch.Document({
+      document: { id: 'id', index: ['text'], store: true },
+      tokenize: 'forward', resolution: 9, cache: true
+    });
+    tryConsoleenaInit();
   }
 }
 loadIndex();
 
 // ============================================================
-// 3. SEARCH
+// 3. EXACT SEARCH
 // ============================================================
 const searchInput = document.getElementById('search-input');
 const resultsEl = document.getElementById('results');
@@ -308,6 +421,7 @@ function runSearch() {
 
   hits.forEach(({ id }) => {
     const doc = documents[id];
+    if (!doc) return;
     const el = document.createElement('div');
     el.className = `result ${doc.type || 'code'}`;
 
@@ -329,7 +443,73 @@ function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ============================================================
-// 4. TABS
+// 4. MODE TOGGLE
+// ============================================================
+function setMode(mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
+  document.getElementById('mode-exact').style.display = mode === 'exact' ? 'block' : 'none';
+  document.getElementById('mode-ai').style.display = mode === 'ai' ? 'block' : 'none';
+  if (mode === 'ai') setTimeout(() => document.getElementById('nl-input').focus(), 50);
+  if (mode === 'exact') setTimeout(() => document.getElementById('search-input').focus(), 50);
+}
+
+// ============================================================
+// 5. CONSOLEENA (natural language)
+// ============================================================
+let consoleenaReady = false;
+
+function tryConsoleenaInit() {
+  const aiBtn = document.getElementById('ai-mode-btn');
+  const csStatus = document.getElementById('consoleena-status');
+
+  if (window.__consoleenaFailed || typeof window.Consoleena === 'undefined') {
+    csStatus.innerHTML = '⚠️ Consoleena not available. Exact search still works.';
+    aiBtn.disabled = true;
+    aiBtn.title = 'Consoleena failed to load';
+    return;
+  }
+  try {
+    if (typeof Consoleena.set === 'function') {
+      Consoleena.set('erplorerIndex', documents);
+      Consoleena.set('entryCount', documents.length);
+    }
+    consoleenaReady = true;
+    aiBtn.disabled = false;
+    aiBtn.title = 'Ask questions in plain English';
+    csStatus.innerHTML = `✅ Consoleena loaded — ${documents.length} entries available for AI queries.`;
+  } catch (err) {
+    csStatus.innerHTML = `⚠️ Consoleena init error: ${escapeHtml(err.message)}`;
+    aiBtn.disabled = true;
+  }
+}
+
+async function askNatural() {
+  const input = document.getElementById('nl-input');
+  const answerEl = document.getElementById('nl-answer');
+  const q = input.value.trim();
+  if (!q) return;
+
+  answerEl.innerHTML = '<div class="ai-answer loading">Thinking…</div>';
+  if (!consoleenaReady) {
+    answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong> to search by literal text.</div>';
+    return;
+  }
+  try {
+    let answer = await Consoleena.ask(q);
+    const formatted = typeof answer === 'string'
+      ? escapeHtml(answer).replace(/\n/g, '<br>')
+      : escapeHtml(JSON.stringify(answer, null, 2));
+    answerEl.innerHTML = `<div class="ai-answer">${formatted}</div>`;
+    if (typeof Consoleena.highlight === 'function') { try { Consoleena.highlight('.result'); } catch {} }
+  } catch (err) {
+    answerEl.innerHTML = `<div class="ai-answer">❌ ${escapeHtml(err.message)}</div>`;
+  }
+}
+document.getElementById('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') askNatural(); });
+
+// ============================================================
+// 6. TABS
 // ============================================================
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -341,12 +521,11 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// 5. FILE → PLAYWRIGHT / PYTEST
+// 7. FILE → PLAYWRIGHT / PYTEST
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const genOut = document.getElementById('gen-output');
-
 const ACCEPTED = ['xlsx','xls','csv','tsv','txt'];
 
 dropZone.addEventListener('click', () => fileInput.click());
@@ -387,7 +566,6 @@ function handleFile(file) {
   else reader.readAsArrayBuffer(file);
 }
 
-// Action catalog
 const ACTIONS = {
   UI:   ['goto','fill','click','expectText','expectVisible','expectUrl','wait'],
   API:  ['apiRequest','expectStatus','expectJson','expectHeader'],
@@ -418,13 +596,14 @@ function renderGenerated(rows, filename) {
     return;
   }
 
-  // For each test case, split into UI/API steps (Playwright) and Data steps (pytest)
   const specs = [];
   Object.values(cases).forEach(tc => {
     const pw = tc.steps.filter(s => ['ui','api'].includes(kindOf(s.action)));
     const data = tc.steps.filter(s => kindOf(s.action) === 'data');
-    if (pw.length)   specs.push({ name: `${tc.id}.spec.js`,   code: buildPlaywright(tc, pw, filename), kind: 'playwright', kindLabel: pw.every(s=>kindOf(s.action)==='api') ? 'api' : 'ui' });
-    if (data.length) specs.push({ name: `${tc.id}_test.py`,   code: buildPytest(tc, data, filename),      kind: 'pytest',    kindLabel: 'data' });
+    if (pw.length)   specs.push({ name: `${tc.id}.spec.js`, code: buildPlaywright(tc, pw, filename),
+                                  kind: 'playwright', kindLabel: pw.every(s=>kindOf(s.action)==='api') ? 'api' : 'ui' });
+    if (data.length) specs.push({ name: `${tc.id}_test.py`, code: buildPytest(tc, data, filename),
+                                  kind: 'pytest', kindLabel: 'data' });
   });
 
   if (!specs.length) { genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found.</p>'; return; }
@@ -452,7 +631,6 @@ function renderGenerated(rows, filename) {
   });
 }
 
-// ---------- Playwright (UI + API) ----------
 function buildPlaywright(tc, steps, sourceFile) {
   const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const lines = steps.map(s => {
@@ -465,7 +643,6 @@ function buildPlaywright(tc, steps, sourceFile) {
       case 'expectVisible': return `  await expect(page.locator('${esc(selector)}')).toBeVisible();`;
       case 'expectUrl':     return `  await expect(page).toHaveURL(/${esc(url || value)}/);`;
       case 'wait':          return `  await page.waitForTimeout(${Number(value) || 1000});`;
-
       case 'apiRequest': {
         const m = (method || 'GET').toUpperCase();
         const opts = [];
@@ -489,31 +666,23 @@ ${lines}
 });
 `;
 }
-
 function jsonPathToJs(path) {
   if (!path) return '';
-  // Convert "data[0].name" → [0].name
   return path.replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]');
 }
 
-// ---------- Pytest + PySpark (Data) ----------
 function buildPytest(tc, steps, sourceFile) {
   const esc = s => String(s).replace(/\\/g,'\\\\').replace(/"""/g,'\\"\\"\\"');
-
-  // We declare variables up-front and assert them in order.
-  const setup = [];
-  const tests = [];
+  const setup = []; const tests = [];
   let queryVar = null, queryCounter = 0;
 
   steps.forEach(s => {
     const { action, selector='', value='', expected='', jsonpath='' } = s;
     switch (action) {
-      case 'runSql': {
-        queryCounter++;
-        queryVar = `result_${queryCounter}`;
+      case 'runSql':
+        queryCounter++; queryVar = `result_${queryCounter}`;
         setup.push(`${queryVar} = spark.sql("""${esc(value)}""").collect()`);
         break;
-      }
       case 'expectRowCount':
         tests.push(`    assert len(${queryVar}) == ${Number(expected) || 0}, f"Expected ${esc(expected)} rows, got {len(${queryVar})}"`);
         break;
@@ -547,15 +716,12 @@ ${setup.map(l => '    ' + l).join('\n')}
 ${tests.join('\n') || '    pass  # no assertions generated'}
 `;
 }
-
 function jsonPathToPy(path) {
   if (!path) return '';
-  // Convert "[0].name" → "[0]['name']"
   return path.replace(/\[(\d+)\]/g, '[$1]').replace(/\.([A-Za-z_$][\w$]*)/g, "['$1']");
 }
 function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
 
-// ---------- Download helpers ----------
 function downloadFile(name, content, mime = 'text/plain') {
   const blob = new Blob([content], { type: mime + ';charset=utf-8' });
   const a = document.createElement('a');
@@ -566,30 +732,22 @@ function downloadFile(name, content, mime = 'text/plain') {
 }
 
 // ============================================================
-// 6. TEMPLATE DOWNLOAD
+// 8. TEMPLATE DOWNLOAD
 // ============================================================
 const TEMPLATE_ROWS = [
   ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
-
-  // UI test
   ['TC001','Login UI flow','1','goto','','/login','','','','','',''],
   ['TC001','Login UI flow','2','fill','','','','','#username','admin','',''],
   ['TC001','Login UI flow','3','fill','','','','','#password','secret123','',''],
   ['TC001','Login UI flow','4','click','','','','','button[type=submit]','','',''],
   ['TC001','Login UI flow','5','expectText','','','','','.dashboard','','Welcome admin',''],
-
-  // API test (Postman-style)
   ['TC002','Users API returns alice','1','apiRequest','GET','/api/users','{"Accept":"application/json"}','','','','',''],
   ['TC002','Users API returns alice','2','expectStatus','','','','','','','200',''],
   ['TC002','Users API returns alice','3','expectJson','','','','','','','alice','data[0].name'],
   ['TC002','Users API returns alice','4','expectHeader','','','','','content-type','','application/json',''],
-
-  // Data test (Databricks / SQL)
   ['TC003','Users table has no nulls in email','1','runSql','','','','','','SELECT COUNT(*) AS c FROM users','',''],
   ['TC003','Users table has no nulls in email','2','expectRowCount','','','','','','','1',''],
   ['TC003','Users table has no nulls in email','3','expectNoNulls','','','','','users','','',''],
-
-  // Data test - migration success
   ['TC004','Migration added expected rows','1','runSql','','','','','','SELECT COUNT(*) FROM orders','',''],
   ['TC004','Migration added expected rows','2','expectRowCount','','','','','','','10000','']
 ];
@@ -600,7 +758,6 @@ function csvEscape(v) {
     ? '"' + s.replace(/"/g,'""') + '"'
     : s;
 }
-
 function downloadTemplate(format) {
   const isTsv = format === 'tsv';
   const body = TEMPLATE_ROWS.map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(',')).join('\n');
@@ -608,7 +765,7 @@ function downloadTemplate(format) {
 }
 
 // ============================================================
-// 7. SETTINGS
+// 9. SETTINGS
 // ============================================================
 function saveToken() {
   const t = document.getElementById('token-input').value.trim();
@@ -622,6 +779,278 @@ function clearToken() {
 (function () {
   const e = sessionStorage.getItem('gh_token');
   if (e) { document.getElementById('token-input').value = e; document.getElementById('token-status').innerHTML = '✅ Token loaded.'; }
+})();
+
+// ============================================================
+// 10. DYNAMIC INDEX — Crawl + Manual Fallbacks
+// ============================================================
+const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
+const RAGINA_TIMEOUT_MS = 30000;
+
+const PARSE_PATTERNS = [
+  { type: 'error',         re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
+  { type: 'java-error',    re: /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g },
+  { type: 'java-error',    re: /LOG(?:GER)?\.(?:error|warn|severe)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi },
+  { type: 'python-error',  re: /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
+  { type: 'python-error',  re: /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
+  { type: 'sql-error',     re: /RAISE\s+EXCEPTION\s+'([^']+)'/gi },
+  { type: 'sql-error',     re: /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g },
+  { type: 'config-error',  re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
+];
+
+function detectType(filename) {
+  const ext = (filename.split('.').pop() || '').toLowerCase();
+  if (['java','kt','groovy','scala'].includes(ext)) return 'java-error';
+  if (['py'].includes(ext)) return 'python-error';
+  if (['sql'].includes(ext)) return 'sql-error';
+  if (['yaml','yml','properties','env','json'].includes(ext)) return 'config-error';
+  return 'code';
+}
+
+function parseText(text, sourceName) {
+  const entries = [];
+  const lines = text.split('\n');
+  const defaultType = detectType(sourceName);
+
+  for (const { type, re } of PARSE_PATTERNS) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(text)) !== null) {
+      let message = null;
+      for (let i = 1; i < m.length; i++) if (m[i]) { message = m[i]; break; }
+      if (!message || message.trim().length < 3) continue;
+
+      const lineNum = text.substring(0, m.index).split('\n').length;
+      const start = Math.max(0, lineNum - 3);
+      const end = Math.min(lines.length, lineNum + 2);
+
+      entries.push({
+        type: type || defaultType,
+        text: message.trim(),
+        file: sourceName,
+        line: lineNum,
+        context: lines.slice(start, end).join('\n')
+      });
+    }
+  }
+  return entries;
+}
+
+function appendToIndex(newEntries, sourceLabel) {
+  if (!newEntries.length) { showAddStatus('warn', `No errors found in ${sourceLabel}.`); return 0; }
+  const baseId = documents.length;
+  newEntries.forEach((doc, i) => {
+    documents.push(doc);
+    if (flexIndex) flexIndex.add({ ...doc, id: baseId + i });
+  });
+  showAddStatus('ok', `✅ Added ${newEntries.length} entries from ${sourceLabel}. Total: ${documents.length}.`);
+  return newEntries.length;
+}
+
+function showAddStatus(kind, html) {
+  const el = document.getElementById('add-status');
+  el.style.display = 'block';
+  el.innerHTML = html;
+  el.style.background = kind === 'ok' ? '#DCFCE7' : kind === 'warn' ? '#FEF3C7' : '#FEE2E2';
+  el.style.color = kind === 'ok' ? '#166534' : kind === 'warn' ? '#92400E' : '#991B1B';
+}
+
+function setAddLoading(html) {
+  const el = document.getElementById('add-status');
+  el.style.display = 'block';
+  el.innerHTML = `<span class="spinner"></span>${html}`;
+  el.style.background = '#F1F5F9';
+  el.style.color = '#64748B';
+}
+
+// ============================================================
+// TIER 1 — RAGina Crawl API
+// ============================================================
+async function tryTier1Crawl() {
+  const url = document.getElementById('crawl-url').value.trim();
+  if (!url) return;
+  if (!/^https?:\/\//.test(url)) { showAddStatus('error', '❌ URL must start with http:// or https://'); return; }
+
+  setAddLoading(`Crawling ${url}...`);
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), RAGINA_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(RAGINA_CRAWL_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, maxPages: 20 }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const data = await res.json();
+    const pages = data.pages || data.results || (Array.isArray(data) ? data : []);
+    if (!pages.length) throw new Error('Crawl returned 0 pages');
+
+    const allEntries = [];
+    for (const p of pages) {
+      const text = p.text || p.content || p.markdown || '';
+      const src = p.url || p.title || url;
+      allEntries.push(...parseText(text, src));
+    }
+
+    if (!allEntries.length) throw new Error('No errors found in crawled pages');
+    appendToIndex(allEntries, `${pages.length} crawled pages`);
+  } catch (err) {
+    clearTimeout(timer);
+    showAddStatus('error',
+      `❌ Tier 1 (crawl) failed: ${escapeHtml(err.message)}.<br>
+       <strong>Try Tier 2</strong> (GitHub repo scan) or <strong>Tier 4</strong> (paste text) below.`);
+  }
+}
+
+// ============================================================
+// TIER 2 — GitHub Repo Scan via Octokit
+// ============================================================
+async function tryTier2Repo() {
+  const repoInput = document.getElementById('repo-scan').value.trim();
+  if (!repoInput) return;
+  const parts = repoInput.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
+  if (parts.length < 2) { showAddStatus('error', '❌ Format must be owner/repo'); return; }
+
+  const [owner, repo] = parts;
+  setAddLoading(`Fetching ${owner}/${repo}...`);
+
+  const octokit = getOctokit();
+  if (!octokit) {
+    showAddStatus('error', '❌ Octokit not loaded. Try Tier 3 (folder) or Tier 4 (paste).');
+    return;
+  }
+
+  try {
+    const { data: tree } = await octokit.rest.git.getTree({
+      owner, repo, tree_sha: 'main', recursive: 'true'
+    });
+
+    const files = (tree.tree || []).filter(f => {
+      if (f.type !== 'blob') return false;
+      if (f.size && f.size > 500000) return false;
+      return /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path);
+    }).slice(0, 200);
+
+    if (!files.length) { showAddStatus('warn', 'No indexable files found.'); return; }
+
+    setAddLoading(`Parsing ${files.length} files from ${owner}/${repo}...`);
+    const allEntries = [];
+
+    for (const f of files) {
+      try {
+        const { data } = await octokit.rest.repos.getContent({ owner, repo, path: f.path });
+        const content = atob(data.content.replace(/\n/g, ''));
+        allEntries.push(...parseText(content, f.path));
+      } catch {}
+    }
+
+    if (!allEntries.length) { showAddStatus('warn', 'No errors extracted from repo.'); return; }
+    appendToIndex(allEntries, `${owner}/${repo} (${files.length} files)`);
+  } catch (err) {
+    showAddStatus('error',
+      `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br>
+       <strong>If the repo is private</strong>, add a token in Settings. Or try Tier 3/4 below.`);
+  }
+}
+
+// ============================================================
+// TIER 3 — Local Folder / Files
+// ============================================================
+async function tryTier3Folder() {
+  if (!window.showDirectoryPicker) {
+    showAddStatus('warn', '⚠️ Folder picker not supported in this browser. Use "Or drop files" instead.');
+    return;
+  }
+  try {
+    const dir = await window.showDirectoryPicker();
+    setAddLoading(`Reading folder "${dir.name}"...`);
+    const allEntries = [];
+
+    async function walk(handle, prefix = '') {
+      for await (const entry of handle.values()) {
+        const path = prefix ? `${prefix}/${entry.name}` : entry.name;
+        if (entry.kind === 'directory') {
+          if (['node_modules', '.git', 'dist', 'build', 'target'].includes(entry.name)) continue;
+          await walk(entry, path);
+        } else if (entry.kind === 'file') {
+          if (!/\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(entry.name)) continue;
+          try {
+            const file = await entry.getFile();
+            if (file.size > 500000) continue;
+            const text = await file.text();
+            allEntries.push(...parseText(text, path));
+          } catch {}
+        }
+      }
+    }
+
+    await walk(dir);
+    if (!allEntries.length) { showAddStatus('warn', 'No errors found in folder.'); return; }
+    appendToIndex(allEntries, `folder "${dir.name}"`);
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+    showAddStatus('error', `❌ Folder read failed: ${escapeHtml(err.message)}.`);
+  }
+}
+
+function tryTier3File() {
+  document.getElementById('tier3-file').click();
+}
+
+document.getElementById('tier3-file').addEventListener('change', async e => {
+  const files = Array.from(e.target.files);
+  if (!files.length) return;
+  setAddLoading(`Reading ${files.length} files...`);
+
+  const allEntries = [];
+  for (const file of files) {
+    try {
+      const text = await file.text();
+      allEntries.push(...parseText(text, file.name));
+    } catch {}
+  }
+
+  if (!allEntries.length) { showAddStatus('warn', 'No errors found in dropped files.'); return; }
+  appendToIndex(allEntries, `${files.length} files`);
+  e.target.value = '';
+});
+
+// ============================================================
+// TIER 4 — Paste Text
+// ============================================================
+function tryTier4Paste() {
+  const text = document.getElementById('tier4-text').value;
+  if (!text.trim()) { showAddStatus('warn', 'Nothing to add.'); return; }
+
+  const entries = parseText(text, 'pasted-content');
+  if (!entries.length) {
+    appendToIndex([{
+      type: 'code',
+      text: text.slice(0, 120),
+      file: 'pasted-content',
+      line: 1,
+      context: text.slice(0, 800)
+    }], 'pasted text');
+  } else {
+    appendToIndex(entries, 'pasted text');
+  }
+  document.getElementById('tier4-text').value = '';
+}
+
+// ============================================================
+// CRAWL API REACHABILITY CHECK
+// ============================================================
+(async () => {
+  try {
+    const r = await fetch(RAGINA_CRAWL_API, { method: 'OPTIONS' });
+    console.log(r.ok ? '✅ Crawl API reachable' : `⚠️ Crawl API responded ${r.status}`);
+  } catch {
+    console.warn('⚠️ Crawl API unreachable — Tier 1 will fall back to Tier 2/3/4.');
+  }
 })();
 </script>
 </body>

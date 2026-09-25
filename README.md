@@ -3,7 +3,7 @@
   <img src="https://raw.githubusercontent.com/suryasticsai/erplorer/main/erplorer-logo.png" alt="ERplorer" width="180">
 </p>
 
-<h1 align="center">ERplorer</h1>
+<h1 align="center">Er`plorer</h1>
 
 <p align="center">
   <strong>Error Resolution Explorer</strong><br>

@@ -205,7 +205,6 @@
   details summary::before { content:'▸ '; display:inline-block; transition:transform 0.15s; }
   details[open] summary::before { transform:rotate(90deg); }
 
-  /* History panel */
   .history-panel {
     margin-top:1rem; padding:0.85rem 1rem;
     background:white; border:1px solid var(--border); border-radius:10px;
@@ -227,7 +226,6 @@
     font-size:0.7rem; font-weight:600; color:var(--muted);
   }
 
-  /* Pattern cards */
   .pattern-card {
     display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
     padding:1rem 1.15rem; margin-top:0.75rem; background:white;
@@ -273,6 +271,44 @@
     font-size:0.75rem; color:var(--muted); margin-top:0.25rem;
   }
 
+  .ai-hero {
+    background:linear-gradient(135deg, #F5F3FF 0%, #FEF3C7 100%);
+    border:1px solid var(--border); border-radius:12px;
+    padding:1.5rem 1.75rem; margin-bottom:1.5rem;
+  }
+  .ai-hero h2 { font-size:1.15rem; margin-bottom:0.4rem; }
+  .ai-hero p { font-size:0.9rem; color:var(--slate); }
+  .ai-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem; }
+
+  .preview-table {
+    width:100%; border-collapse:collapse; margin-top:1rem;
+    font-size:0.78rem; background:white; border-radius:8px; overflow:hidden;
+    border:1px solid var(--border);
+  }
+  .preview-table th {
+    background:var(--slate); color:white; padding:0.55rem 0.7rem;
+    text-align:left; font-weight:600; font-size:0.72rem;
+    text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
+  }
+  .preview-table td {
+    padding:0.5rem 0.7rem; border-bottom:1px solid var(--border);
+    font-family:ui-monospace,monospace; font-size:0.75rem;
+    vertical-align:top; max-width:200px; overflow:hidden;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .preview-table tr:last-child td { border-bottom:none; }
+  .preview-table tr:hover td { background:#FFFBEB; }
+  .preview-table td[contenteditable="true"]:focus {
+    outline:2px solid var(--signal); background:#FFFBEB;
+    white-space:normal; max-width:none;
+  }
+
+  .ai-privacy {
+    font-size:0.78rem; color:var(--muted); margin-top:0.85rem;
+    padding:0.6rem 0.85rem; background:rgba(255,255,255,0.7);
+    border-radius:6px; border:1px dashed #FDE68A;
+  }
+
   .footer {
     margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
     font-size:0.8rem; color:var(--muted);
@@ -292,6 +328,7 @@
 
 <div class="tabs">
   <button class="tab active" data-tab="explorer">Error Explorer</button>
+  <button class="tab" data-tab="ai-excel">🤖 AI → Excel</button>
   <button class="tab" data-tab="generator">Test Cases → Code</button>
   <button class="tab" data-tab="patterns">🎯 Patterns</button>
   <button class="tab" data-tab="settings">⚙️ Settings</button>
@@ -322,7 +359,6 @@
     <div id="nl-answer"></div>
   </div>
 
-  <!-- Search History -->
   <div class="history-panel" id="history-panel" style="display:none;">
     <div class="history-header">
       <strong>🕘 Recent searches</strong>
@@ -331,7 +367,6 @@
     <div class="history-list" id="history-list"></div>
   </div>
 
-  <!-- Add Content -->
   <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
     <h3 style="font-size:1rem; margin-bottom:0.75rem;">➕ Add more content to search</h3>
 
@@ -359,6 +394,49 @@
 
     <div id="add-status" class="status" style="margin-top:0.75rem; display:none;"></div>
   </div>
+</div>
+
+<!-- ============ AI → EXCEL ============ -->
+<div class="panel" id="panel-ai-excel">
+  <div class="ai-hero">
+    <h2>🤖 AI → Excel</h2>
+    <p>Paste test scenarios in plain English. AI converts them into the exact columns the <strong>Test Cases → Code</strong> tab expects — ready to download as CSV or XLSX, or send straight to the generator.</p>
+  </div>
+
+  <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Paste your test scenarios</label>
+  <textarea id="ai-input" style="min-height:200px; font-family:system-ui, sans-serif; font-size:0.9rem;" placeholder="Example:
+
+Test the login page:
+1. Go to /login
+2. Enter &quot;admin&quot; in the username field
+3. Enter &quot;secret123&quot; in the password field
+4. Click the submit button
+5. Verify that the dashboard shows &quot;Welcome admin&quot;
+
+Test the users API:
+- GET /api/users should return 200
+- The first user's name should be &quot;alice&quot;
+
+Test the users table migration:
+- Run SELECT COUNT(*) FROM users
+- Expect 1 row back
+- There should be no nulls in the email column"></textarea>
+
+  <div class="ai-actions">
+    <button class="ai" id="btn-ai" onclick="runAITransform()">🤖 Convert with AI</button>
+    <button class="ghost" onclick="runRuleTransform()">📏 Convert with rules (offline)</button>
+    <button class="secondary" onclick="clearAITab()">Clear</button>
+  </div>
+
+  <div class="ai-privacy">
+    <strong>Privacy:</strong> "Convert with AI" sends your pasted text to
+    <code style="background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;">ragina-crawler-ragina.vercel.app/api/ask</code> first.
+    If that fails, it falls back to <code style="background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;">text.pollinations.ai</code>.
+    If both are blocked, use <strong>Convert with rules</strong> — it runs 100% in your browser.
+  </div>
+
+  <div id="ai-status" style="margin-top:1rem;"></div>
+  <div id="ai-preview"></div>
 </div>
 
 <!-- ============ GENERATOR ============ -->
@@ -457,17 +535,18 @@
   </div>
   <div id="token-status" class="status" style="margin-top:1rem;"></div>
 
-  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI Assistant</h3>
+  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI endpoints</h3>
   <p style="color:var(--muted); font-size:0.9rem;">
-    The "Ask AI" tab uses <a href="https://github.com/suryasticsai/Consoleena" target="_blank" style="color:var(--signal)">Consoleena</a>
-    for natural language queries. Runs entirely in your browser.
+    <strong>Primary:</strong> your Vercel deployment at
+    <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">ragina-crawler-ragina.vercel.app/api/ask</code><br>
+    <strong>Fallback:</strong> <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">text.pollinations.ai</code><br>
+    <strong>Offline:</strong> rule-based parser runs entirely in the browser.
   </p>
   <div id="consoleena-status" class="status" style="margin-top:1rem;">⏳ Checking Consoleena...</div>
 
   <h3 style="margin-top:2rem; margin-bottom:0.75rem;">Local storage</h3>
   <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-    ERplorer stores search history and custom patterns in your browser using IndexedDB.
-    Nothing is sent to any server. Clearing your browser data will remove them.
+    ERplorer stores search history and custom patterns in your browser using IndexedDB. Nothing is sent to any server.
   </p>
   <button class="danger" onclick="resetAllLocalData()">🗑️ Reset all local data</button>
 </div>
@@ -483,7 +562,7 @@
 
 <script>
 // ============================================================
-// 1. INDEXEDDB — search history + custom patterns
+// 1. INDEXEDDB
 // ============================================================
 const DB_NAME = 'erplorer';
 const DB_VERSION = 1;
@@ -498,7 +577,6 @@ function openDB() {
       if (!db.objectStoreNames.contains('searches')) {
         const s = db.createObjectStore('searches', { keyPath: 'id', autoIncrement: true });
         s.createIndex('timestamp', 'timestamp');
-        s.createIndex('query', 'query', { unique: false });
       }
       if (!db.objectStoreNames.contains('patterns')) {
         const p = db.createObjectStore('patterns', { keyPath: 'id', autoIncrement: true });
@@ -510,54 +588,44 @@ function openDB() {
   });
   return dbPromise;
 }
-
 async function dbAdd(store, value) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).add(value);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    const r = tx.objectStore(store).add(value);
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
-
 async function dbPut(store, value) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).put(value);
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    const r = tx.objectStore(store).put(value);
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
-
 async function dbGetAll(store) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readonly');
-    const req = tx.objectStore(store).getAll();
-    req.onsuccess = () => resolve(req.result);
-    req.onerror = () => reject(req.error);
+    const r = tx.objectStore(store).getAll();
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
-
 async function dbDelete(store, id) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).delete(id);
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    const r = tx.objectStore(store).delete(id);
+    r.onsuccess = () => res(); r.onerror = () => rej(r.error);
   });
 }
-
 async function dbClear(store) {
   const db = await openDB();
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
-    const req = tx.objectStore(store).clear();
-    req.onsuccess = () => resolve();
-    req.onerror = () => reject(req.error);
+    const r = tx.objectStore(store).clear();
+    r.onsuccess = () => res(); r.onerror = () => rej(r.error);
   });
 }
 
@@ -569,26 +637,20 @@ const HISTORY_LIMIT = 25;
 async function recordSearch(query, mode, resultCount) {
   if (!query || query.length < 2) return;
   try {
-    const searches = await dbGetAll('searches');
-    // Remove duplicate of the same query+mode (we'll re-add it)
-    for (const s of searches) {
+    const all = await dbGetAll('searches');
+    for (const s of all) {
       if (s.query === query && s.mode === mode) await dbDelete('searches', s.id);
     }
-    await dbAdd('searches', {
-      query, mode, resultCount,
-      timestamp: Date.now()
-    });
-    // Trim to HISTORY_LIMIT
-    const all = await dbGetAll('searches');
-    if (all.length > HISTORY_LIMIT) {
-      all.sort((a, b) => a.timestamp - b.timestamp);
-      const toDelete = all.slice(0, all.length - HISTORY_LIMIT);
-      for (const s of toDelete) await dbDelete('searches', s.id);
+    await dbAdd('searches', { query, mode, resultCount, timestamp: Date.now() });
+    const current = await dbGetAll('searches');
+    if (current.length > HISTORY_LIMIT) {
+      current.sort((a, b) => a.timestamp - b.timestamp);
+      for (const s of current.slice(0, current.length - HISTORY_LIMIT)) {
+        await dbDelete('searches', s.id);
+      }
     }
     renderHistory();
-  } catch (err) {
-    console.warn('History save failed:', err);
-  }
+  } catch (err) { console.warn('History save failed:', err); }
 }
 
 async function renderHistory() {
@@ -598,17 +660,13 @@ async function renderHistory() {
     const all = await dbGetAll('searches');
     if (!all.length) { panel.style.display = 'none'; return; }
     all.sort((a, b) => b.timestamp - a.timestamp);
-
     panel.style.display = 'block';
     list.innerHTML = all.map(s => `
       <div class="history-chip" onclick="rerunSearch(${s.id})">
         <span>${escapeHtml(s.query.length > 40 ? s.query.slice(0, 40) + '…' : s.query)}</span>
         ${s.resultCount != null ? `<span class="count">${s.resultCount}</span>` : ''}
-      </div>
-    `).join('');
-  } catch (err) {
-    console.warn('History render failed:', err);
-  }
+      </div>`).join('');
+  } catch (err) { console.warn('History render failed:', err); }
 }
 
 async function rerunSearch(id) {
@@ -624,11 +682,7 @@ async function rerunSearch(id) {
     runSearch();
   }
 }
-
-async function clearHistory() {
-  await dbClear('searches');
-  renderHistory();
-}
+async function clearHistory() { await dbClear('searches'); renderHistory(); }
 
 // ============================================================
 // 3. CUSTOM PATTERNS
@@ -636,12 +690,8 @@ async function clearHistory() {
 let customPatterns = [];
 
 async function loadCustomPatterns() {
-  try {
-    customPatterns = await dbGetAll('patterns');
-    renderPatterns();
-  } catch (err) {
-    console.warn('Pattern load failed:', err);
-  }
+  try { customPatterns = await dbGetAll('patterns'); renderPatterns(); }
+  catch (err) { console.warn('Pattern load failed:', err); }
 }
 
 function renderPatterns() {
@@ -653,26 +703,21 @@ function renderPatterns() {
     list.innerHTML = '<p style="color:var(--muted); padding:1rem 0; font-size:0.9rem;">No custom patterns yet. Add one above.</p>';
     return;
   }
-
   list.innerHTML = customPatterns.map(p => `
     <div class="pattern-card ${p.enabled === false ? 'disabled' : ''}" data-id="${p.id}">
       <div class="pattern-info">
         <div class="name">${escapeHtml(p.name)}</div>
         <div class="regex">${escapeHtml(p.pattern)}</div>
-        <div class="meta">
-          Type: <strong>${escapeHtml(p.type)}</strong>
-          ${p.exts ? ` · Files: <strong>${escapeHtml(p.exts)}</strong>` : ' · All files'}
-        </div>
+        <div class="meta">Type: <strong>${escapeHtml(p.type)}</strong>${p.exts ? ` · Files: <strong>${escapeHtml(p.exts)}</strong>` : ' · All files'}</div>
       </div>
       <div class="pattern-actions">
-        <label class="toggle-switch" title="Enable / disable">
+        <label class="toggle-switch">
           <input type="checkbox" ${p.enabled === false ? '' : 'checked'} onchange="togglePattern(${p.id}, this.checked)">
           <span class="slider"></span>
         </label>
         <button class="danger" onclick="deletePattern(${p.id})">Delete</button>
       </div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 async function addPattern() {
@@ -681,88 +726,45 @@ async function addPattern() {
   const type = document.getElementById('pat-type').value.trim() || 'custom-error';
   const exts = document.getElementById('pat-exts').value.trim();
 
-  if (!name || !pattern) {
-    alert('Name and regex pattern are required.');
-    return;
-  }
-
-  // Validate regex
+  if (!name || !pattern) { alert('Name and regex pattern are required.'); return; }
   try { new RegExp(pattern, 'g'); }
-  catch (err) {
-    alert('Invalid regex: ' + err.message);
-    return;
-  }
+  catch (err) { alert('Invalid regex: ' + err.message); return; }
 
-  await dbAdd('patterns', {
-    name, pattern, type, exts,
-    enabled: true,
-    createdAt: Date.now()
-  });
-
+  await dbAdd('patterns', { name, pattern, type, exts, enabled: true, createdAt: Date.now() });
   document.getElementById('pat-name').value = '';
   document.getElementById('pat-regex').value = '';
   document.getElementById('pat-exts').value = '';
   document.getElementById('pattern-test').style.display = 'none';
-
   await loadCustomPatterns();
 }
-
 async function togglePattern(id, enabled) {
-  const p = customPatterns.find(x => x.id === id);
-  if (!p) return;
-  p.enabled = enabled;
-  await dbPut('patterns', p);
-  renderPatterns();
+  const p = customPatterns.find(x => x.id === id); if (!p) return;
+  p.enabled = enabled; await dbPut('patterns', p); renderPatterns();
 }
-
 async function deletePattern(id) {
   if (!confirm('Delete this pattern?')) return;
-  await dbDelete('patterns', id);
-  await loadCustomPatterns();
+  await dbDelete('patterns', id); await loadCustomPatterns();
 }
-
 function testPattern() {
   const pattern = document.getElementById('pat-regex').value.trim();
   const output = document.getElementById('pattern-test');
   output.style.display = 'block';
+  if (!pattern) { output.innerHTML = '<div class="error-list">Enter a regex pattern first.</div>'; return; }
 
-  if (!pattern) {
-    output.innerHTML = '<div class="error-list">Enter a regex pattern first.</div>';
-    return;
-  }
-
-  const sample = `This is a sample.
-MY_APP_ERROR_42: Something broke
-Another line without the pattern.
-MY_APP_ERROR_99: Second issue here`;
-
+  const sample = `This is a sample.\nMY_APP_ERROR_42: Something broke\nAnother line without the pattern.\nMY_APP_ERROR_99: Second issue here`;
   try {
     const re = new RegExp(pattern, 'g');
     const matches = [...sample.matchAll(re)];
-    if (!matches.length) {
-      output.innerHTML = `<div class="status">No matches in the built-in sample. Test it against real content after saving.</div>`;
-      return;
-    }
-    output.innerHTML = `
-      <div class="status">
-        ✅ Found <strong>${matches.length}</strong> match(es) in the sample text:
-        <ul style="margin-left:1.25rem; margin-top:0.5rem;">
-          ${matches.map(m => `<li><code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">${escapeHtml(m[1] || m[0])}</code></li>`).join('')}
-        </ul>
-      </div>
-    `;
+    if (!matches.length) { output.innerHTML = `<div class="status">No matches in the built-in sample.</div>`; return; }
+    output.innerHTML = `<div class="status">✅ Found <strong>${matches.length}</strong> match(es):<ul style="margin-left:1.25rem; margin-top:0.5rem;">${matches.map(m => `<li><code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">${escapeHtml(m[1] || m[0])}</code></li>`).join('')}</ul></div>`;
   } catch (err) {
     output.innerHTML = `<div class="error-list">Invalid regex: ${escapeHtml(err.message)}</div>`;
   }
 }
-
 async function resetAllLocalData() {
-  if (!confirm('This will delete all search history and custom patterns. Continue?')) return;
-  await dbClear('searches');
-  await dbClear('patterns');
-  customPatterns = [];
-  renderPatterns();
-  renderHistory();
+  if (!confirm('Delete all search history and custom patterns?')) return;
+  await dbClear('searches'); await dbClear('patterns');
+  customPatterns = []; renderPatterns(); renderHistory();
   alert('Local data cleared.');
 }
 
@@ -801,7 +803,6 @@ async function loadIndex() {
     const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
     const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
     status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
-
     window.erplorerIndex = documents;
     tryConsoleenaInit();
   } catch (err) {
@@ -824,10 +825,7 @@ const resultsEl = document.getElementById('results');
 let debounce;
 searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(runSearch, 180); });
 searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') {
-    clearTimeout(debounce);
-    runSearch(true); // save this one to history
-  }
+  if (e.key === 'Enter') { clearTimeout(debounce); runSearch(true); }
 });
 
 function runSearch(saveToHistory = false) {
@@ -842,17 +840,13 @@ function runSearch(saveToHistory = false) {
     if (saveToHistory) recordSearch(q, 'exact', 0);
     return;
   }
-
   hits.forEach(({ id }) => {
-    const doc = documents[id];
-    if (!doc) return;
+    const doc = documents[id]; if (!doc) return;
     const el = document.createElement('div');
     el.className = `result ${doc.type || 'code'}`;
-
     let snippet = doc.context || doc.text || '';
     const re = new RegExp(`(${escapeRegex(q)})`, 'gi');
     snippet = escapeHtml(snippet).replace(re, '<span class="highlight">$1</span>');
-
     el.innerHTML = `
       <div class="meta">
         <strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}
@@ -862,7 +856,6 @@ function runSearch(saveToHistory = false) {
       <div class="snippet">${snippet}</div>`;
     resultsEl.appendChild(el);
   });
-
   if (saveToHistory) recordSearch(q, 'exact', hits.length);
 }
 function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
@@ -888,11 +881,9 @@ let consoleenaReady = false;
 function tryConsoleenaInit() {
   const aiBtn = document.getElementById('ai-mode-btn');
   const csStatus = document.getElementById('consoleena-status');
-
   if (window.__consoleenaFailed || typeof window.Consoleena === 'undefined') {
     csStatus.innerHTML = '⚠️ Consoleena not available. Exact search still works.';
     aiBtn.disabled = true;
-    aiBtn.title = 'Consoleena failed to load';
     return;
   }
   try {
@@ -914,7 +905,6 @@ async function askNatural() {
   const answerEl = document.getElementById('nl-answer');
   const q = input.value.trim();
   if (!q) return;
-
   answerEl.innerHTML = '<div class="ai-answer loading">Thinking…</div>';
   if (!consoleenaReady) {
     answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong>.</div>';
@@ -947,7 +937,387 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// 10. FILE → PLAYWRIGHT / PYTEST
+// 10. AI → EXCEL
+// ============================================================
+// Primary: your own Vercel deployment
+const AI_PRIMARY = 'https://ragina-crawler-ragina.vercel.app/api/ask';
+// Secondary: Pollinations public fallback
+const AI_FALLBACK = 'https://text.pollinations.ai/openai';
+const AI_TIMEOUT_MS = 45000;
+
+const AI_SYSTEM_PROMPT = `You are a QA test case parser. You convert free-form test scenario text into structured JSON test steps.
+
+You output ONLY valid JSON. No markdown, no explanation, no code fences.
+
+The output must be a JSON object with a single key "steps" containing an array of step objects, each with exactly these fields:
+
+{
+  "id": "TC001",
+  "scenario": "short scenario name",
+  "step": 1,
+  "action": "goto|fill|click|expectText|expectVisible|expectUrl|wait|apiRequest|expectStatus|expectJson|expectHeader|runSql|expectRowCount|expectNoNulls|expectUnique|expectValue",
+  "method": "",
+  "url": "",
+  "headers": "",
+  "body": "",
+  "selector": "",
+  "value": "",
+  "expected": "",
+  "jsonpath": ""
+}
+
+Rules:
+1. Detect each test case from the text. Assign sequential IDs TC001, TC002, etc.
+2. Every logical action becomes one row.
+3. Convert natural language to the closest action:
+   - "go to X" / "navigate to X" / "open X" / "visit X" → goto, url=X
+   - "enter X in Y" / "type X into Y" / "fill X in Y" → fill, value=X, selector=Y
+   - "click X" / "press X" / "tap X" → click, selector=X
+   - "verify X" / "should see X" / "expect X" / "check X" → expectText, expected=X
+   - "wait N seconds" → wait, value=(N*1000 as string)
+   - HTTP methods like GET/POST/PUT/DELETE with a URL → apiRequest with method and url
+   - "should return 200" / "expect status 200" → expectStatus, expected=200
+   - "SQL:" / "run SQL" / "SELECT ..." → runSql, value=the SQL
+   - "no nulls in X" → expectNoNulls, selector=X
+   - "N rows" → expectRowCount, expected=N
+4. For selectors, use the most likely CSS selector. If unsure, use "#field-name" or ".element-class" based on context.
+5. Leave fields as empty strings ("") when not applicable.
+6. Every field must be present in every row.`;
+
+async function runAITransform() {
+  const text = document.getElementById('ai-input').value.trim();
+  const statusEl = document.getElementById('ai-status');
+  const previewEl = document.getElementById('ai-preview');
+  if (!text) { statusEl.innerHTML = '<div class="error-list">Paste some test scenarios first.</div>'; return; }
+
+  statusEl.innerHTML = '<div class="status"><span class="spinner"></span>Asking AI to convert your scenarios…</div>';
+  previewEl.innerHTML = '';
+
+  const userPrompt = `Convert these test scenarios into JSON:\n\n${text}`;
+
+  const attempts = [
+    { label: 'Vercel /api/ask', call: () => callVercelAsk(userPrompt) },
+    { label: 'Pollinations fallback', call: () => callPollinations(userPrompt) }
+  ];
+
+  let lastError = null;
+
+  for (const attempt of attempts) {
+    try {
+      statusEl.innerHTML = `<div class="status"><span class="spinner"></span>Trying ${attempt.label}…</div>`;
+      const rawText = await attempt.call();
+      const rows = normalizeAIResponse(rawText);
+      if (!rows.length) throw new Error('AI returned no usable rows');
+      renderAIPreview(rows, attempt.label);
+      return;
+    } catch (err) {
+      lastError = err;
+      console.warn(`${attempt.label} failed:`, err.message);
+    }
+  }
+
+  statusEl.innerHTML = `<div class="error-list">
+    ❌ Both AI endpoints failed: ${escapeHtml(lastError?.message || 'unknown error')}<br><br>
+    <strong>Try "Convert with rules"</strong> — it runs entirely in your browser with no network call.
+  </div>`;
+}
+
+async function callVercelAsk(userPrompt) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    const res = await fetch(AI_PRIMARY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: userPrompt,
+        context: AI_SYSTEM_PROMPT
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`Vercel HTTP ${res.status}`);
+
+    const data = await res.json();
+    const content =
+      data.answer ||
+      data.response ||
+      data.content ||
+      data.message?.content ||
+      data.choices?.[0]?.message?.content ||
+      (typeof data === 'string' ? data : null);
+
+    if (!content) throw new Error('Vercel returned no answer field');
+    return typeof content === 'string' ? content : JSON.stringify(content);
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+async function callPollinations(userPrompt) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    const res = await fetch(AI_FALLBACK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'openai',
+        messages: [
+          { role: 'system', content: AI_SYSTEM_PROMPT },
+          { role: 'user', content: userPrompt }
+        ],
+        response_format: { type: 'json_object' }
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
+    const data = await res.json();
+    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error('Pollinations returned empty content');
+    return content;
+  } catch (err) {
+    clearTimeout(timer);
+    throw err;
+  }
+}
+
+function normalizeAIResponse(rawText) {
+  let content = String(rawText).trim();
+  content = content.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+
+  let parsed;
+  try {
+    parsed = JSON.parse(content);
+  } catch {
+    const arrMatch = content.match(/\[[\s\S]*\]/);
+    const objMatch = content.match(/\{[\s\S]*\}/);
+    if (arrMatch) { try { parsed = JSON.parse(arrMatch[0]); } catch {} }
+    if (!parsed && objMatch) { try { parsed = JSON.parse(objMatch[0]); } catch {} }
+    if (!parsed) throw new Error('AI returned invalid JSON');
+  }
+
+  let steps;
+  if (Array.isArray(parsed)) steps = parsed;
+  else if (parsed.steps) steps = parsed.steps;
+  else if (parsed.testCases) steps = parsed.testCases;
+  else if (parsed.data) steps = parsed.data;
+  else if (parsed.result) steps = parsed.result;
+  else if (parsed.answer && typeof parsed.answer === 'object') steps = parsed.answer.steps || parsed.answer;
+  else steps = Object.values(parsed).find(v => Array.isArray(v));
+
+  if (!Array.isArray(steps)) throw new Error('AI response has no steps array');
+
+  return steps.map((s, i) => ({
+    id: String(s.id || `TC${String(i + 1).padStart(3, '0')}`),
+    scenario: String(s.scenario || s.name || 'Test scenario'),
+    step: String(s.step ?? i + 1),
+    action: String(s.action || ''),
+    method: String(s.method || ''),
+    url: String(s.url || ''),
+    headers: typeof s.headers === 'object' ? JSON.stringify(s.headers) : String(s.headers || ''),
+    body: typeof s.body === 'object' ? JSON.stringify(s.body) : String(s.body || ''),
+    selector: String(s.selector || ''),
+    value: String(s.value || ''),
+    expected: String(s.expected || ''),
+    jsonpath: String(s.jsonpath || s.jsonPath || '')
+  }));
+}
+
+function runRuleTransform() {
+  const text = document.getElementById('ai-input').value.trim();
+  const statusEl = document.getElementById('ai-status');
+  const previewEl = document.getElementById('ai-preview');
+  if (!text) { statusEl.innerHTML = '<div class="error-list">Paste some test scenarios first.</div>'; return; }
+
+  statusEl.innerHTML = '<div class="status"><span class="spinner"></span>Parsing with rules…</div>';
+  previewEl.innerHTML = '';
+
+  try {
+    const rows = ruleBasedParse(text);
+    if (!rows.length) {
+      statusEl.innerHTML = '<div class="error-list">📏 Rules couldn\'t find any steps. Try phrasing steps as numbered lists or bullet points with action verbs (go to, enter, click, verify).</div>';
+      return;
+    }
+    renderAIPreview(rows, 'Rules');
+  } catch (err) {
+    statusEl.innerHTML = `<div class="error-list">❌ Rule parsing failed: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function ruleBasedParse(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+  const rows = [];
+  let currentId = 'TC001';
+  let currentScenario = 'Test scenario';
+  let stepNum = 0;
+  let tcCounter = 0;
+
+  for (const raw of lines) {
+    const cleaned = raw
+      .replace(/^[-*•●▪]\s+/, '')
+      .replace(/^\d+[.):\]]\s*/, '')
+      .replace(/^step\s*\d+[:.)]?\s*/i, '')
+      .trim();
+    if (!cleaned) continue;
+
+    const tcMatch = cleaned.match(/TC\d+/i);
+    const headerMatch = cleaned.match(/^(test|scenario|verify)\s+(?:the\s+)?(.+?)(?:\s*[:.]|$)/i);
+
+    if (tcMatch && cleaned.length < 80 && !/^\s*(go|enter|click|verify|wait)/i.test(cleaned)) {
+      tcCounter++;
+      currentId = tcMatch[0].toUpperCase();
+      currentScenario = cleaned.replace(tcMatch[0], '').replace(/[:\-]/g, '').trim() || currentScenario;
+      stepNum = 0;
+      continue;
+    }
+    if (headerMatch && cleaned.length < 80 && !/^\s*(go|enter|click|verify|wait)\s/i.test(cleaned)) {
+      tcCounter++;
+      currentId = `TC${String(tcCounter).padStart(3, '0')}`;
+      currentScenario = headerMatch[2].trim();
+      stepNum = 0;
+      continue;
+    }
+
+    let action = '', url = '', selector = '', value = '', expected = '', method = '', headers = '', body = '', jsonpath = '';
+    const quoted = cleaned.match(/["']([^"']+)["']/);
+    const sel = cleaned.match(/[#.][\w-]+|\[[\w-]+=[^\]]+\]/);
+
+    if (/^(go to|navigate to|navigate|open|visit)\s/i.test(cleaned)) {
+      action = 'goto';
+      url = cleaned.replace(/^(go to|navigate to|navigate|open|visit)\s+/i, '').trim();
+      const urlMatch = url.match(/https?:\/\/\S+|\/\S+/);
+      if (urlMatch) url = urlMatch[0];
+    } else if (/^(enter|type|input|fill)\s/i.test(cleaned)) {
+      action = 'fill';
+      if (quoted) value = quoted[1];
+      if (sel) selector = sel[0];
+      else {
+        const fieldMatch = cleaned.match(/(?:in|into)\s+the\s+([\w-]+)/i);
+        if (fieldMatch) selector = `#${fieldMatch[1].toLowerCase()}`;
+      }
+    } else if (/^(click|press|tap)\s/i.test(cleaned)) {
+      action = 'click';
+      if (sel) selector = sel[0];
+      else if (quoted) selector = `text=${quoted[1]}`;
+    } else if (/^(verify|check|expect|should see|should show|assert|confirm)\s/i.test(cleaned)) {
+      action = 'expectText';
+      if (quoted) expected = quoted[1];
+      else expected = cleaned.replace(/^(verify|check|expect|should see|should show|assert|confirm)\s+(that\s+)?/i, '').trim();
+      if (sel) selector = sel[0];
+    } else if (/^wait\s/i.test(cleaned)) {
+      action = 'wait';
+      const num = cleaned.match(/\d+/);
+      value = num ? String(parseInt(num[0], 10) * 1000) : '1000';
+    } else if (/^(get|post|put|delete|patch)\s+/i.test(cleaned)) {
+      action = 'apiRequest';
+      const m = cleaned.match(/^(GET|POST|PUT|DELETE|PATCH)\s+(\S+)/i);
+      if (m) { method = m[1].toUpperCase(); url = m[2]; }
+    } else if (/should return\s+(\d+)/i.test(cleaned)) {
+      action = 'expectStatus';
+      expected = cleaned.match(/should return\s+(\d+)/i)[1];
+    } else if (/^sql[:\s]|^run sql|^select\s/i.test(cleaned)) {
+      action = 'runSql';
+      value = cleaned.replace(/^(sql[:\s]+|run sql\s+)/i, '').trim();
+    } else if (/no nulls in\s+([\w.]+)/i.test(cleaned)) {
+      action = 'expectNoNulls';
+      selector = cleaned.match(/no nulls in\s+([\w.]+)/i)[1];
+    } else if (/(\d+)\s+rows?/i.test(cleaned)) {
+      action = 'expectRowCount';
+      expected = cleaned.match(/(\d+)\s+rows?/i)[1];
+    }
+
+    if (action) {
+      stepNum++;
+      rows.push({
+        id: currentId, scenario: currentScenario, step: String(stepNum),
+        action, method, url, headers, body, selector, value, expected, jsonpath
+      });
+    }
+  }
+  return rows;
+}
+
+let currentAIPreviewRows = [];
+
+function renderAIPreview(rows, sourceLabel) {
+  currentAIPreviewRows = rows;
+  const statusEl = document.getElementById('ai-status');
+  const previewEl = document.getElementById('ai-preview');
+
+  const testCaseCount = new Set(rows.map(r => r.id)).size;
+  statusEl.innerHTML = `<div class="status">✅ <strong>${sourceLabel}</strong> produced <strong>${rows.length}</strong> steps across <strong>${testCaseCount}</strong> test case(s).<br><small>Cells are editable — click any cell to fix values before downloading.</small></div>`;
+
+  const cols = ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'];
+  previewEl.innerHTML = `
+    <div style="overflow-x:auto; margin-top:1rem;">
+      <table class="preview-table" id="ai-table">
+        <thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${rows.map((r, i) => `<tr data-row="${i}">${cols.map(c => `<td contenteditable="true" data-col="${c}">${escapeHtml(String(r[c] ?? ''))}</td>`).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;">
+      <button class="ghost" onclick="downloadAIPreview('csv')">⬇️ Download CSV</button>
+      <button class="ghost" onclick="downloadAIPreview('xlsx')">⬇️ Download XLSX</button>
+      <button class="ai" onclick="sendAIPreviewToGenerator()">→ Send to Test Cases tab</button>
+    </div>
+  `;
+
+  previewEl.querySelectorAll('td[contenteditable]').forEach(td => {
+    td.addEventListener('blur', () => {
+      const rowIdx = parseInt(td.closest('tr').dataset.row, 10);
+      const col = td.dataset.col;
+      currentAIPreviewRows[rowIdx][col] = td.textContent.trim();
+    });
+  });
+}
+
+function downloadAIPreview(format) {
+  if (!currentAIPreviewRows.length) return;
+  const cols = ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'];
+
+  if (format === 'csv') {
+    const body = [
+      cols.join(','),
+      ...currentAIPreviewRows.map(r => cols.map(c => csvEscape(r[c] ?? '')).join(','))
+    ].join('\n');
+    downloadFile('ai-test-cases.csv', body, 'text/csv');
+    return;
+  }
+
+  if (format === 'xlsx') {
+    if (typeof XLSX === 'undefined') { alert('XLSX library not loaded.'); return; }
+    const aoa = [cols, ...currentAIPreviewRows.map(r => cols.map(c => String(r[c] ?? '')))];
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'TestCases');
+    XLSX.writeFile(wb, 'ai-test-cases.xlsx');
+  }
+}
+
+function sendAIPreviewToGenerator() {
+  if (!currentAIPreviewRows.length) { alert('Nothing to send.'); return; }
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('.tab[data-tab="generator"]').classList.add('active');
+  document.getElementById('panel-generator').classList.add('active');
+  renderGenerated(currentAIPreviewRows, 'AI-generated');
+  document.getElementById('gen-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function clearAITab() {
+  document.getElementById('ai-input').value = '';
+  document.getElementById('ai-status').innerHTML = '';
+  document.getElementById('ai-preview').innerHTML = '';
+  currentAIPreviewRows = [];
+}
+
+// ============================================================
+// 11. FILE → PLAYWRIGHT / PYTEST
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
@@ -1096,7 +1466,6 @@ function jsonPathToJs(path) {
   if (!path) return '';
   return path.replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]');
 }
-
 function buildPytest(tc, steps, sourceFile) {
   const esc = s => String(s).replace(/\\/g,'\\\\').replace(/"""/g,'\\"\\"\\"');
   const setup = []; const tests = [];
@@ -1158,7 +1527,7 @@ function downloadFile(name, content, mime = 'text/plain') {
 }
 
 // ============================================================
-// 11. TEMPLATE DOWNLOAD
+// 12. TEMPLATE DOWNLOAD
 // ============================================================
 const TEMPLATE_ROWS = [
   ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
@@ -1191,7 +1560,7 @@ function downloadTemplate(format) {
 }
 
 // ============================================================
-// 12. SETTINGS
+// 13. SETTINGS
 // ============================================================
 function saveToken() {
   const t = document.getElementById('token-input').value.trim();
@@ -1208,7 +1577,7 @@ function clearToken() {
 })();
 
 // ============================================================
-// 13. DYNAMIC INDEX — Crawl + Manual Fallbacks
+// 14. DYNAMIC INDEX
 // ============================================================
 const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
 const RAGINA_TIMEOUT_MS = 30000;
@@ -1224,7 +1593,6 @@ const BUILTIN_PATTERNS = [
   { type: 'config-error',  re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
 ];
 
-// Merge built-in + enabled custom patterns at runtime
 function getActivePatterns() {
   const merged = [...BUILTIN_PATTERNS];
   for (const p of customPatterns) {
@@ -1235,9 +1603,7 @@ function getActivePatterns() {
         re: new RegExp(p.pattern, 'g'),
         exts: p.exts ? p.exts.split(',').map(e => e.trim()).filter(Boolean) : null
       });
-    } catch (err) {
-      console.warn(`Pattern "${p.name}" has invalid regex:`, err.message);
-    }
+    } catch (err) { console.warn(`Pattern "${p.name}" invalid:`, err.message); }
   }
   return merged;
 }
@@ -1265,11 +1631,9 @@ function parseText(text, sourceName) {
       let message = null;
       for (let i = 1; i < m.length; i++) if (m[i]) { message = m[i]; break; }
       if (!message || message.trim().length < 3) continue;
-
       const lineNum = text.substring(0, m.index).split('\n').length;
       const start = Math.max(0, lineNum - 3);
       const end = Math.min(lines.length, lineNum + 2);
-
       entries.push({
         type: type || defaultType,
         text: message.trim(),
@@ -1300,7 +1664,6 @@ function showAddStatus(kind, html) {
   el.style.background = kind === 'ok' ? '#DCFCE7' : kind === 'warn' ? '#FEF3C7' : '#FEE2E2';
   el.style.color = kind === 'ok' ? '#166534' : kind === 'warn' ? '#92400E' : '#991B1B';
 }
-
 function setAddLoading(html) {
   const el = document.getElementById('add-status');
   el.style.display = 'block';
@@ -1309,7 +1672,6 @@ function setAddLoading(html) {
   el.style.color = '#64748B';
 }
 
-// TIER 1 — RAGina Crawl API
 async function tryTier1Crawl() {
   const url = document.getElementById('crawl-url').value.trim();
   if (!url) return;
@@ -1328,7 +1690,6 @@ async function tryTier1Crawl() {
     });
     clearTimeout(timer);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
     const data = await res.json();
     const pages = data.pages || data.results || (Array.isArray(data) ? data : []);
     if (!pages.length) throw new Error('Crawl returned 0 pages');
@@ -1339,49 +1700,33 @@ async function tryTier1Crawl() {
       const src = p.url || p.title || url;
       allEntries.push(...parseText(text, src));
     }
-
     if (!allEntries.length) throw new Error('No errors found in crawled pages');
     appendToIndex(allEntries, `${pages.length} crawled pages`);
   } catch (err) {
     clearTimeout(timer);
-    showAddStatus('error',
-      `❌ Tier 1 (crawl) failed: ${escapeHtml(err.message)}.<br>
-       <strong>Try Tier 2</strong> (GitHub repo scan) or <strong>Tier 4</strong> (paste text) below.`);
+    showAddStatus('error', `❌ Tier 1 (crawl) failed: ${escapeHtml(err.message)}.<br><strong>Try Tier 2</strong> or <strong>Tier 4</strong> below.`);
   }
 }
 
-// TIER 2 — GitHub Repo Scan
 async function tryTier2Repo() {
   const repoInput = document.getElementById('repo-scan').value.trim();
   if (!repoInput) return;
   const parts = repoInput.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
   if (parts.length < 2) { showAddStatus('error', '❌ Format must be owner/repo'); return; }
-
   const [owner, repo] = parts;
   setAddLoading(`Fetching ${owner}/${repo}...`);
-
   const octokit = getOctokit();
-  if (!octokit) {
-    showAddStatus('error', '❌ Octokit not loaded. Try Tier 3 (folder) or Tier 4 (paste).');
-    return;
-  }
-
+  if (!octokit) { showAddStatus('error', '❌ Octokit not loaded. Try Tier 3 or Tier 4.'); return; }
   try {
-    const { data: tree } = await octokit.rest.git.getTree({
-      owner, repo, tree_sha: 'main', recursive: 'true'
-    });
-
+    const { data: tree } = await octokit.rest.git.getTree({ owner, repo, tree_sha: 'main', recursive: 'true' });
     const files = (tree.tree || []).filter(f => {
       if (f.type !== 'blob') return false;
       if (f.size && f.size > 500000) return false;
       return /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path);
     }).slice(0, 200);
-
     if (!files.length) { showAddStatus('warn', 'No indexable files found.'); return; }
-
     setAddLoading(`Parsing ${files.length} files from ${owner}/${repo}...`);
     const allEntries = [];
-
     for (const f of files) {
       try {
         const { data } = await octokit.rest.repos.getContent({ owner, repo, path: f.path });
@@ -1389,27 +1734,19 @@ async function tryTier2Repo() {
         allEntries.push(...parseText(content, f.path));
       } catch {}
     }
-
     if (!allEntries.length) { showAddStatus('warn', 'No errors extracted from repo.'); return; }
     appendToIndex(allEntries, `${owner}/${repo} (${files.length} files)`);
   } catch (err) {
-    showAddStatus('error',
-      `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br>
-       <strong>If the repo is private</strong>, add a token in Settings. Or try Tier 3/4.`);
+    showAddStatus('error', `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br><strong>If the repo is private</strong>, add a token in Settings.`);
   }
 }
 
-// TIER 3 — Local Folder / Files
 async function tryTier3Folder() {
-  if (!window.showDirectoryPicker) {
-    showAddStatus('warn', '⚠️ Folder picker not supported. Use "Or drop files" instead.');
-    return;
-  }
+  if (!window.showDirectoryPicker) { showAddStatus('warn', '⚠️ Folder picker not supported. Use "Or drop files".'); return; }
   try {
     const dir = await window.showDirectoryPicker();
     setAddLoading(`Reading folder "${dir.name}"...`);
     const allEntries = [];
-
     async function walk(handle, prefix = '') {
       for await (const entry of handle.values()) {
         const path = prefix ? `${prefix}/${entry.name}` : entry.name;
@@ -1427,7 +1764,6 @@ async function tryTier3Folder() {
         }
       }
     }
-
     await walk(dir);
     if (!allEntries.length) { showAddStatus('warn', 'No errors found in folder.'); return; }
     appendToIndex(allEntries, `folder "${dir.name}"`);
@@ -1437,15 +1773,12 @@ async function tryTier3Folder() {
   }
 }
 
-function tryTier3File() {
-  document.getElementById('tier3-file').click();
-}
+function tryTier3File() { document.getElementById('tier3-file').click(); }
 
 document.getElementById('tier3-file').addEventListener('change', async e => {
   const files = Array.from(e.target.files);
   if (!files.length) return;
   setAddLoading(`Reading ${files.length} files...`);
-
   const allEntries = [];
   for (const file of files) {
     try {
@@ -1453,26 +1786,17 @@ document.getElementById('tier3-file').addEventListener('change', async e => {
       allEntries.push(...parseText(text, file.name));
     } catch {}
   }
-
   if (!allEntries.length) { showAddStatus('warn', 'No errors found in dropped files.'); return; }
   appendToIndex(allEntries, `${files.length} files`);
   e.target.value = '';
 });
 
-// TIER 4 — Paste Text
 function tryTier4Paste() {
   const text = document.getElementById('tier4-text').value;
   if (!text.trim()) { showAddStatus('warn', 'Nothing to add.'); return; }
-
   const entries = parseText(text, 'pasted-content');
   if (!entries.length) {
-    appendToIndex([{
-      type: 'code',
-      text: text.slice(0, 120),
-      file: 'pasted-content',
-      line: 1,
-      context: text.slice(0, 800)
-    }], 'pasted text');
+    appendToIndex([{ type: 'code', text: text.slice(0, 120), file: 'pasted-content', line: 1, context: text.slice(0, 800) }], 'pasted text');
   } else {
     appendToIndex(entries, 'pasted text');
   }
@@ -1480,14 +1804,13 @@ function tryTier4Paste() {
 }
 
 // ============================================================
-// 14. BOOT
+// 15. BOOT
 // ============================================================
 (async function boot() {
   await loadCustomPatterns();
   await renderHistory();
 })();
 
-// CRAWL API REACHABILITY CHECK
 (async () => {
   try {
     const r = await fetch(RAGINA_CRAWL_API, { method: 'OPTIONS' });

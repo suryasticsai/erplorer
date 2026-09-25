@@ -47,7 +47,6 @@
     color:var(--muted); transition:0.15s;
   }
   .mode-btn.active { background:white; color:var(--signal); box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-  .mode-btn:disabled { opacity:0.4; cursor:not-allowed; }
 
   input[type=text] {
     width:100%; padding:1rem 1.15rem; font-size:1.05rem; font-family:inherit;
@@ -340,7 +339,7 @@
 
   <div class="mode-toggle" style="margin-top:1rem;">
     <button class="mode-btn active" data-mode="exact" onclick="setMode('exact')">🔍 Exact search</button>
-    <button class="mode-btn" data-mode="ai" id="ai-mode-btn" onclick="setMode('ai')" disabled>💬 Ask AI</button>
+    <button class="mode-btn" data-mode="ai" onclick="setMode('ai')">💬 Ask AI</button>
   </div>
 
   <div id="mode-exact">
@@ -542,7 +541,7 @@ Test the users table migration:
     <strong>Fallback:</strong> <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">text.pollinations.ai</code><br>
     <strong>Offline:</strong> rule-based parser runs entirely in the browser.
   </p>
-  <div id="consoleena-status" class="status" style="margin-top:1rem;">⏳ Checking Consoleena...</div>
+  <div id="api-status" class="status" style="margin-top:1rem;">⏳ Checking AI endpoint...</div>
 
   <h3 style="margin-top:2rem; margin-bottom:0.75rem;">Local storage</h3>
   <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
@@ -558,7 +557,6 @@ Test the users table migration:
 
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/suryasticsai/Consoleena@main/consoleena.min.js" onerror="window.__consoleenaFailed=true"></script>
 
 <script>
 // ============================================================
@@ -803,8 +801,6 @@ async function loadIndex() {
     const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
     const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
     status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
-    window.erplorerIndex = documents;
-    tryConsoleenaInit();
   } catch (err) {
     status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator and Add Content still work.<br><small style="color:#94A3B8">${err.message}</small>`;
     documents = [];
@@ -812,7 +808,6 @@ async function loadIndex() {
       document: { id: 'id', index: ['text'], store: true },
       tokenize: 'forward', resolution: 9, cache: true
     });
-    tryConsoleenaInit();
   }
 }
 loadIndex();
@@ -874,52 +869,122 @@ function setMode(mode) {
 }
 
 // ============================================================
-// 8. CONSOLEENA
+// 8. ASK AI (natural language over the local index)
 // ============================================================
-let consoleenaReady = false;
-
-function tryConsoleenaInit() {
-  const aiBtn = document.getElementById('ai-mode-btn');
-  const csStatus = document.getElementById('consoleena-status');
-  if (window.__consoleenaFailed || typeof window.Consoleena === 'undefined') {
-    csStatus.innerHTML = '⚠️ Consoleena not available. Exact search still works.';
-    aiBtn.disabled = true;
-    return;
-  }
-  try {
-    if (typeof Consoleena.set === 'function') {
-      Consoleena.set('erplorerIndex', documents);
-      Consoleena.set('entryCount', documents.length);
-    }
-    consoleenaReady = true;
-    aiBtn.disabled = false;
-    csStatus.innerHTML = `✅ Consoleena loaded — ${documents.length} entries available.`;
-  } catch (err) {
-    csStatus.innerHTML = `⚠️ Consoleena init error: ${escapeHtml(err.message)}`;
-    aiBtn.disabled = true;
-  }
-}
+const AI_PRIMARY = 'https://ragina-crawler-ragina.vercel.app/api/ask';
+const AI_FALLBACK = 'https://text.pollinations.ai/openai';
+const AI_TIMEOUT_MS = 45000;
 
 async function askNatural() {
   const input = document.getElementById('nl-input');
   const answerEl = document.getElementById('nl-answer');
   const q = input.value.trim();
   if (!q) return;
-  answerEl.innerHTML = '<div class="ai-answer loading">Thinking…</div>';
-  if (!consoleenaReady) {
-    answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong>.</div>';
+
+  if (!flexIndex) {
+    answerEl.innerHTML = '<div class="ai-answer">⚠️ Search index not loaded yet.</div>';
     return;
   }
+
+  // Step 1: Local search to find candidate entries
+  const raw = flexIndex.search(q, { enrich: true });
+  const hits = raw.flatMap(r => r.result).slice(0, 20);
+  const matchedDocs = hits.map(h => documents[h.id]).filter(Boolean);
+
+  if (!matchedDocs.length) {
+    answerEl.innerHTML = '<div class="ai-answer">No matching entries found in the index. Try different keywords.</div>';
+    recordSearch(q, 'ai', 0);
+    return;
+  }
+
+  answerEl.innerHTML = '<div class="ai-answer loading">Searching the index and asking AI…</div>';
+
+  // Step 2: Format context for the LLM
+  const context = matchedDocs.slice(0, 15).map((d, i) =>
+    `[${i + 1}] ${d.file || 'unknown'}${d.line ? ':' + d.line : ''} (${d.type || 'code'})\n${d.text || ''}`
+  ).join('\n\n');
+
+  const prompt = `The user searched a codebase error index for: "${q}"
+
+Top matching entries from the index:
+
+${context}
+
+Give a short, useful answer for a QA engineer. Point out the most relevant files and line numbers. Keep it under 200 words.`;
+
+  // Step 3: Call AI endpoints with fallback
+  let aiAnswer = null;
+  let aiSource = '';
+
   try {
-    let answer = await Consoleena.ask(q);
-    const formatted = typeof answer === 'string'
-      ? escapeHtml(answer).replace(/\n/g, '<br>')
-      : escapeHtml(JSON.stringify(answer, null, 2));
-    answerEl.innerHTML = `<div class="ai-answer">${formatted}</div>`;
-    if (typeof Consoleena.highlight === 'function') { try { Consoleena.highlight('.result'); } catch {} }
-    recordSearch(q, 'ai', null);
-  } catch (err) {
-    answerEl.innerHTML = `<div class="ai-answer">❌ ${escapeHtml(err.message)}</div>`;
+    const res = await fetchWithTimeout(AI_PRIMARY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question: prompt,
+        context: 'You are a helpful assistant answering questions about a codebase search index.'
+      })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      aiAnswer = data.answer || data.response || data.content ||
+                 data.choices?.[0]?.message?.content ||
+                 (typeof data === 'string' ? data : null);
+      if (aiAnswer) aiSource = 'Vercel';
+    }
+  } catch (err) { console.warn('Vercel ask failed:', err.message); }
+
+  if (!aiAnswer) {
+    try {
+      const res = await fetchWithTimeout(AI_FALLBACK, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai',
+          messages: [
+            { role: 'system', content: 'You are a helpful assistant answering questions about a codebase.' },
+            { role: 'user', content: prompt }
+          ]
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        aiAnswer = data.choices?.[0]?.message?.content;
+        if (aiAnswer) aiSource = 'Pollinations';
+      }
+    } catch (err) { console.warn('Pollinations ask failed:', err.message); }
+  }
+
+  // Step 4: Render answer + matched entries
+  let html = '';
+  if (aiAnswer) {
+    html += `<div class="ai-answer"><small style="color:var(--muted);">Answered by ${aiSource}</small><br><br>${escapeHtml(aiAnswer).replace(/\n/g, '<br>')}</div>`;
+  } else {
+    html += `<div class="ai-answer">⚠️ AI summarization unavailable. Showing raw matches below.</div>`;
+  }
+
+  html += `<h4 style="margin-top:1.5rem; font-size:0.9rem;">Top matches (${matchedDocs.length})</h4>`;
+  html += matchedDocs.slice(0, 8).map(d => `
+    <div class="result ${d.type || 'code'}">
+      <div class="meta">
+        <strong>${escapeHtml(d.file || 'unknown')}</strong>${d.line ? ':' + d.line : ''}
+        <span class="badge">${d.type || 'code'}</span>
+      </div>
+      <div class="snippet">${escapeHtml((d.text || d.context || '').slice(0, 400))}</div>
+    </div>
+  `).join('');
+
+  answerEl.innerHTML = html;
+  recordSearch(q, 'ai', matchedDocs.length);
+}
+
+async function fetchWithTimeout(url, options) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
   }
 }
 document.getElementById('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') askNatural(); });
@@ -939,12 +1004,6 @@ document.querySelectorAll('.tab').forEach(tab => {
 // ============================================================
 // 10. AI → EXCEL
 // ============================================================
-// Primary: your own Vercel deployment
-const AI_PRIMARY = 'https://ragina-crawler-ragina.vercel.app/api/ask';
-// Secondary: Pollinations public fallback
-const AI_FALLBACK = 'https://text.pollinations.ai/openai';
-const AI_TIMEOUT_MS = 45000;
-
 const AI_SYSTEM_PROMPT = `You are a QA test case parser. You convert free-form test scenario text into structured JSON test steps.
 
 You output ONLY valid JSON. No markdown, no explanation, no code fences.
@@ -1023,65 +1082,39 @@ async function runAITransform() {
 }
 
 async function callVercelAsk(userPrompt) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  try {
-    const res = await fetch(AI_PRIMARY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: userPrompt,
-        context: AI_SYSTEM_PROMPT
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`Vercel HTTP ${res.status}`);
-
-    const data = await res.json();
-    const content =
-      data.answer ||
-      data.response ||
-      data.content ||
-      data.message?.content ||
-      data.choices?.[0]?.message?.content ||
-      (typeof data === 'string' ? data : null);
-
-    if (!content) throw new Error('Vercel returned no answer field');
-    return typeof content === 'string' ? content : JSON.stringify(content);
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
+  const res = await fetchWithTimeout(AI_PRIMARY, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ question: userPrompt, context: AI_SYSTEM_PROMPT })
+  });
+  if (!res.ok) throw new Error(`Vercel HTTP ${res.status}`);
+  const data = await res.json();
+  const content =
+    data.answer || data.response || data.content ||
+    data.message?.content || data.choices?.[0]?.message?.content ||
+    (typeof data === 'string' ? data : null);
+  if (!content) throw new Error('Vercel returned no answer field');
+  return typeof content === 'string' ? content : JSON.stringify(content);
 }
 
 async function callPollinations(userPrompt) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  try {
-    const res = await fetch(AI_FALLBACK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'openai',
-        messages: [
-          { role: 'system', content: AI_SYSTEM_PROMPT },
-          { role: 'user', content: userPrompt }
-        ],
-        response_format: { type: 'json_object' }
-      }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
-    if (!content) throw new Error('Pollinations returned empty content');
-    return content;
-  } catch (err) {
-    clearTimeout(timer);
-    throw err;
-  }
+  const res = await fetchWithTimeout(AI_FALLBACK, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'openai',
+      messages: [
+        { role: 'system', content: AI_SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt }
+      ],
+      response_format: { type: 'json_object' }
+    })
+  });
+  if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
+  const data = await res.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error('Pollinations returned empty content');
+  return content;
 }
 
 function normalizeAIResponse(rawText) {
@@ -1809,14 +1842,22 @@ function tryTier4Paste() {
 (async function boot() {
   await loadCustomPatterns();
   await renderHistory();
-})();
 
-(async () => {
+  // AI endpoint reachability check
+  const status = document.getElementById('api-status');
   try {
-    const r = await fetch(RAGINA_CRAWL_API, { method: 'OPTIONS' });
-    console.log(r.ok ? '✅ Crawl API reachable' : `⚠️ Crawl API responded ${r.status}`);
-  } catch {
-    console.warn('⚠️ Crawl API unreachable — Tier 1 will fall back to Tier 2/3/4.');
+    const r = await fetch(AI_PRIMARY, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: 'ping', context: '' })
+    });
+    if (r.ok) {
+      status.innerHTML = '✅ AI endpoint reachable (Vercel /api/ask)';
+    } else {
+      status.innerHTML = `⚠️ Vercel responded ${r.status}. Fallback: Pollinations.`;
+    }
+  } catch (err) {
+    status.innerHTML = `⚠️ Vercel unreachable (${escapeHtml(err.message)}). Fallback: Pollinations, then rules.`;
   }
 })();
 </script>

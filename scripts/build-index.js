@@ -1,72 +1,182 @@
 #!/usr/bin/env node
 /**
- * ERplorer index builder.
- * Scans source code + Playwright test results, emits search-index.json.
+ * ERplorer multi-language index builder.
+ * Scans Java, Node.js, Python, SQL, YAML, JSON, properties, and notebooks.
+ * Emits search-index.json.
  */
 const fs = require('fs');
 const path = require('path');
 
-const SOURCE_DIR = './src';
+const ROOT_DIR = process.env.ERPLORER_SCAN || '.';
 const TEST_RESULTS = './test-results.json';
 const OUTPUT = './search-index.json';
 
-// Matches: throw new Error('...'), Error("..."), console.error(`...`)
-const ERROR_REGEX =
-  /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g;
+// Directories to skip
+const SKIP_DIRS = new Set([
+  'node_modules', '.git', 'dist', 'build', 'target', 'out',
+  '.next', '.cache', 'coverage', 'venv', '.venv', '__pycache__'
+]);
+
+// Language → file extensions
+const EXT_LANG = {
+  '.js':'js', '.mjs':'js', '.cjs':'js', '.jsx':'js',
+  '.ts':'ts', '.tsx':'ts',
+  '.java':'java', '.kt':'kotlin', '.groovy':'groovy',
+  '.py':'python',
+  '.sql':'sql',
+  '.scala':'scala',
+  '.yaml':'yaml', '.yml':'yaml',
+  '.json':'json',
+  '.properties':'properties', '.env':'properties',
+  '.ipynb':'notebook'
+};
+
+// Per-language error patterns.
+// Each pattern must have at least one capture group.
+const PATTERNS = {
+  js: [
+    /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g
+  ],
+  ts: [
+    /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g
+  ],
+  java: [
+    /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g,
+    /LOG(?:GER)?\.(?:error|warn|severe|log)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi,
+    /logger\.(?:error|warn|severe|log)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi
+  ],
+  kotlin: [
+    /throw \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g
+  ],
+  groovy: [
+    /throw new \w*(?:Exception|Error)\s*\(\s*'([^']+)'/g
+  ],
+  python: [
+    /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g,
+    /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g,
+    /logger\.(?:error|warning|critical)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g
+  ],
+  sql: [
+    /RAISE\s+EXCEPTION\s+'([^']+)'/gi,
+    /SIGNAL\s+SQLSTATE\s+'[^']*'\s+SET\s+MESSAGE_TEXT\s*=\s*'([^']+)'/gi,
+    /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g
+  ],
+  scala: [
+    /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g
+  ],
+  yaml: [
+    /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim
+  ],
+  properties: [
+    /^\s*[\w.-]*error[\w.-]*\s*[:=]\s*(.+)$/gim
+  ],
+  json: [
+    /"(?:error|message|reason|failure)"\s*:\s*"([^"]+)"/g
+  ]
+};
 
 function walk(dir, files = []) {
   if (!fs.existsSync(dir)) return files;
   for (const entry of fs.readdirSync(dir)) {
+    if (SKIP_DIRS.has(entry)) continue;
     const full = path.join(dir, entry);
-    const stat = fs.statSync(full);
-    if (stat.isDirectory()) {
-      if (entry === 'node_modules' || entry === '.git' || entry === 'dist') continue;
-      walk(full, files);
-    } else if (/\.(js|ts|jsx|tsx|mjs|cjs)$/.test(full)) {
-      files.push(full);
-    }
+    let stat;
+    try { stat = fs.statSync(full); } catch { continue; }
+    if (stat.isDirectory()) walk(full, files);
+    else if (stat.isFile()) files.push(full);
   }
   return files;
 }
 
-function indexSourceCode(index) {
-  const files = walk(SOURCE_DIR);
+function firstCapture(match) {
+  for (let i = 1; i < match.length; i++) {
+    if (match[i]) return match[i];
+  }
+  return null;
+}
+
+function indexFile(file, index) {
+  const ext = path.extname(file).toLowerCase();
+  const lang = EXT_LANG[ext];
+  if (!lang) return 0;
+
+  const relPath = path.relative(process.cwd(), file);
+  let content;
+  try { content = fs.readFileSync(file, 'utf-8'); } catch { return 0; }
+  if (!content) return 0;
+
   let count = 0;
 
-  for (const file of files) {
-    const content = fs.readFileSync(file, 'utf-8');
-    const lines = content.split('\n');
-    let match;
+  // Special case: Jupyter notebooks — extract Python source
+  if (lang === 'notebook') {
+    try {
+      const nb = JSON.parse(content);
+      const cells = (nb.cells || []).filter(c => c.cell_type === 'code');
+      cells.forEach((cell, idx) => {
+        const src = Array.isArray(cell.source) ? cell.source.join('') : String(cell.source || '');
+        PATTERNS.python.forEach(re => {
+          re.lastIndex = 0;
+          let m;
+          while ((m = re.exec(src)) !== null) {
+            const message = firstCapture(m);
+            if (!message) continue;
+            index.push({
+              type: 'notebook-error',
+              text: message,
+              file: relPath,
+              line: idx + 1,
+              context: src.slice(0, 400)
+            });
+            count++;
+          }
+        });
+      });
+      return count;
+    } catch { return 0; }
+  }
 
-    ERROR_REGEX.lastIndex = 0;
-    while ((match = ERROR_REGEX.exec(content)) !== null) {
-      const message = match[1] || match[2] || match[3];
-      if (!message) continue;
+  // Regular file
+  const lines = content.split('\n');
+  const patterns = PATTERNS[lang] || [];
 
-      const lineNum = content.substring(0, match.index).split('\n').length;
+  for (const re of patterns) {
+    re.lastIndex = 0;
+    let m;
+    while ((m = re.exec(content)) !== null) {
+      const message = firstCapture(m);
+      if (!message || message.trim().length < 3) continue;
+
+      const lineNum = content.substring(0, m.index).split('\n').length;
       const start = Math.max(0, lineNum - 3);
       const end = Math.min(lines.length, lineNum + 2);
 
+      // Classify by extension
+      let type = 'code';
+      if (['java','kotlin','groovy','scala'].includes(lang)) type = 'java-error';
+      else if (lang === 'python') type = 'python-error';
+      else if (lang === 'sql') type = 'sql-error';
+      else if (['yaml','properties','json'].includes(lang)) type = 'config-error';
+      else type = 'error';
+
       index.push({
-        type: 'error',
-        text: message,
-        file: path.relative(process.cwd(), file),
+        type,
+        text: message.trim(),
+        file: relPath,
         line: lineNum,
-        context: lines.slice(start, end).join('\n'),
+        context: lines.slice(start, end).join('\n')
       });
       count++;
     }
   }
-  console.log(`  ↳ Indexed ${count} source errors from ${files.length} files`);
+
+  return count;
 }
 
 function indexTestResults(index) {
-  if (!fs.existsSync(TEST_RESULTS)) {
-    console.log('  ↳ No test-results.json found, skipping.');
-    return;
-  }
+  if (!fs.existsSync(TEST_RESULTS)) return 0;
 
-  const results = JSON.parse(fs.readFileSync(TEST_RESULTS, 'utf-8'));
+  let results;
+  try { results = JSON.parse(fs.readFileSync(TEST_RESULTS, 'utf-8')); } catch { return 0; }
   let count = 0;
 
   function walkSuites(suite, inheritedFile = '') {
@@ -83,32 +193,44 @@ function indexTestResults(index) {
             line: test.location?.line || 0,
             context: (result.error.stack || result.error.message || '').slice(0, 800),
             testTitle: spec.title,
-            status: result.status,
+            status: result.status
           });
           count++;
         }
       }
     }
-
-    for (const child of suite.suites || []) {
-      walkSuites(child, filePath);
-    }
+    for (const child of suite.suites || []) walkSuites(child, filePath);
   }
-
-  for (const suite of results.suites || []) {
-    walkSuites(suite);
-  }
-  console.log(`  ↳ Indexed ${count} test failures`);
+  for (const suite of results.suites || []) walkSuites(suite);
+  return count;
 }
 
 function main() {
-  console.log('🔍 ERplorer — building index...');
+  console.log('🔍 ERplorer — building multi-language index...');
+  const files = walk(ROOT_DIR);
+  console.log(`  ↳ Scanned ${files.length} files`);
+
   const index = [];
-  indexSourceCode(index);
-  indexTestResults(index);
+  const byLang = {};
+
+  for (const file of files) {
+    const n = indexFile(file, index);
+    if (n > 0) {
+      const ext = path.extname(file).toLowerCase();
+      byLang[ext] = (byLang[ext] || 0) + n;
+    }
+  }
+
+  const testCount = indexTestResults(index);
+
+  console.log('  ↳ By file type:');
+  Object.entries(byLang).sort((a,b) => b[1]-a[1]).forEach(([ext, n]) => {
+    console.log(`     ${ext.padEnd(12)} ${n}`);
+  });
+  console.log(`  ↳ Test failures: ${testCount}`);
+  console.log(`✅ Wrote ${index.length} entries to ${OUTPUT}`);
 
   fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2));
-  console.log(`✅ Wrote ${index.length} entries to ${OUTPUT}`);
 }
 
 main();

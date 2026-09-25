@@ -1,0 +1,30 @@
+[
+  {
+    "type": "error",
+    "text": "Username is required",
+    "file": "src/sample.js",
+    "line": 3,
+    "context": "function login(username, password) {\n  if (!username) {\n    throw new Error('Username is required');\n  }\n  if (!password) {"
+  },
+  {
+    "type": "error",
+    "text": "Password is required",
+    "file": "src/sample.js",
+    "line": 6,
+    "context": "  }\n  if (!password) {\n    throw new Error('Password is required');\n  }\n  if (password.length < 8) {"
+  },
+  {
+    "type": "error",
+    "text": "Password must be at least 8 characters",
+    "file": "src/sample.js",
+    "line": 9,
+    "context": "  }\n  if (password.length < 8) {\n    throw new Error('Password must be at least 8 characters');\n  }\n  return { username, ok: true };"
+  },
+  {
+    "type": "error",
+    "text": "Login service initialized",
+    "file": "src/sample.js",
+    "line": 13,
+    "context": "  return { username, ok: true };\n}\n\nconsole.error('Login service initialized');\nmodule.exports = { login };"
+  }
+]

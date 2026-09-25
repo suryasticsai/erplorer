@@ -4,189 +4,161 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ERplorer — Error Resolution Explorer</title>
-
 <link rel="icon" type="image/png" href="erplorer-logo.png">
 <link rel="apple-touch-icon" href="erplorer-logo.png">
-
 <style>
   :root {
-    --ink: #0F172A;
-    --slate: #1E293B;
-    --mist: #94A3B8;
-    --paper: #F8FAFC;
-    --signal: #F59E0B;
-    --error: #EF4444;
-    --code: #3B82F6;
-    --test: #8B5CF6;
-    --border: #E2E8F0;
-    --muted: #64748B;
+    --ink:#0F172A; --slate:#1E293B; --paper:#F8FAFC; --signal:#F59E0B;
+    --error:#EF4444; --code:#3B82F6; --test:#8B5CF6; --api:#10B981;
+    --data:#06B6D4; --border:#E2E8F0; --muted:#64748B;
   }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { height: 100%; }
+  * { box-sizing:border-box; margin:0; padding:0; }
   body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 1.5rem;
-    color: var(--ink);
-    line-height: 1.55;
-    background: var(--paper);
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    max-width:1100px; margin:0 auto; padding:1.5rem;
+    color:var(--ink); line-height:1.55; background:var(--paper);
   }
+  .header { display:flex; align-items:center; gap:0.85rem; margin-bottom:0.4rem; }
+  .header img { width:48px; height:48px; object-fit:contain; border-radius:10px; }
+  .header h1 { font-size:1.55rem; font-weight:700; letter-spacing:-0.02em; }
+  .header h1 .er { color:var(--signal); }
+  .subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.75rem; margin-left:60px; }
 
-  .header { display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.4rem; }
-  .header img { width: 48px; height: 48px; object-fit: contain; border-radius: 10px; }
-  .header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; }
-  .header h1 .er { color: var(--signal); }
-  .subtitle { color: var(--muted); font-size: 0.95rem; margin-bottom: 1.75rem; margin-left: 60px; }
-
-  .tabs { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border); margin-bottom: 1.75rem; }
+  .tabs { display:flex; gap:0.25rem; border-bottom:2px solid var(--border); margin-bottom:1.75rem; }
   .tab {
-    padding: 0.75rem 1.25rem; cursor: pointer; border: none; background: none;
-    font-size: 0.95rem; font-family: inherit; color: var(--muted);
-    border-bottom: 3px solid transparent; margin-bottom: -2px; transition: 0.15s;
+    padding:0.75rem 1.25rem; cursor:pointer; border:none; background:none;
+    font-size:0.95rem; font-family:inherit; color:var(--muted);
+    border-bottom:3px solid transparent; margin-bottom:-2px; transition:0.15s;
   }
-  .tab:hover { color: var(--signal); }
-  .tab.active { color: var(--signal); border-bottom-color: var(--signal); font-weight: 600; }
+  .tab:hover { color:var(--signal); }
+  .tab.active { color:var(--signal); border-bottom-color:var(--signal); font-weight:600; }
 
-  .panel { display: none; }
-  .panel.active { display: block; animation: fade 0.2s ease; }
-  @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .panel { display:none; }
+  .panel.active { display:block; animation:fade 0.2s ease; }
+  @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
 
   input[type=text] {
-    width: 100%; padding: 1rem 1.15rem; font-size: 1.05rem; font-family: inherit;
-    border: 2px solid var(--border); border-radius: 12px; outline: none;
-    background: white; transition: 0.15s;
+    width:100%; padding:1rem 1.15rem; font-size:1.05rem; font-family:inherit;
+    border:2px solid var(--border); border-radius:12px; outline:none;
+    background:white; transition:0.15s;
   }
-  input[type=text]:focus { border-color: var(--signal); box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12); }
+  input[type=text]:focus { border-color:var(--signal); box-shadow:0 0 0 4px rgba(245,158,11,0.12); }
   input[type=password] {
-    width: 100%; padding: 0.9rem 1rem; font-size: 1rem; font-family: inherit;
-    border: 2px solid var(--border); border-radius: 10px; outline: none;
+    width:100%; padding:0.9rem 1rem; font-size:1rem; font-family:inherit;
+    border:2px solid var(--border); border-radius:10px; outline:none;
   }
-  input[type=password]:focus { border-color: var(--signal); }
+  input[type=password]:focus { border-color:var(--signal); }
 
   .result {
-    border: 1px solid var(--border); background: white; padding: 1rem 1.15rem;
-    margin-top: 0.85rem; border-radius: 10px; transition: 0.15s;
+    border:1px solid var(--border); background:white; padding:1rem 1.15rem;
+    margin-top:0.85rem; border-radius:10px; transition:0.15s;
   }
-  .result:hover { box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06); }
-  .result.error { border-left: 4px solid var(--error); }
-  .result.code { border-left: 4px solid var(--code); }
-  .result.test-failure { border-left: 4px solid var(--test); }
-  .meta {
-    font-size: 0.85rem; color: var(--slate); margin-bottom: 0.55rem;
-    display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
-  }
-  .meta strong { font-family: ui-monospace, "SF Mono", monospace; font-weight: 600; }
+  .result:hover { box-shadow:0 4px 14px rgba(15,23,42,0.06); }
+  .result.error         { border-left:4px solid var(--error); }
+  .result.code          { border-left:4px solid var(--code); }
+  .result.test-failure  { border-left:4px solid var(--test); }
+  .result.api-error     { border-left:4px solid var(--api); }
+  .result.data-error    { border-left:4px solid var(--data); }
+  .result.config-error  { border-left:4px solid #F97316; }
+
+  .meta { font-size:0.85rem; color:var(--slate); margin-bottom:0.55rem;
+          display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
+  .meta strong { font-family:ui-monospace,"SF Mono",monospace; font-weight:600; }
   .badge {
-    background: #F1F5F9; padding: 2px 9px; border-radius: 5px;
-    font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.6px;
-    font-weight: 600; color: var(--slate);
+    background:#F1F5F9; padding:2px 9px; border-radius:5px;
+    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.6px;
+    font-weight:600; color:var(--slate);
   }
   .snippet {
-    background: var(--paper); padding: 0.85rem 1rem; border-radius: 8px;
-    overflow-x: auto; font-family: ui-monospace, "SF Mono", monospace;
-    font-size: 0.83rem; white-space: pre-wrap; word-break: break-word;
-    line-height: 1.65; color: var(--slate);
+    background:var(--paper); padding:0.85rem 1rem; border-radius:8px;
+    overflow-x:auto; font-family:ui-monospace,"SF Mono",monospace;
+    font-size:0.83rem; white-space:pre-wrap; word-break:break-word;
+    line-height:1.65; color:var(--slate);
   }
-  .highlight { background: #FEF3C7; padding: 0 2px; border-radius: 2px; }
+  .highlight { background:#FEF3C7; padding:0 2px; border-radius:2px; }
 
-  .status {
-    font-size: 0.85rem; color: var(--muted); margin-top: 0.75rem;
-    padding: 0.6rem 0.85rem; background: #F1F5F9; border-radius: 8px;
-  }
-  .status code { background: #E2E8F0; padding: 1px 5px; border-radius: 3px; font-size: 0.82rem; }
+  .status { font-size:0.85rem; color:var(--muted); margin-top:0.75rem;
+            padding:0.6rem 0.85rem; background:#F1F5F9; border-radius:8px; }
+  .status code { background:#E2E8F0; padding:1px 5px; border-radius:3px; font-size:0.82rem; }
   .spinner {
-    display: inline-block; width: 12px; height: 12px;
-    border: 2px solid var(--border); border-top-color: var(--signal);
-    border-radius: 50%; animation: spin 0.6s linear infinite;
-    margin-right: 6px; vertical-align: middle;
+    display:inline-block; width:12px; height:12px;
+    border:2px solid var(--border); border-top-color:var(--signal);
+    border-radius:50%; animation:spin 0.6s linear infinite;
+    margin-right:6px; vertical-align:middle;
   }
-  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes spin { to { transform:rotate(360deg); } }
 
   .drop {
-    border: 2px dashed #CBD5E1; border-radius: 12px; padding: 3rem 2rem;
-    text-align: center; color: var(--muted); cursor: pointer;
-    transition: 0.2s; background: white;
+    border:2px dashed #CBD5E1; border-radius:12px; padding:3rem 2rem;
+    text-align:center; color:var(--muted); cursor:pointer; transition:0.2s; background:white;
   }
-  .drop:hover, .drop.over { border-color: var(--signal); background: #FFFBEB; color: var(--slate); }
-  .drop strong { display: block; font-size: 1.1rem; margin-bottom: 0.4rem; color: var(--ink); }
-  .drop span { font-size: 0.9rem; }
-  .drop .formats {
-    display: inline-flex; gap: 0.5rem; margin-top: 0.85rem;
-  }
+  .drop:hover, .drop.over { border-color:var(--signal); background:#FFFBEB; color:var(--slate); }
+  .drop strong { display:block; font-size:1.1rem; margin-bottom:0.4rem; color:var(--ink); }
+  .drop span { font-size:0.9rem; }
+  .drop .formats { display:inline-flex; gap:0.5rem; margin-top:0.85rem; flex-wrap:wrap; justify-content:center; }
   .format-pill {
-    background: var(--paper); color: var(--slate); padding: 3px 10px;
-    border-radius: 6px; font-size: 0.75rem; font-weight: 600;
-    font-family: ui-monospace, monospace; letter-spacing: 0.3px;
+    background:var(--paper); color:var(--slate); padding:3px 10px;
+    border-radius:6px; font-size:0.75rem; font-weight:600;
+    font-family:ui-monospace,monospace; letter-spacing:0.3px;
   }
 
   button {
-    padding: 0.65rem 1.25rem; border: none; border-radius: 8px;
-    background: var(--signal); color: white; font-size: 0.9rem;
-    font-family: inherit; font-weight: 500; cursor: pointer; transition: 0.15s;
+    padding:0.65rem 1.25rem; border:none; border-radius:8px;
+    background:var(--signal); color:white; font-size:0.9rem;
+    font-family:inherit; font-weight:500; cursor:pointer; transition:0.15s;
   }
-  button:hover { background: #D97706; }
-  button.secondary { background: #F1F5F9; color: var(--slate); }
-  button.secondary:hover { background: #E2E8F0; }
-  button.ghost {
-    background: transparent; color: var(--signal);
-    border: 1px solid var(--signal); padding: 0.55rem 1rem;
-  }
-  button.ghost:hover { background: #FFFBEB; color: var(--signal); }
+  button:hover { background:#D97706; }
+  button.secondary { background:#F1F5F9; color:var(--slate); }
+  button.secondary:hover { background:#E2E8F0; }
+  button.ghost { background:transparent; color:var(--signal); border:1px solid var(--signal); padding:0.55rem 1rem; }
+  button.ghost:hover { background:#FFFBEB; }
 
   .preview {
-    background: var(--ink); color: #CBD5E1; padding: 1.25rem 1.4rem;
-    border-radius: 10px; font-family: ui-monospace, "SF Mono", monospace;
-    font-size: 0.8rem; overflow-x: auto; white-space: pre;
-    margin-top: 1rem; max-height: 420px; line-height: 1.65;
+    background:var(--ink); color:#CBD5E1; padding:1.25rem 1.4rem;
+    border-radius:10px; font-family:ui-monospace,"SF Mono",monospace;
+    font-size:0.8rem; overflow-x:auto; white-space:pre;
+    margin-top:1rem; max-height:420px; line-height:1.65;
   }
 
-  .grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 1rem; margin-top: 1rem;
-  }
-  .spec-card {
-    border: 1px solid var(--border); border-radius: 10px;
-    padding: 1rem; background: white;
-  }
-  .spec-card strong { font-size: 0.9rem; display: block; }
-  .spec-card .steps { font-size: 0.8rem; color: var(--muted); margin-top: 0.25rem; }
-  .spec-card button { margin-top: 0.75rem; width: 100%; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; margin-top:1rem; }
+  .spec-card { border:1px solid var(--border); border-radius:10px; padding:1rem; background:white; }
+  .spec-card strong { font-size:0.9rem; display:block; }
+  .spec-card .steps { font-size:0.8rem; color:var(--muted); margin-top:0.25rem; }
+  .spec-card button { margin-top:0.75rem; width:100%; }
+  .spec-card .kind { display:inline-block; font-size:0.68rem; font-weight:600; text-transform:uppercase;
+                     padding:2px 8px; border-radius:5px; margin-top:0.4rem; letter-spacing:0.4px; }
+  .kind.ui   { background:#EDE9FE; color:#6D28D9; }
+  .kind.api  { background:#D1FAE5; color:#047857; }
+  .kind.data { background:#CFFAFE; color:#0E7490; }
 
-  .error-list {
-    color: #B91C1C; background: #FEF2F2; padding: 1rem 1.25rem;
-    border-radius: 10px; margin-top: 1rem; border-left: 4px solid var(--error);
-  }
-  .error-list ul { margin-left: 1.25rem; margin-top: 0.5rem; }
-  .error-list li { font-size: 0.9rem; }
+  .error-list { color:#B91C1C; background:#FEF2F2; padding:1rem 1.25rem;
+                border-radius:10px; margin-top:1rem; border-left:4px solid var(--error); }
+  .error-list ul { margin-left:1.25rem; margin-top:0.5rem; }
+  .error-list li { font-size:0.9rem; }
 
-  .schema-hint {
-    font-size: 0.82rem; color: var(--muted); margin-top: 1.25rem;
-    padding: 0.85rem 1rem; background: white; border-radius: 8px;
-    border: 1px solid var(--border);
-  }
+  .schema-hint { font-size:0.82rem; color:var(--muted); margin-top:1.25rem;
+                 padding:0.85rem 1rem; background:white; border-radius:8px; border:1px solid var(--border); }
   .schema-hint code {
-    background: #F1F5F9; padding: 1px 6px; border-radius: 4px;
-    font-size: 0.8rem; font-family: ui-monospace, monospace; color: var(--slate);
+    background:#F1F5F9; padding:1px 6px; border-radius:4px;
+    font-size:0.8rem; font-family:ui-monospace,monospace; color:var(--slate);
   }
-  .schema-hint .row { margin-bottom: 0.5rem; }
-  .schema-hint .row:last-child { margin-bottom: 0; }
+  .schema-hint .row { margin-bottom:0.6rem; }
+  .schema-hint .row:last-child { margin-bottom:0; }
 
   .template-bar {
-    display: flex; justify-content: space-between; align-items: center;
-    gap: 1rem; flex-wrap: wrap; margin-top: 1rem;
-    padding: 0.85rem 1rem; background: #FFFBEB;
-    border: 1px solid #FDE68A; border-radius: 8px;
+    display:flex; justify-content:space-between; align-items:center; gap:1rem;
+    flex-wrap:wrap; margin-top:1rem; padding:0.85rem 1rem;
+    background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px;
   }
-  .template-bar span { font-size: 0.85rem; color: var(--slate); }
+  .template-bar span { font-size:0.85rem; color:var(--slate); }
 
   .footer {
-    margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--border);
-    font-size: 0.8rem; color: var(--muted);
-    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+    margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
+    font-size:0.8rem; color:var(--muted);
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
   }
-  .footer a { color: var(--signal); text-decoration: none; }
-  .footer a:hover { text-decoration: underline; }
+  .footer a { color:var(--signal); text-decoration:none; }
+  .footer a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
@@ -195,18 +167,18 @@
   <img src="erplorer-logo.png" alt="ERplorer logo">
   <h1><span class="er">ER</span>plorer</h1>
 </div>
-<p class="subtitle">Error Resolution Explorer — from error message to source line.</p>
+<p class="subtitle">Error Resolution Explorer — Java, Node.js, Databricks, configs.</p>
 
 <div class="tabs">
   <button class="tab active" data-tab="explorer">Error Explorer</button>
-  <button class="tab" data-tab="generator">Excel / CSV → Playwright</button>
+  <button class="tab" data-tab="generator">Test Cases → Code</button>
   <button class="tab" data-tab="settings">⚙️ Settings</button>
 </div>
 
 <!-- Explorer -->
 <div class="panel active" id="panel-explorer">
   <div id="index-status" class="status"><span class="spinner"></span>Loading search index...</div>
-  <input type="text" id="search-input" placeholder="Paste an error message or search code..." autofocus>
+  <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
   <div id="results"></div>
 </div>
 
@@ -219,12 +191,13 @@
       <span class="format-pill">.XLSX</span>
       <span class="format-pill">.XLS</span>
       <span class="format-pill">.CSV</span>
+      <span class="format-pill">.TSV</span>
     </div>
   </div>
-  <input type="file" id="file-input" accept=".xlsx,.xls,.csv" style="display:none;">
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
 
   <div class="template-bar">
-    <span>💡 New here? Download a starter template to see the required columns.</span>
+    <span>💡 Download a starter template showing UI, API, and Data test types.</span>
     <div style="display:flex; gap:0.5rem;">
       <button class="ghost" onclick="downloadTemplate('csv')">⬇️ CSV template</button>
       <button class="ghost" onclick="downloadTemplate('tsv')">⬇️ TSV template</button>
@@ -234,10 +207,19 @@
   <div id="gen-output"></div>
 
   <div class="schema-hint">
-    <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code>, <code>.xls</code>, <code>.csv</code> (comma-separated), <code>.tsv</code> (tab-separated)</div>
-    <div class="row"><strong>Required columns:</strong> <code>id</code>, <code>scenario</code>, <code>step</code>, <code>action</code>, <code>selector</code>, <code>value</code>, <code>expected</code></div>
-    <div class="row"><strong>Valid actions:</strong> <code>goto</code>, <code>fill</code>, <code>click</code>, <code>expectText</code>, <code>expectVisible</code>, <code>expectUrl</code>, <code>wait</code></div>
-    <div class="row"><strong>CSV tip:</strong> Wrap values containing commas in double quotes — e.g. <code>"Welcome, admin"</code></div>
+    <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code> <code>.xls</code> <code>.csv</code> <code>.tsv</code></div>
+    <div class="row"><strong>Columns:</strong> <code>id</code> <code>scenario</code> <code>step</code> <code>action</code> <code>method</code> <code>url</code> <code>headers</code> <code>body</code> <code>selector</code> <code>value</code> <code>expected</code> <code>jsonpath</code></div>
+
+    <div class="row"><strong>🧪 UI actions (Playwright):</strong><br>
+      <code>goto</code> · <code>fill</code> · <code>click</code> · <code>expectText</code> · <code>expectVisible</code> · <code>expectUrl</code> · <code>wait</code>
+    </div>
+    <div class="row"><strong>🔌 API actions (Postman-style, Playwright request):</strong><br>
+      <code>apiRequest</code> · <code>expectStatus</code> · <code>expectJson</code> · <code>expectHeader</code>
+    </div>
+    <div class="row"><strong>📊 Data actions (Databricks / SQL, pytest):</strong><br>
+      <code>runSql</code> · <code>expectRowCount</code> · <code>expectNoNulls</code> · <code>expectUnique</code> · <code>expectValue</code>
+    </div>
+    <div class="row"><strong>CSV tip:</strong> Wrap values containing commas or quotes in double quotes — e.g. <code>"Welcome, admin"</code></div>
   </div>
 </div>
 
@@ -245,7 +227,8 @@
 <div class="panel" id="panel-settings">
   <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
   <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-    Paste a Personal Access Token to enable live GitHub API queries. Stored in <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">sessionStorage</code> only — cleared when you close this tab.
+    Paste a Personal Access Token to enable live GitHub API queries. Stored in
+    <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">sessionStorage</code> only.
   </p>
   <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
   <div style="margin-top:1rem; display:flex; gap:0.5rem;">
@@ -265,19 +248,13 @@
 
 <script>
 // ============================================================
-// 1. OCTOKIT (async ESM)
+// 1. OCTOKIT
 // ============================================================
 let OctokitClass = null;
 (async () => {
-  try {
-    const mod = await import("https://esm.sh/@octokit/rest");
-    OctokitClass = mod.Octokit;
-    console.log("✅ Octokit loaded");
-  } catch (err) {
-    console.warn("⚠️ Octokit unavailable:", err.message);
-  }
+  try { const m = await import("https://esm.sh/@octokit/rest"); OctokitClass = m.Octokit; }
+  catch (e) { console.warn("⚠️ Octokit unavailable:", e.message); }
 })();
-
 function getOctokit() {
   if (!OctokitClass) return null;
   const token = sessionStorage.getItem('gh_token');
@@ -287,8 +264,7 @@ function getOctokit() {
 // ============================================================
 // 2. SEARCH INDEX
 // ============================================================
-let flexIndex = null;
-let documents = [];
+let flexIndex = null, documents = [];
 
 async function loadIndex() {
   const status = document.getElementById('index-status');
@@ -299,15 +275,16 @@ async function loadIndex() {
 
     flexIndex = new FlexSearch.Document({
       document: { id: 'id', index: ['text'], store: true },
-      tokenize: 'forward',
-      resolution: 9,
-      cache: true
+      tokenize: 'forward', resolution: 9, cache: true
     });
-
     documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
-    status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries.`;
+
+    // Show breakdown by type
+    const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
+    const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
+    status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
   } catch (err) {
-    status.innerHTML = `⚠️ No <code>search-index.json</code> found. The generator still works.<br><small style="color:#94A3B8">${err.message}</small>`;
+    status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator still works.<br><small style="color:#94A3B8">${err.message}</small>`;
   }
 }
 loadIndex();
@@ -318,11 +295,7 @@ loadIndex();
 const searchInput = document.getElementById('search-input');
 const resultsEl = document.getElementById('results');
 let debounce;
-
-searchInput.addEventListener('input', () => {
-  clearTimeout(debounce);
-  debounce = setTimeout(runSearch, 180);
-});
+searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(runSearch, 180); });
 
 function runSearch() {
   const q = searchInput.value.trim();
@@ -331,11 +304,7 @@ function runSearch() {
 
   const raw = flexIndex.search(q, { enrich: true });
   const hits = raw.flatMap(r => r.result).slice(0, 20);
-
-  if (!hits.length) {
-    resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>';
-    return;
-  }
+  if (!hits.length) { resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>'; return; }
 
   hits.forEach(({ id }) => {
     const doc = documents[id];
@@ -343,8 +312,8 @@ function runSearch() {
     el.className = `result ${doc.type || 'code'}`;
 
     let snippet = doc.context || doc.text || '';
-    const regex = new RegExp(`(${escapeRegex(q)})`, 'gi');
-    snippet = escapeHtml(snippet).replace(regex, '<span class="highlight">$1</span>');
+    const re = new RegExp(`(${escapeRegex(q)})`, 'gi');
+    snippet = escapeHtml(snippet).replace(re, '<span class="highlight">$1</span>');
 
     el.innerHTML = `
       <div class="meta">
@@ -352,16 +321,12 @@ function runSearch() {
         <span class="badge">${doc.type || 'code'}</span>
         ${doc.testTitle ? `<em>— ${escapeHtml(doc.testTitle)}</em>` : ''}
       </div>
-      <div class="snippet">${snippet}</div>
-    `;
+      <div class="snippet">${snippet}</div>`;
     resultsEl.appendChild(el);
   });
 }
-
 function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ============================================================
 // 4. TABS
@@ -376,86 +341,72 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// 5. FILE → PLAYWRIGHT (Excel / CSV / TSV)
+// 5. FILE → PLAYWRIGHT / PYTEST
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 const genOut = document.getElementById('gen-output');
 
-const ACCEPTED_EXTENSIONS = ['xlsx', 'xls', 'csv', 'tsv', 'txt'];
+const ACCEPTED = ['xlsx','xls','csv','tsv','txt'];
 
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
 dropZone.addEventListener('drop', e => {
-  e.preventDefault();
-  dropZone.classList.remove('over');
+  e.preventDefault(); dropZone.classList.remove('over');
   if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
-function getExtension(name) {
-  return name.split('.').pop().toLowerCase();
-}
+function getExt(name) { return name.split('.').pop().toLowerCase(); }
 
 function handleFile(file) {
-  const ext = getExtension(file.name);
-  if (!ACCEPTED_EXTENSIONS.includes(ext)) {
-    genOut.innerHTML = `<div class="error-list">❌ Unsupported file type ".${escapeHtml(ext)}". Please upload one of: ${ACCEPTED_EXTENSIONS.map(e => '.' + e).join(', ')}</div>`;
+  const ext = getExt(file.name);
+  if (!ACCEPTED.includes(ext)) {
+    genOut.innerHTML = `<div class="error-list">❌ Unsupported file ".${escapeHtml(ext)}". Use: ${ACCEPTED.map(e => '.'+e).join(', ')}</div>`;
     return;
   }
-
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      let workbook;
-
-      if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
-        // Read as text — pass raw string to SheetJS so it handles the delimiter
-        const text = e.target.result;
-        workbook = XLSX.read(text, { type: 'string', raw: false });
+      let wb;
+      if (['csv','tsv','txt'].includes(ext)) {
+        wb = XLSX.read(e.target.result, { type: 'string', raw: false });
       } else {
-        // Binary Excel formats
-        workbook = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
       }
-
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-
-      if (!rows.length) {
-        genOut.innerHTML = '<div class="error-list">❌ No rows found in the file. Check that the first sheet has a header row.</div>';
-        return;
-      }
-
+      if (!rows.length) { genOut.innerHTML = '<div class="error-list">❌ No rows found.</div>'; return; }
       renderGenerated(rows, file.name);
     } catch (err) {
       genOut.innerHTML = `<div class="error-list">❌ Failed to parse <strong>${escapeHtml(file.name)}</strong>: ${escapeHtml(err.message)}</div>`;
     }
   };
-
-  if (ext === 'csv' || ext === 'tsv' || ext === 'txt') {
-    reader.readAsText(file, 'utf-8');
-  } else {
-    reader.readAsArrayBuffer(file);
-  }
+  if (['csv','tsv','txt'].includes(ext)) reader.readAsText(file, 'utf-8');
+  else reader.readAsArrayBuffer(file);
 }
 
+// Action catalog
+const ACTIONS = {
+  UI:   ['goto','fill','click','expectText','expectVisible','expectUrl','wait'],
+  API:  ['apiRequest','expectStatus','expectJson','expectHeader'],
+  DATA: ['runSql','expectRowCount','expectNoNulls','expectUnique','expectValue']
+};
+const ALL_ACTIONS = [...ACTIONS.UI, ...ACTIONS.API, ...ACTIONS.DATA];
+const kindOf = a => ACTIONS.UI.includes(a) ? 'ui'
+                  : ACTIONS.API.includes(a) ? 'api'
+                  : ACTIONS.DATA.includes(a) ? 'data' : 'ui';
+
 function renderGenerated(rows, filename) {
-  const cases = {};
-  const errors = [];
-  const validActions = ['goto', 'fill', 'click', 'expectText', 'expectVisible', 'expectUrl', 'wait'];
+  const cases = {}; const errors = [];
 
   rows.forEach((row, i) => {
     if (!row.id) return;
-    // Coerce everything to string, trim whitespace
     Object.keys(row).forEach(k => { row[k] = String(row[k] ?? '').trim(); });
-
-    if (!row.action) {
-      errors.push(`Row ${i + 2}: missing action`);
-      return;
-    }
-    if (!validActions.includes(row.action)) {
-      errors.push(`Row ${i + 2}: unknown action "${row.action}". Valid: ${validActions.join(', ')}`);
+    if (!row.action) { errors.push(`Row ${i+2}: missing action`); return; }
+    if (!ALL_ACTIONS.includes(row.action)) {
+      errors.push(`Row ${i+2}: unknown action "${row.action}". Valid: ${ALL_ACTIONS.join(', ')}`);
       return;
     }
     if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
@@ -463,31 +414,31 @@ function renderGenerated(rows, filename) {
   });
 
   if (errors.length) {
-    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors in ${escapeHtml(filename)}:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
     return;
   }
 
-  const specs = Object.values(cases).map(tc => ({
-    name: `${tc.id}.spec.js`,
-    code: buildSpec(tc, filename),
-    stepCount: tc.steps.length
-  }));
+  // For each test case, split into UI/API steps (Playwright) and Data steps (pytest)
+  const specs = [];
+  Object.values(cases).forEach(tc => {
+    const pw = tc.steps.filter(s => ['ui','api'].includes(kindOf(s.action)));
+    const data = tc.steps.filter(s => kindOf(s.action) === 'data');
+    if (pw.length)   specs.push({ name: `${tc.id}.spec.js`,   code: buildPlaywright(tc, pw, filename), kind: 'playwright', kindLabel: pw.every(s=>kindOf(s.action)==='api') ? 'api' : 'ui' });
+    if (data.length) specs.push({ name: `${tc.id}_test.py`,   code: buildPytest(tc, data, filename),      kind: 'pytest',    kindLabel: 'data' });
+  });
 
-  if (!specs.length) {
-    genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found in the file.</p>';
-    return;
-  }
+  if (!specs.length) { genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found.</p>'; return; }
 
   genOut.innerHTML = `
-    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} spec file(s) from ${escapeHtml(filename)}</h3>
+    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} file(s) from ${escapeHtml(filename)}</h3>
     <div class="grid">
       ${specs.map((s, i) => `
         <div class="spec-card">
           <strong>${escapeHtml(s.name)}</strong>
-          <div class="steps">${s.stepCount} step${s.stepCount === 1 ? '' : 's'}</div>
+          <div class="steps">${s.kind === 'playwright' ? 'Playwright' : 'pytest + PySpark'}</div>
+          <span class="kind ${s.kindLabel}">${s.kindLabel}</span>
           <button class="secondary" data-spec="${i}">⬇️ Download</button>
-        </div>
-      `).join('')}
+        </div>`).join('')}
     </div>
     <h4 style="margin-top:1.75rem;">Preview: ${escapeHtml(specs[0].name)}</h4>
     <div class="preview">${escapeHtml(specs[0].code)}</div>
@@ -495,37 +446,116 @@ function renderGenerated(rows, filename) {
 
   genOut.querySelectorAll('button[data-spec]').forEach(btn => {
     btn.addEventListener('click', () => {
-      const spec = specs[parseInt(btn.dataset.spec)];
-      downloadFile(spec.name, spec.code, 'text/javascript');
+      const s = specs[parseInt(btn.dataset.spec)];
+      downloadFile(s.name, s.code, s.kind === 'playwright' ? 'text/javascript' : 'text/x-python');
     });
   });
 }
 
-function buildSpec(tc, sourceFile) {
-  const esc = s => String(s).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-  const lines = tc.steps.map(s => {
-    const { action, selector = '', value = '', expected = '' } = s;
+// ---------- Playwright (UI + API) ----------
+function buildPlaywright(tc, steps, sourceFile) {
+  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+  const lines = steps.map(s => {
+    const { action, method='', url='', headers='', body='', selector='', value='', expected='', jsonpath='' } = s;
     switch (action) {
-      case 'goto':          return `  await page.goto('${esc(value)}');`;
+      case 'goto':          return `  await page.goto('${esc(url || value)}');`;
       case 'fill':          return `  await page.fill('${esc(selector)}', '${esc(value)}');`;
       case 'click':         return `  await page.click('${esc(selector)}');`;
       case 'expectText':    return `  await expect(page.locator('${esc(selector)}')).toContainText('${esc(expected || value)}');`;
       case 'expectVisible': return `  await expect(page.locator('${esc(selector)}')).toBeVisible();`;
-      case 'expectUrl':     return `  await expect(page).toHaveURL(/${esc(value)}/);`;
+      case 'expectUrl':     return `  await expect(page).toHaveURL(/${esc(url || value)}/);`;
       case 'wait':          return `  await page.waitForTimeout(${Number(value) || 1000});`;
-      default:              return `  // TODO: unsupported action "${esc(action)}"`;
+
+      case 'apiRequest': {
+        const m = (method || 'GET').toUpperCase();
+        const opts = [];
+        if (headers) opts.push(`headers: ${headers}`);
+        if (body)    opts.push(`data: ${body}`);
+        const optsStr = opts.length ? `, { ${opts.join(', ')} }` : '';
+        return `  const response = await request.${m.toLowerCase()}('${esc(url)}'${optsStr});`;
+      }
+      case 'expectStatus':  return `  expect(response.status()).toBe(${Number(expected) || 200});`;
+      case 'expectJson':    return `  expect((await response.json())${jsonPathToJs(jsonpath)}).toBe('${esc(expected)}');`;
+      case 'expectHeader':  return `  expect(response.headers()['${esc(selector.toLowerCase())}']).toBe('${esc(expected)}');`;
+      default:              return `  // TODO: unsupported "${esc(action)}"`;
     }
   }).join('\n');
 
   return `// AUTO-GENERATED from ${sourceFile} — do not edit manually
 const { test, expect } = require('@playwright/test');
 
-test('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page }) => {
+test('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page, request }) => {
 ${lines}
 });
 `;
 }
 
+function jsonPathToJs(path) {
+  if (!path) return '';
+  // Convert "data[0].name" → [0].name
+  return path.replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]');
+}
+
+// ---------- Pytest + PySpark (Data) ----------
+function buildPytest(tc, steps, sourceFile) {
+  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/"""/g,'\\"\\"\\"');
+
+  // We declare variables up-front and assert them in order.
+  const setup = [];
+  const tests = [];
+  let queryVar = null, queryCounter = 0;
+
+  steps.forEach(s => {
+    const { action, selector='', value='', expected='', jsonpath='' } = s;
+    switch (action) {
+      case 'runSql': {
+        queryCounter++;
+        queryVar = `result_${queryCounter}`;
+        setup.push(`${queryVar} = spark.sql("""${esc(value)}""").collect()`);
+        break;
+      }
+      case 'expectRowCount':
+        tests.push(`    assert len(${queryVar}) == ${Number(expected) || 0}, f"Expected ${esc(expected)} rows, got {len(${queryVar})}"`);
+        break;
+      case 'expectNoNulls':
+        tests.push(`    nulls = spark.sql("SELECT COUNT(*) AS c FROM ${esc(selector)} WHERE ${esc(selector)} IS NULL").collect()[0]['c']\n    assert nulls == 0, f"Found {nulls} NULLs in ${esc(selector)}"`);
+        break;
+      case 'expectUnique':
+        tests.push(`    dupes = spark.sql("SELECT ${esc(selector)}, COUNT(*) AS c FROM ${esc(selector)} GROUP BY ${esc(selector)} HAVING c > 1").collect()\n    assert len(dupes) == 0, f"Found {len(dupes)} duplicate values in ${esc(selector)}"`);
+        break;
+      case 'expectValue':
+        tests.push(`    assert str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip() == '${esc(expected)}', f"Expected '${esc(expected)}', got '{str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip()}'"`);
+        break;
+    }
+  });
+
+  return `# AUTO-GENERATED from ${sourceFile} — do not edit manually
+# Test type: Data validation (Databricks / PySpark)
+import pytest
+from pyspark.sql import SparkSession
+
+
+@pytest.fixture(scope="session")
+def spark():
+    return SparkSession.builder.appName("erplorer-tests").getOrCreate()
+
+
+def test_${tc.id.toLowerCase()}_${slug(tc.scenario)}(spark):
+    """${esc(tc.scenario)}"""
+${setup.map(l => '    ' + l).join('\n')}
+
+${tests.join('\n') || '    pass  # no assertions generated'}
+`;
+}
+
+function jsonPathToPy(path) {
+  if (!path) return '';
+  // Convert "[0].name" → "[0]['name']"
+  return path.replace(/\[(\d+)\]/g, '[$1]').replace(/\.([A-Za-z_$][\w$]*)/g, "['$1']");
+}
+function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
+
+// ---------- Download helpers ----------
 function downloadFile(name, content, mime = 'text/plain') {
   const blob = new Blob([content], { type: mime + ';charset=utf-8' });
   const a = document.createElement('a');
@@ -539,51 +569,50 @@ function downloadFile(name, content, mime = 'text/plain') {
 // 6. TEMPLATE DOWNLOAD
 // ============================================================
 const TEMPLATE_ROWS = [
-  ['id','scenario','step','action','selector','value','expected'],
-  ['TC001','Login with valid credentials','1','goto','','/login',''],
-  ['TC001','Login with valid credentials','2','fill','#username','admin',''],
-  ['TC001','Login with valid credentials','3','fill','#password','secret123',''],
-  ['TC001','Login with valid credentials','4','click','button[type=submit]','',''],
-  ['TC001','Login with valid credentials','5','expectText','.dashboard','','Welcome admin'],
-  ['TC002','Logout from dashboard','1','goto','','/dashboard',''],
-  ['TC002','Logout from dashboard','2','click','#logout-btn','',''],
-  ['TC002','Logout from dashboard','3','expectUrl','','/login',''],
-  ['TC003','Search for a product','1','goto','','/search',''],
-  ['TC003','Search for a product','2','fill','#search-box','laptop',''],
-  ['TC003','Search for a product','3','click','#search-submit','',''],
-  ['TC003','Search for a product','4','expectText','.results','','Found 12 results']
+  ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
+
+  // UI test
+  ['TC001','Login UI flow','1','goto','','/login','','','','','',''],
+  ['TC001','Login UI flow','2','fill','','','','','#username','admin','',''],
+  ['TC001','Login UI flow','3','fill','','','','','#password','secret123','',''],
+  ['TC001','Login UI flow','4','click','','','','','button[type=submit]','','',''],
+  ['TC001','Login UI flow','5','expectText','','','','','.dashboard','','Welcome admin',''],
+
+  // API test (Postman-style)
+  ['TC002','Users API returns alice','1','apiRequest','GET','/api/users','{"Accept":"application/json"}','','','','',''],
+  ['TC002','Users API returns alice','2','expectStatus','','','','','','','200',''],
+  ['TC002','Users API returns alice','3','expectJson','','','','','','','alice','data[0].name'],
+  ['TC002','Users API returns alice','4','expectHeader','','','','','content-type','','application/json',''],
+
+  // Data test (Databricks / SQL)
+  ['TC003','Users table has no nulls in email','1','runSql','','','','','','SELECT COUNT(*) AS c FROM users','',''],
+  ['TC003','Users table has no nulls in email','2','expectRowCount','','','','','','','1',''],
+  ['TC003','Users table has no nulls in email','3','expectNoNulls','','','','','users','','',''],
+
+  // Data test - migration success
+  ['TC004','Migration added expected rows','1','runSql','','','','','','SELECT COUNT(*) FROM orders','',''],
+  ['TC004','Migration added expected rows','2','expectRowCount','','','','','','','10000','']
 ];
 
 function csvEscape(v) {
   const s = String(v ?? '');
-  if (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r')) {
-    return '"' + s.replace(/"/g, '""') + '"';
-  }
-  return s;
+  return (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r'))
+    ? '"' + s.replace(/"/g,'""') + '"'
+    : s;
 }
 
 function downloadTemplate(format) {
   const isTsv = format === 'tsv';
-  const delim = isTsv ? '\t' : ',';
-  const ext = isTsv ? 'tsv' : 'csv';
-  const mime = isTsv ? 'text/tab-separated-values' : 'text/csv';
-
-  const body = TEMPLATE_ROWS
-    .map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(','))
-    .join('\n');
-
-  downloadFile(`TEMPLATE.${ext}`, body, mime);
+  const body = TEMPLATE_ROWS.map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(',')).join('\n');
+  downloadFile(`TEMPLATE.${isTsv ? 'tsv' : 'csv'}`, body, isTsv ? 'text/tab-separated-values' : 'text/csv');
 }
 
 // ============================================================
-// 7. SETTINGS / TOKEN
+// 7. SETTINGS
 // ============================================================
 function saveToken() {
-  const token = document.getElementById('token-input').value.trim();
-  if (token) {
-    sessionStorage.setItem('gh_token', token);
-    document.getElementById('token-status').innerHTML = '✅ Token saved to sessionStorage.';
-  }
+  const t = document.getElementById('token-input').value.trim();
+  if (t) { sessionStorage.setItem('gh_token', t); document.getElementById('token-status').innerHTML = '✅ Token saved.'; }
 }
 function clearToken() {
   sessionStorage.removeItem('gh_token');
@@ -591,11 +620,8 @@ function clearToken() {
   document.getElementById('token-status').innerHTML = '🗑️ Token cleared.';
 }
 (function () {
-  const existing = sessionStorage.getItem('gh_token');
-  if (existing) {
-    document.getElementById('token-input').value = existing;
-    document.getElementById('token-status').innerHTML = '✅ Token loaded from session.';
-  }
+  const e = sessionStorage.getItem('gh_token');
+  if (e) { document.getElementById('token-input').value = e; document.getElementById('token-status').innerHTML = '✅ Token loaded.'; }
 })();
 </script>
 </body>

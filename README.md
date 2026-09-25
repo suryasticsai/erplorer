@@ -22,20 +22,6 @@
   <img src="https://img.shields.io/badge/license-MIT-22C55E?style=flat-square" alt="MIT">
 </p>
 
----
-
-## 🔗 Quick Links
-
-| | Link |
-|---|---|
-| 🚀 **Live tool** | [https://suryasticsai.github.io/erplorer/](https://suryasticsai.github.io/erplorer/) |
-| 📦 **Repository** | [https://github.com/suryasticsai/erplorer](https://github.com/suryasticsai/erplorer) |
-| 💬 **Consoleena** (AI assistant) | [https://github.com/suryasticsai/Consoleena](https://github.com/suryasticsai/Consoleena) |
-| 🕷️ **RAGina** (crawler backend) | [https://github.com/suryasticsai/RAGina](https://github.com/suryasticsai/RAGina) |
-| 📄 **Issues & feedback** | [https://github.com/suryasticsai/erplorer/issues](https://github.com/suryasticsai/erplorer/issues) |
-
----
-
 ## What it does
 
 ERplorer indexes your codebase — Java, Node.js, Python, SQL, YAML, JSON, Databricks notebooks — and lets anyone search it by pasting an error message. It returns the exact **file**, **line number**, and **surrounding code**.

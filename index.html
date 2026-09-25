@@ -24,7 +24,7 @@
   .header h1 .er { color:var(--signal); }
   .subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.75rem; margin-left:60px; }
 
-  .tabs { display:flex; gap:0.25rem; border-bottom:2px solid var(--border); margin-bottom:1.75rem; }
+  .tabs { display:flex; gap:0.25rem; border-bottom:2px solid var(--border); margin-bottom:1.75rem; flex-wrap:wrap; }
   .tab {
     padding:0.75rem 1.25rem; cursor:pointer; border:none; background:none;
     font-size:0.95rem; font-family:inherit; color:var(--muted);
@@ -60,6 +60,7 @@
     border:2px solid var(--border); border-radius:10px; outline:none;
   }
   input[type=password]:focus { border-color:var(--signal); }
+  input[type=text].small { padding:0.55rem 0.75rem; font-size:0.9rem; border-radius:8px; }
 
   .search-row { display:flex; gap:0.5rem; align-items:stretch; }
   .search-row input { flex:1; }
@@ -80,10 +81,6 @@
     white-space:pre-wrap; word-break:break-word;
   }
   .ai-answer.loading { color:var(--muted); font-style:italic; }
-  .ai-answer code {
-    background:#F1F5F9; padding:1px 6px; border-radius:4px;
-    font-family:ui-monospace,monospace; font-size:0.85rem;
-  }
   .ai-hint {
     font-size:0.82rem; color:var(--muted); margin-top:0.75rem;
     padding:0.6rem 0.85rem; background:#FAFAFA; border-radius:6px;
@@ -106,6 +103,7 @@
   .result.sql-error     { border-left:4px solid #7C3AED; }
   .result.notebook-error{ border-left:4px solid #DB2777; }
   .result.crawled       { border-left:4px solid #EC4899; }
+  .result.custom-error  { border-left:4px solid #14B8A6; }
 
   .meta { font-size:0.85rem; color:var(--slate); margin-bottom:0.55rem;
           display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
@@ -160,6 +158,8 @@
   button.ghost:hover { background:#FFFBEB; }
   button.ai { background:var(--ai); }
   button.ai:hover { background:#7C3AED; }
+  button.danger { background:#FEE2E2; color:#991B1B; }
+  button.danger:hover { background:#FECACA; }
 
   .preview {
     background:var(--ink); color:#CBD5E1; padding:1.25rem 1.4rem;
@@ -205,6 +205,74 @@
   details summary::before { content:'▸ '; display:inline-block; transition:transform 0.15s; }
   details[open] summary::before { transform:rotate(90deg); }
 
+  /* History panel */
+  .history-panel {
+    margin-top:1rem; padding:0.85rem 1rem;
+    background:white; border:1px solid var(--border); border-radius:10px;
+  }
+  .history-header {
+    display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;
+  }
+  .history-header strong { font-size:0.85rem; color:var(--slate); }
+  .history-list { display:flex; flex-wrap:wrap; gap:0.5rem; }
+  .history-chip {
+    display:inline-flex; align-items:center; gap:0.4rem;
+    padding:0.35rem 0.7rem; background:var(--paper); border:1px solid var(--border);
+    border-radius:6px; font-size:0.8rem; cursor:pointer; transition:0.15s;
+    font-family:ui-monospace,monospace; color:var(--slate);
+  }
+  .history-chip:hover { border-color:var(--signal); background:#FFFBEB; }
+  .history-chip .count {
+    background:#E2E8F0; padding:0 6px; border-radius:4px;
+    font-size:0.7rem; font-weight:600; color:var(--muted);
+  }
+
+  /* Pattern cards */
+  .pattern-card {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
+    padding:1rem 1.15rem; margin-top:0.75rem; background:white;
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .pattern-card.disabled { opacity:0.5; }
+  .pattern-info { flex:1; min-width:0; }
+  .pattern-info .name { font-weight:600; font-size:0.95rem; margin-bottom:0.25rem; }
+  .pattern-info .regex {
+    font-family:ui-monospace,monospace; font-size:0.78rem;
+    background:var(--paper); padding:0.4rem 0.6rem; border-radius:5px;
+    color:var(--slate); overflow-x:auto; white-space:nowrap;
+  }
+  .pattern-info .meta { font-size:0.75rem; color:var(--muted); margin-top:0.4rem; }
+  .pattern-actions { display:flex; gap:0.4rem; align-items:center; }
+  .pattern-actions button { padding:0.4rem 0.75rem; font-size:0.8rem; }
+
+  .toggle-switch {
+    position:relative; display:inline-block; width:36px; height:20px;
+  }
+  .toggle-switch input { opacity:0; width:0; height:0; }
+  .toggle-switch .slider {
+    position:absolute; cursor:pointer; inset:0;
+    background:#CBD5E1; border-radius:20px; transition:0.2s;
+  }
+  .toggle-switch .slider::before {
+    content:''; position:absolute; height:14px; width:14px;
+    left:3px; bottom:3px; background:white; border-radius:50%; transition:0.2s;
+  }
+  .toggle-switch input:checked + .slider { background:var(--signal); }
+  .toggle-switch input:checked + .slider::before { transform:translateX(16px); }
+
+  .form-card {
+    padding:1.25rem; margin-top:1rem; background:white;
+    border:1px solid var(--border); border-radius:10px;
+  }
+  .form-row { margin-bottom:0.85rem; }
+  .form-row label {
+    display:block; font-size:0.82rem; font-weight:600;
+    color:var(--slate); margin-bottom:0.35rem;
+  }
+  .form-row .help {
+    font-size:0.75rem; color:var(--muted); margin-top:0.25rem;
+  }
+
   .footer {
     margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
     font-size:0.8rem; color:var(--muted);
@@ -225,6 +293,7 @@
 <div class="tabs">
   <button class="tab active" data-tab="explorer">Error Explorer</button>
   <button class="tab" data-tab="generator">Test Cases → Code</button>
+  <button class="tab" data-tab="patterns">🎯 Patterns</button>
   <button class="tab" data-tab="settings">⚙️ Settings</button>
 </div>
 
@@ -237,13 +306,11 @@
     <button class="mode-btn" data-mode="ai" id="ai-mode-btn" onclick="setMode('ai')" disabled>💬 Ask AI</button>
   </div>
 
-  <!-- Exact search mode -->
   <div id="mode-exact">
     <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
     <div id="results"></div>
   </div>
 
-  <!-- AI mode -->
   <div id="mode-ai" style="display:none;">
     <div class="search-row">
       <input type="text" id="nl-input" placeholder="Ask in plain English: 'Show Java errors in auth module'">
@@ -255,7 +322,16 @@
     <div id="nl-answer"></div>
   </div>
 
-  <!-- ===== Add Content Section ===== -->
+  <!-- Search History -->
+  <div class="history-panel" id="history-panel" style="display:none;">
+    <div class="history-header">
+      <strong>🕘 Recent searches</strong>
+      <button class="ghost" style="padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="clearHistory()">Clear all</button>
+    </div>
+    <div class="history-list" id="history-list"></div>
+  </div>
+
+  <!-- Add Content -->
   <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
     <h3 style="font-size:1rem; margin-bottom:0.75rem;">➕ Add more content to search</h3>
 
@@ -319,6 +395,54 @@
   </div>
 </div>
 
+<!-- ============ PATTERNS ============ -->
+<div class="panel" id="panel-patterns">
+  <h3 style="font-size:1.1rem; margin-bottom:0.5rem;">🎯 Custom error patterns</h3>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.25rem;">
+    Define team-specific regex rules to detect errors ERplorer's built-in patterns don't catch.
+    Patterns are stored in your browser (IndexedDB) and applied the next time you crawl, scan, or paste content.
+  </p>
+
+  <div class="form-card">
+    <h4 style="font-size:0.95rem; margin-bottom:0.75rem;">➕ Add a new pattern</h4>
+
+    <div class="form-row">
+      <label for="pat-name">Name</label>
+      <input type="text" id="pat-name" class="small" placeholder="e.g. MyApp internal error">
+    </div>
+
+    <div class="form-row">
+      <label for="pat-regex">Regex pattern</label>
+      <input type="text" id="pat-regex" class="small" placeholder="e.g. MY_APP_ERROR_\\d+: ([^\\n]+)" style="font-family:ui-monospace,monospace;">
+      <div class="help">Use a capture group <code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;">( )</code> to mark which part is the error message.</div>
+    </div>
+
+    <div class="form-row">
+      <label for="pat-type">Result type</label>
+      <input type="text" id="pat-type" class="small" placeholder="custom-error" value="custom-error">
+      <div class="help">Shown as the badge on results. Use <code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;">custom-error</code> for a teal border.</div>
+    </div>
+
+    <div class="form-row">
+      <label for="pat-exts">File extensions (optional)</label>
+      <input type="text" id="pat-exts" class="small" placeholder=".js,.ts,.java — leave empty for all files">
+      <div class="help">Comma-separated. Leave blank to apply the pattern to every indexed file.</div>
+    </div>
+
+    <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+      <button onclick="addPattern()">Save pattern</button>
+      <button class="secondary" onclick="testPattern()">Test against sample</button>
+    </div>
+
+    <div id="pattern-test" style="margin-top:1rem; display:none;"></div>
+  </div>
+
+  <h4 style="font-size:0.95rem; margin-top:2rem; margin-bottom:0.5rem;">
+    Your patterns <span id="pattern-count" style="color:var(--muted); font-weight:normal;">(0)</span>
+  </h4>
+  <div id="pattern-list"></div>
+</div>
+
 <!-- ============ SETTINGS ============ -->
 <div class="panel" id="panel-settings">
   <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
@@ -336,10 +460,16 @@
   <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI Assistant</h3>
   <p style="color:var(--muted); font-size:0.9rem;">
     The "Ask AI" tab uses <a href="https://github.com/suryasticsai/Consoleena" target="_blank" style="color:var(--signal)">Consoleena</a>
-    for natural language queries. It runs entirely in your browser — no data leaves your machine except the query text sent to the
-    configured LLM endpoint.
+    for natural language queries. Runs entirely in your browser.
   </p>
   <div id="consoleena-status" class="status" style="margin-top:1rem;">⏳ Checking Consoleena...</div>
+
+  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">Local storage</h3>
+  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
+    ERplorer stores search history and custom patterns in your browser using IndexedDB.
+    Nothing is sent to any server. Clearing your browser data will remove them.
+  </p>
+  <button class="danger" onclick="resetAllLocalData()">🗑️ Reset all local data</button>
 </div>
 
 <div class="footer">
@@ -353,7 +483,291 @@
 
 <script>
 // ============================================================
-// 1. OCTOKIT
+// 1. INDEXEDDB — search history + custom patterns
+// ============================================================
+const DB_NAME = 'erplorer';
+const DB_VERSION = 1;
+let dbPromise = null;
+
+function openDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('searches')) {
+        const s = db.createObjectStore('searches', { keyPath: 'id', autoIncrement: true });
+        s.createIndex('timestamp', 'timestamp');
+        s.createIndex('query', 'query', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('patterns')) {
+        const p = db.createObjectStore('patterns', { keyPath: 'id', autoIncrement: true });
+        p.createIndex('createdAt', 'createdAt');
+      }
+    };
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror = e => reject(e.target.error);
+  });
+  return dbPromise;
+}
+
+async function dbAdd(store, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).add(value);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbPut(store, value) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).put(value);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbGetAll(store) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readonly');
+    const req = tx.objectStore(store).getAll();
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbDelete(store, id) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function dbClear(store) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, 'readwrite');
+    const req = tx.objectStore(store).clear();
+    req.onsuccess = () => resolve();
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// ============================================================
+// 2. SEARCH HISTORY
+// ============================================================
+const HISTORY_LIMIT = 25;
+
+async function recordSearch(query, mode, resultCount) {
+  if (!query || query.length < 2) return;
+  try {
+    const searches = await dbGetAll('searches');
+    // Remove duplicate of the same query+mode (we'll re-add it)
+    for (const s of searches) {
+      if (s.query === query && s.mode === mode) await dbDelete('searches', s.id);
+    }
+    await dbAdd('searches', {
+      query, mode, resultCount,
+      timestamp: Date.now()
+    });
+    // Trim to HISTORY_LIMIT
+    const all = await dbGetAll('searches');
+    if (all.length > HISTORY_LIMIT) {
+      all.sort((a, b) => a.timestamp - b.timestamp);
+      const toDelete = all.slice(0, all.length - HISTORY_LIMIT);
+      for (const s of toDelete) await dbDelete('searches', s.id);
+    }
+    renderHistory();
+  } catch (err) {
+    console.warn('History save failed:', err);
+  }
+}
+
+async function renderHistory() {
+  const panel = document.getElementById('history-panel');
+  const list = document.getElementById('history-list');
+  try {
+    const all = await dbGetAll('searches');
+    if (!all.length) { panel.style.display = 'none'; return; }
+    all.sort((a, b) => b.timestamp - a.timestamp);
+
+    panel.style.display = 'block';
+    list.innerHTML = all.map(s => `
+      <div class="history-chip" onclick="rerunSearch(${s.id})">
+        <span>${escapeHtml(s.query.length > 40 ? s.query.slice(0, 40) + '…' : s.query)}</span>
+        ${s.resultCount != null ? `<span class="count">${s.resultCount}</span>` : ''}
+      </div>
+    `).join('');
+  } catch (err) {
+    console.warn('History render failed:', err);
+  }
+}
+
+async function rerunSearch(id) {
+  const all = await dbGetAll('searches');
+  const entry = all.find(s => s.id === id);
+  if (!entry) return;
+  setMode(entry.mode || 'exact');
+  if (entry.mode === 'ai') {
+    document.getElementById('nl-input').value = entry.query;
+    askNatural();
+  } else {
+    document.getElementById('search-input').value = entry.query;
+    runSearch();
+  }
+}
+
+async function clearHistory() {
+  await dbClear('searches');
+  renderHistory();
+}
+
+// ============================================================
+// 3. CUSTOM PATTERNS
+// ============================================================
+let customPatterns = [];
+
+async function loadCustomPatterns() {
+  try {
+    customPatterns = await dbGetAll('patterns');
+    renderPatterns();
+  } catch (err) {
+    console.warn('Pattern load failed:', err);
+  }
+}
+
+function renderPatterns() {
+  const list = document.getElementById('pattern-list');
+  const count = document.getElementById('pattern-count');
+  count.textContent = `(${customPatterns.length})`;
+
+  if (!customPatterns.length) {
+    list.innerHTML = '<p style="color:var(--muted); padding:1rem 0; font-size:0.9rem;">No custom patterns yet. Add one above.</p>';
+    return;
+  }
+
+  list.innerHTML = customPatterns.map(p => `
+    <div class="pattern-card ${p.enabled === false ? 'disabled' : ''}" data-id="${p.id}">
+      <div class="pattern-info">
+        <div class="name">${escapeHtml(p.name)}</div>
+        <div class="regex">${escapeHtml(p.pattern)}</div>
+        <div class="meta">
+          Type: <strong>${escapeHtml(p.type)}</strong>
+          ${p.exts ? ` · Files: <strong>${escapeHtml(p.exts)}</strong>` : ' · All files'}
+        </div>
+      </div>
+      <div class="pattern-actions">
+        <label class="toggle-switch" title="Enable / disable">
+          <input type="checkbox" ${p.enabled === false ? '' : 'checked'} onchange="togglePattern(${p.id}, this.checked)">
+          <span class="slider"></span>
+        </label>
+        <button class="danger" onclick="deletePattern(${p.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addPattern() {
+  const name = document.getElementById('pat-name').value.trim();
+  const pattern = document.getElementById('pat-regex').value.trim();
+  const type = document.getElementById('pat-type').value.trim() || 'custom-error';
+  const exts = document.getElementById('pat-exts').value.trim();
+
+  if (!name || !pattern) {
+    alert('Name and regex pattern are required.');
+    return;
+  }
+
+  // Validate regex
+  try { new RegExp(pattern, 'g'); }
+  catch (err) {
+    alert('Invalid regex: ' + err.message);
+    return;
+  }
+
+  await dbAdd('patterns', {
+    name, pattern, type, exts,
+    enabled: true,
+    createdAt: Date.now()
+  });
+
+  document.getElementById('pat-name').value = '';
+  document.getElementById('pat-regex').value = '';
+  document.getElementById('pat-exts').value = '';
+  document.getElementById('pattern-test').style.display = 'none';
+
+  await loadCustomPatterns();
+}
+
+async function togglePattern(id, enabled) {
+  const p = customPatterns.find(x => x.id === id);
+  if (!p) return;
+  p.enabled = enabled;
+  await dbPut('patterns', p);
+  renderPatterns();
+}
+
+async function deletePattern(id) {
+  if (!confirm('Delete this pattern?')) return;
+  await dbDelete('patterns', id);
+  await loadCustomPatterns();
+}
+
+function testPattern() {
+  const pattern = document.getElementById('pat-regex').value.trim();
+  const output = document.getElementById('pattern-test');
+  output.style.display = 'block';
+
+  if (!pattern) {
+    output.innerHTML = '<div class="error-list">Enter a regex pattern first.</div>';
+    return;
+  }
+
+  const sample = `This is a sample.
+MY_APP_ERROR_42: Something broke
+Another line without the pattern.
+MY_APP_ERROR_99: Second issue here`;
+
+  try {
+    const re = new RegExp(pattern, 'g');
+    const matches = [...sample.matchAll(re)];
+    if (!matches.length) {
+      output.innerHTML = `<div class="status">No matches in the built-in sample. Test it against real content after saving.</div>`;
+      return;
+    }
+    output.innerHTML = `
+      <div class="status">
+        ✅ Found <strong>${matches.length}</strong> match(es) in the sample text:
+        <ul style="margin-left:1.25rem; margin-top:0.5rem;">
+          ${matches.map(m => `<li><code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">${escapeHtml(m[1] || m[0])}</code></li>`).join('')}
+        </ul>
+      </div>
+    `;
+  } catch (err) {
+    output.innerHTML = `<div class="error-list">Invalid regex: ${escapeHtml(err.message)}</div>`;
+  }
+}
+
+async function resetAllLocalData() {
+  if (!confirm('This will delete all search history and custom patterns. Continue?')) return;
+  await dbClear('searches');
+  await dbClear('patterns');
+  customPatterns = [];
+  renderPatterns();
+  renderHistory();
+  alert('Local data cleared.');
+}
+
+// ============================================================
+// 4. OCTOKIT
 // ============================================================
 let OctokitClass = null;
 (async () => {
@@ -367,7 +781,7 @@ function getOctokit() {
 }
 
 // ============================================================
-// 2. SEARCH INDEX
+// 5. SEARCH INDEX
 // ============================================================
 let flexIndex = null, documents = [];
 
@@ -403,21 +817,31 @@ async function loadIndex() {
 loadIndex();
 
 // ============================================================
-// 3. EXACT SEARCH
+// 6. EXACT SEARCH
 // ============================================================
 const searchInput = document.getElementById('search-input');
 const resultsEl = document.getElementById('results');
 let debounce;
 searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(runSearch, 180); });
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    clearTimeout(debounce);
+    runSearch(true); // save this one to history
+  }
+});
 
-function runSearch() {
+function runSearch(saveToHistory = false) {
   const q = searchInput.value.trim();
   resultsEl.innerHTML = '';
   if (q.length < 2 || !flexIndex) return;
 
   const raw = flexIndex.search(q, { enrich: true });
   const hits = raw.flatMap(r => r.result).slice(0, 20);
-  if (!hits.length) { resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>'; return; }
+  if (!hits.length) {
+    resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>';
+    if (saveToHistory) recordSearch(q, 'exact', 0);
+    return;
+  }
 
   hits.forEach(({ id }) => {
     const doc = documents[id];
@@ -438,12 +862,14 @@ function runSearch() {
       <div class="snippet">${snippet}</div>`;
     resultsEl.appendChild(el);
   });
+
+  if (saveToHistory) recordSearch(q, 'exact', hits.length);
 }
 function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
 function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ============================================================
-// 4. MODE TOGGLE
+// 7. MODE TOGGLE
 // ============================================================
 function setMode(mode) {
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
@@ -455,7 +881,7 @@ function setMode(mode) {
 }
 
 // ============================================================
-// 5. CONSOLEENA (natural language)
+// 8. CONSOLEENA
 // ============================================================
 let consoleenaReady = false;
 
@@ -476,8 +902,7 @@ function tryConsoleenaInit() {
     }
     consoleenaReady = true;
     aiBtn.disabled = false;
-    aiBtn.title = 'Ask questions in plain English';
-    csStatus.innerHTML = `✅ Consoleena loaded — ${documents.length} entries available for AI queries.`;
+    csStatus.innerHTML = `✅ Consoleena loaded — ${documents.length} entries available.`;
   } catch (err) {
     csStatus.innerHTML = `⚠️ Consoleena init error: ${escapeHtml(err.message)}`;
     aiBtn.disabled = true;
@@ -492,7 +917,7 @@ async function askNatural() {
 
   answerEl.innerHTML = '<div class="ai-answer loading">Thinking…</div>';
   if (!consoleenaReady) {
-    answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong> to search by literal text.</div>';
+    answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong>.</div>';
     return;
   }
   try {
@@ -502,6 +927,7 @@ async function askNatural() {
       : escapeHtml(JSON.stringify(answer, null, 2));
     answerEl.innerHTML = `<div class="ai-answer">${formatted}</div>`;
     if (typeof Consoleena.highlight === 'function') { try { Consoleena.highlight('.result'); } catch {} }
+    recordSearch(q, 'ai', null);
   } catch (err) {
     answerEl.innerHTML = `<div class="ai-answer">❌ ${escapeHtml(err.message)}</div>`;
   }
@@ -509,7 +935,7 @@ async function askNatural() {
 document.getElementById('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') askNatural(); });
 
 // ============================================================
-// 6. TABS
+// 9. TABS
 // ============================================================
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -521,7 +947,7 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 // ============================================================
-// 7. FILE → PLAYWRIGHT / PYTEST
+// 10. FILE → PLAYWRIGHT / PYTEST
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
@@ -732,7 +1158,7 @@ function downloadFile(name, content, mime = 'text/plain') {
 }
 
 // ============================================================
-// 8. TEMPLATE DOWNLOAD
+// 11. TEMPLATE DOWNLOAD
 // ============================================================
 const TEMPLATE_ROWS = [
   ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
@@ -765,7 +1191,7 @@ function downloadTemplate(format) {
 }
 
 // ============================================================
-// 9. SETTINGS
+// 12. SETTINGS
 // ============================================================
 function saveToken() {
   const t = document.getElementById('token-input').value.trim();
@@ -782,12 +1208,12 @@ function clearToken() {
 })();
 
 // ============================================================
-// 10. DYNAMIC INDEX — Crawl + Manual Fallbacks
+// 13. DYNAMIC INDEX — Crawl + Manual Fallbacks
 // ============================================================
 const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
 const RAGINA_TIMEOUT_MS = 30000;
 
-const PARSE_PATTERNS = [
+const BUILTIN_PATTERNS = [
   { type: 'error',         re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
   { type: 'java-error',    re: /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g },
   { type: 'java-error',    re: /LOG(?:GER)?\.(?:error|warn|severe)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi },
@@ -797,6 +1223,24 @@ const PARSE_PATTERNS = [
   { type: 'sql-error',     re: /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g },
   { type: 'config-error',  re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
 ];
+
+// Merge built-in + enabled custom patterns at runtime
+function getActivePatterns() {
+  const merged = [...BUILTIN_PATTERNS];
+  for (const p of customPatterns) {
+    if (p.enabled === false) continue;
+    try {
+      merged.push({
+        type: p.type || 'custom-error',
+        re: new RegExp(p.pattern, 'g'),
+        exts: p.exts ? p.exts.split(',').map(e => e.trim()).filter(Boolean) : null
+      });
+    } catch (err) {
+      console.warn(`Pattern "${p.name}" has invalid regex:`, err.message);
+    }
+  }
+  return merged;
+}
 
 function detectType(filename) {
   const ext = (filename.split('.').pop() || '').toLowerCase();
@@ -811,8 +1255,10 @@ function parseText(text, sourceName) {
   const entries = [];
   const lines = text.split('\n');
   const defaultType = detectType(sourceName);
+  const fileExt = sourceName.includes('.') ? '.' + sourceName.split('.').pop().toLowerCase() : '';
 
-  for (const { type, re } of PARSE_PATTERNS) {
+  for (const { type, re, exts } of getActivePatterns()) {
+    if (exts && exts.length && !exts.includes(fileExt)) continue;
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(text)) !== null) {
@@ -863,9 +1309,7 @@ function setAddLoading(html) {
   el.style.color = '#64748B';
 }
 
-// ============================================================
 // TIER 1 — RAGina Crawl API
-// ============================================================
 async function tryTier1Crawl() {
   const url = document.getElementById('crawl-url').value.trim();
   if (!url) return;
@@ -906,9 +1350,7 @@ async function tryTier1Crawl() {
   }
 }
 
-// ============================================================
-// TIER 2 — GitHub Repo Scan via Octokit
-// ============================================================
+// TIER 2 — GitHub Repo Scan
 async function tryTier2Repo() {
   const repoInput = document.getElementById('repo-scan').value.trim();
   if (!repoInput) return;
@@ -953,16 +1395,14 @@ async function tryTier2Repo() {
   } catch (err) {
     showAddStatus('error',
       `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br>
-       <strong>If the repo is private</strong>, add a token in Settings. Or try Tier 3/4 below.`);
+       <strong>If the repo is private</strong>, add a token in Settings. Or try Tier 3/4.`);
   }
 }
 
-// ============================================================
 // TIER 3 — Local Folder / Files
-// ============================================================
 async function tryTier3Folder() {
   if (!window.showDirectoryPicker) {
-    showAddStatus('warn', '⚠️ Folder picker not supported in this browser. Use "Or drop files" instead.');
+    showAddStatus('warn', '⚠️ Folder picker not supported. Use "Or drop files" instead.');
     return;
   }
   try {
@@ -1019,9 +1459,7 @@ document.getElementById('tier3-file').addEventListener('change', async e => {
   e.target.value = '';
 });
 
-// ============================================================
 // TIER 4 — Paste Text
-// ============================================================
 function tryTier4Paste() {
   const text = document.getElementById('tier4-text').value;
   if (!text.trim()) { showAddStatus('warn', 'Nothing to add.'); return; }
@@ -1042,8 +1480,14 @@ function tryTier4Paste() {
 }
 
 // ============================================================
-// CRAWL API REACHABILITY CHECK
+// 14. BOOT
 // ============================================================
+(async function boot() {
+  await loadCustomPatterns();
+  await renderHistory();
+})();
+
+// CRAWL API REACHABILITY CHECK
 (async () => {
   try {
     const r = await fetch(RAGINA_CRAWL_API, { method: 'OPTIONS' });

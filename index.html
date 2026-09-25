@@ -1,558 +1,1004 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ERplorer — Error Resolution Explorer</title>
 <link rel="icon" type="image/png" href="erplorer-logo.png">
 <link rel="apple-touch-icon" href="erplorer-logo.png">
 <style>
-  :root {
-    --ink:#0F172A; --slate:#1E293B; --paper:#F8FAFC; --signal:#F59E0B;
-    --error:#EF4444; --code:#3B82F6; --test:#8B5CF6; --api:#10B981;
-    --data:#06B6D4; --border:#E2E8F0; --muted:#64748B; --ai:#8B5CF6;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body {
-    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    max-width:1100px; margin:0 auto; padding:1.5rem;
-    color:var(--ink); line-height:1.55; background:var(--paper);
-  }
-  .header { display:flex; align-items:center; gap:0.85rem; margin-bottom:0.4rem; }
-  .header img { width:48px; height:48px; object-fit:contain; border-radius:10px; }
-  .header h1 { font-size:1.55rem; font-weight:700; letter-spacing:-0.02em; }
-  .header h1 .er { color:var(--signal); }
-  .subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.75rem; margin-left:60px; }
+:root {
+  --bg: #FAF9F5;
+  --bg-alt: #F4F2EC;
+  --card: #FFFFFF;
+  --card-hover: #FCFBF8;
+  --code-bg: #1C1A16;
+  --code-text: #E8E6DE;
+  --code-muted: #7A7568;
+  --border: #E7E4DC;
+  --border-strong: #D4D0C4;
+  --ink: #14120D;
+  --ink-2: #45413A;
+  --muted: #7A7568;
+  --muted-2: #A8A396;
+  --accent: #B26A34;
+  --accent-soft: #FBF3E4;
+  --error: #B94A3C;
+  --success: #4C7A38;
+  --info: #3D6494;
+  --purple: #6E4F9E;
+  --radius: 18px;
+  --radius-sm: 10px;
+  --radius-pill: 999px;
+  --nav-h: 68px;
+  --glass: rgba(250, 249, 245, 0.94);
+  --bubble-me: #F4F2EC;
+  --bubble-ai: #FFFFFF;
+}
 
-  .tabs { display:flex; gap:0.25rem; border-bottom:2px solid var(--border); margin-bottom:1.75rem; flex-wrap:wrap; }
-  .tab {
-    padding:0.75rem 1.25rem; cursor:pointer; border:none; background:none;
-    font-size:0.95rem; font-family:inherit; color:var(--muted);
-    border-bottom:3px solid transparent; margin-bottom:-2px; transition:0.15s;
-  }
-  .tab:hover { color:var(--signal); }
-  .tab.active { color:var(--signal); border-bottom-color:var(--signal); font-weight:600; }
+[data-theme="dark"] {
+  --bg: #1A1815;
+  --bg-alt: #24211C;
+  --card: #262320;
+  --card-hover: #2D2A25;
+  --code-bg: #0F0E0B;
+  --code-text: #E8E6DE;
+  --code-muted: #6B665D;
+  --border: #35312B;
+  --border-strong: #4A453D;
+  --ink: #F0EDE6;
+  --ink-2: #C9C4BA;
+  --muted: #A8A29A;
+  --muted-2: #7A7568;
+  --accent: #D4884A;
+  --accent-soft: #3A2E1F;
+  --error: #E07866;
+  --success: #7BA562;
+  --info: #7EA6D6;
+  --purple: #A98CD9;
+  --glass: rgba(26, 24, 21, 0.92);
+  --bubble-me: #2D2A25;
+  --bubble-ai: #262320;
+}
 
-  .panel { display:none; }
-  .panel.active { display:block; animation:fade 0.2s ease; }
-  @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
-  .mode-toggle {
-    display:inline-flex; background:#F1F5F9; border-radius:10px; padding:4px;
-    margin-bottom:1rem; gap:2px;
-  }
-  .mode-btn {
-    padding:0.5rem 1rem; border:none; background:transparent; cursor:pointer;
-    border-radius:7px; font-size:0.85rem; font-family:inherit; font-weight:500;
-    color:var(--muted); transition:0.15s;
-  }
-  .mode-btn.active { background:white; color:var(--signal); box-shadow:0 1px 3px rgba(0,0,0,0.08); }
+html { height: auto; }
+body {
+  min-height: 100vh;
+  height: auto;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  font-size: 15px;
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0));
+  transition: background 0.25s, color 0.25s;
+}
+.shell { max-width: 760px; margin: 0 auto; padding: 0 20px; }
 
-  input[type=text] {
-    width:100%; padding:1rem 1.15rem; font-size:1.05rem; font-family:inherit;
-    border:2px solid var(--border); border-radius:12px; outline:none;
-    background:white; transition:0.15s;
-  }
-  input[type=text]:focus { border-color:var(--signal); box-shadow:0 0 0 4px rgba(245,158,11,0.12); }
-  input[type=password] {
-    width:100%; padding:0.9rem 1rem; font-size:1rem; font-family:inherit;
-    border:2px solid var(--border); border-radius:10px; outline:none;
-  }
-  input[type=password]:focus { border-color:var(--signal); }
-  input[type=text].small { padding:0.55rem 0.75rem; font-size:0.9rem; border-radius:8px; }
+/* ============ HEADER ============ */
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 40;
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.app-logo-img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
+  mix-blend-mode: multiply;
+}
+[data-theme="dark"] .app-logo-img {
+  mix-blend-mode: screen;
+  filter: invert(1) hue-rotate(180deg) brightness(1.2) saturate(0.9);
+}
+.app-title-wrap { min-width: 0; flex: 1; }
+.app-title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+.app-title .er { color: var(--accent); }
+.app-tagline {
+  font-size: 10px;
+  color: var(--muted-2);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-top: 3px;
+}
+.theme-toggle {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: 0.15s;
+  flex-shrink: 0;
+}
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+.theme-toggle svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.theme-toggle .moon { display: none; }
+.theme-toggle .sun { display: block; }
+[data-theme="dark"] .theme-toggle .moon { display: block; }
+[data-theme="dark"] .theme-toggle .sun { display: none; }
 
-  .search-row { display:flex; gap:0.5rem; align-items:stretch; }
-  .search-row input { flex:1; }
-  .search-row button { padding:0 1.5rem; }
+/* ============ PANELS ============ */
+.panel { display: none; padding-top: 28px; animation: fade 0.22s ease; }
+.panel.active { display: block; }
+@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
-  textarea {
-    width:100%; min-height:120px; padding:0.85rem;
-    border:2px solid var(--border); border-radius:8px;
-    font-family:ui-monospace,monospace; font-size:0.82rem;
-    outline:none; resize:vertical;
-  }
-  textarea:focus { border-color:var(--signal); }
+/* ============ HERO ============ */
+.hero { margin-bottom: 28px; }
+.hero-eyebrow {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.8px;
+  color: var(--muted-2); font-weight: 600; margin-bottom: 14px;
+}
+.hero-title {
+  font-size: 32px; line-height: 1.1; font-weight: 700;
+  letter-spacing: -0.03em; margin-bottom: 14px; color: var(--ink);
+}
+.hero-title em { font-style: normal; color: var(--accent); }
+.hero-desc { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 560px; }
+@media (min-width: 720px) {
+  .hero-title { font-size: 42px; }
+  .hero-desc { font-size: 16px; }
+}
 
-  .ai-answer {
-    margin-top:1rem; padding:1.25rem 1.4rem; background:white;
-    border:1px solid var(--border); border-left:4px solid var(--ai);
-    border-radius:10px; font-size:0.95rem; line-height:1.7;
-    white-space:pre-wrap; word-break:break-word;
-  }
-  .ai-answer.loading { color:var(--muted); font-style:italic; }
-  .ai-hint {
-    font-size:0.82rem; color:var(--muted); margin-top:0.75rem;
-    padding:0.6rem 0.85rem; background:#FAFAFA; border-radius:6px;
-    border:1px dashed var(--border);
-  }
+/* ============ STATS ============ */
+.stat-row {
+  display: flex; gap: 20px; flex-wrap: wrap;
+  margin-top: 22px; padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.stat { display: flex; align-items: baseline; gap: 6px; font-family: ui-monospace, "SF Mono", monospace; font-size: 14px; }
+.stat .num { font-weight: 700; color: var(--ink); }
+.stat .lbl { color: var(--muted); font-weight: 400; }
 
-  .result {
-    border:1px solid var(--border); background:white; padding:1rem 1.15rem;
-    margin-top:0.85rem; border-radius:10px; transition:0.15s;
-  }
-  .result:hover { box-shadow:0 4px 14px rgba(15,23,42,0.06); }
-  .result.error         { border-left:4px solid var(--error); }
-  .result.code          { border-left:4px solid var(--code); }
-  .result.test-failure  { border-left:4px solid var(--test); }
-  .result.api-error     { border-left:4px solid var(--api); }
-  .result.data-error    { border-left:4px solid var(--data); }
-  .result.config-error  { border-left:4px solid #F97316; }
-  .result.java-error    { border-left:4px solid #B91C1C; }
-  .result.python-error  { border-left:4px solid #0891B2; }
-  .result.sql-error     { border-left:4px solid #7C3AED; }
-  .result.notebook-error{ border-left:4px solid #DB2777; }
-  .result.crawled       { border-left:4px solid #EC4899; }
-  .result.custom-error  { border-left:4px solid #14B8A6; }
+/* ============ SEARCH ============ */
+.search-box { position: relative; margin-bottom: 20px; }
+.search-box svg {
+  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 18px; stroke: var(--muted); pointer-events: none;
+}
+.search-input {
+  width: 100%; padding: 18px 20px 18px 52px;
+  font-size: 15px; font-family: inherit; color: var(--ink);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-pill); outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.25s;
+}
+.search-input::placeholder { color: var(--muted-2); }
+.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(178, 106, 52, 0.15); }
 
-  .meta { font-size:0.85rem; color:var(--slate); margin-bottom:0.55rem;
-          display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
-  .meta strong { font-family:ui-monospace,"SF Mono",monospace; font-weight:600; }
-  .badge {
-    background:#F1F5F9; padding:2px 9px; border-radius:5px;
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.6px;
-    font-weight:600; color:var(--slate);
-  }
-  .snippet {
-    background:var(--paper); padding:0.85rem 1rem; border-radius:8px;
-    overflow-x:auto; font-family:ui-monospace,"SF Mono",monospace;
-    font-size:0.83rem; white-space:pre-wrap; word-break:break-word;
-    line-height:1.65; color:var(--slate);
-  }
-  .highlight { background:#FEF3C7; padding:0 2px; border-radius:2px; }
+/* ============ CHIPS ============ */
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+.chip {
+  padding: 8px 14px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  font-size: 13px; font-family: inherit; color: var(--ink-2);
+  cursor: pointer; transition: 0.15s; display: inline-flex; gap: 6px; align-items: center;
+}
+.chip:hover { border-color: var(--border-strong); }
+.chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.chip.active .count { color: var(--muted-2); }
+.chip .count { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); font-weight: 500; }
 
-  .status { font-size:0.85rem; color:var(--muted); margin-top:0.75rem;
-            padding:0.6rem 0.85rem; background:#F1F5F9; border-radius:8px; }
-  .status code { background:#E2E8F0; padding:1px 5px; border-radius:3px; font-size:0.82rem; }
-  .spinner {
-    display:inline-block; width:12px; height:12px;
-    border:2px solid var(--border); border-top-color:var(--signal);
-    border-radius:50%; animation:spin 0.6s linear infinite;
-    margin-right:6px; vertical-align:middle;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
+/* ============ CARD ============ */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+  margin-bottom: 14px; transition: 0.15s;
+}
+.card:hover { border-color: var(--border-strong); }
+.card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
+.card-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
-  .drop {
-    border:2px dashed #CBD5E1; border-radius:12px; padding:3rem 2rem;
-    text-align:center; color:var(--muted); cursor:pointer; transition:0.2s; background:white;
-  }
-  .drop:hover, .drop.over { border-color:var(--signal); background:#FFFBEB; color:var(--slate); }
-  .drop strong { display:block; font-size:1.1rem; margin-bottom:0.4rem; color:var(--ink); }
-  .drop span { font-size:0.9rem; }
-  .drop .formats { display:inline-flex; gap:0.5rem; margin-top:0.85rem; flex-wrap:wrap; justify-content:center; }
-  .format-pill {
-    background:var(--paper); color:var(--slate); padding:3px 10px;
-    border-radius:6px; font-size:0.75rem; font-weight:600;
-    font-family:ui-monospace,monospace; letter-spacing:0.3px;
-  }
+/* ============ RESULT ============ */
+.result {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 12px;
+  overflow: hidden; transition: 0.15s;
+}
+.result:hover { border-color: var(--border-strong); }
+.result-head {
+  padding: 14px 18px 10px;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px;
+}
+.result-file { font-family: ui-monospace, "SF Mono", monospace; font-size: 13px; color: var(--ink-2); }
+.result-file strong { font-weight: 600; color: var(--ink); }
+.result-badge {
+  padding: 3px 9px; background: var(--bg-alt); border-radius: 6px;
+  font-size: 10px; text-transform: uppercase; font-weight: 700;
+  letter-spacing: 0.6px; color: var(--muted); flex-shrink: 0;
+}
+.result-badge.error, .result-badge.java-error { background: #FBEAE6; color: var(--error); }
+[data-theme="dark"] .result-badge.error,
+[data-theme="dark"] .result-badge.java-error { background: rgba(224,120,102,0.15); }
+.result-badge.python-error { background: #E6F0FA; color: var(--info); }
+[data-theme="dark"] .result-badge.python-error { background: rgba(126,166,214,0.15); }
+.result-badge.sql-error, .result-badge.test-failure { background: #F0E8F8; color: var(--purple); }
+[data-theme="dark"] .result-badge.sql-error,
+[data-theme="dark"] .result-badge.test-failure { background: rgba(169,140,217,0.15); }
+.result-badge.config-error { background: #FEF3E0; color: var(--accent); }
+[data-theme="dark"] .result-badge.config-error { background: rgba(212,136,74,0.15); }
+.result-badge.crawled { background: #FCE8F3; color: #B0427A; }
+[data-theme="dark"] .result-badge.crawled { background: rgba(176,66,122,0.15); }
+.result-badge.custom-error { background: #E6F3EF; color: #2E7A6B; }
+[data-theme="dark"] .result-badge.custom-error { background: rgba(46,122,107,0.2); }
+.result-msg { padding: 0 18px 14px; font-size: 14px; color: var(--ink); font-weight: 500; line-height: 1.5; }
+.code-block {
+  background: var(--code-bg); color: var(--code-text);
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-size: 12.5px; line-height: 1.75;
+  padding: 14px 0; overflow-x: auto;
+  border-top: 1px solid var(--border);
+}
+.code-line { display: flex; gap: 16px; padding: 0 18px; white-space: pre; }
+.code-line.hit { background: rgba(178, 106, 52, 0.15); }
+.code-num { color: var(--code-muted); min-width: 24px; text-align: right; user-select: none; flex-shrink: 0; }
+.code-text { flex: 1; }
+.code-text .mark { background: rgba(178, 106, 52, 0.45); color: #FFF3E0; padding: 0 2px; border-radius: 2px; }
 
-  button {
-    padding:0.65rem 1.25rem; border:none; border-radius:8px;
-    background:var(--signal); color:white; font-size:0.9rem;
-    font-family:inherit; font-weight:500; cursor:pointer; transition:0.15s;
-  }
-  button:hover { background:#D97706; }
-  button.secondary { background:#F1F5F9; color:var(--slate); }
-  button.secondary:hover { background:#E2E8F0; }
-  button.ghost { background:transparent; color:var(--signal); border:1px solid var(--signal); padding:0.55rem 1rem; }
-  button.ghost:hover { background:#FFFBEB; }
-  button.ai { background:var(--ai); }
-  button.ai:hover { background:#7C3AED; }
-  button.danger { background:#FEE2E2; color:#991B1B; }
-  button.danger:hover { background:#FECACA; }
+/* ============ CHAT BUBBLES ============ */
+.chat-thread { display: flex; flex-direction: column; gap: 12px; }
+.chat-bubble {
+  padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.6;
+  max-width: 100%; word-break: break-word;
+}
+.chat-bubble.user {
+  background: var(--ink); color: var(--bg); align-self: flex-end;
+  border-bottom-right-radius: 6px; max-width: 82%;
+}
+.chat-bubble.ai {
+  background: var(--bubble-ai); border: 1px solid var(--border);
+  color: var(--ink); align-self: flex-start;
+  border-bottom-left-radius: 6px; max-width: 100%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.chat-bubble.ai .ai-src {
+  font-size: 11px; color: var(--muted-2); text-transform: uppercase;
+  letter-spacing: 0.8px; font-weight: 600; margin-bottom: 8px;
+}
+.chat-bubble.ai .matches-head {
+  font-size: 11px; color: var(--muted-2); text-transform: uppercase;
+  letter-spacing: 0.8px; font-weight: 600; margin: 14px 0 8px;
+  padding-top: 12px; border-top: 1px solid var(--border);
+}
+.chat-match {
+  padding: 10px 12px; margin-bottom: 8px; background: var(--bg-alt);
+  border-radius: 10px; border-left: 3px solid var(--accent);
+}
+.chat-match .f { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink); font-weight: 600; }
+.chat-match .t { font-size: 13px; color: var(--ink-2); margin-top: 4px; line-height: 1.5; }
+.typing-dots {
+  display: inline-flex; gap: 4px; align-items: center;
+}
+.typing-dots span {
+  width: 6px; height: 6px; border-radius: 50%; background: var(--muted-2);
+  animation: bounce 1.2s infinite;
+}
+.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
+.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
 
-  .preview {
-    background:var(--ink); color:#CBD5E1; padding:1.25rem 1.4rem;
-    border-radius:10px; font-family:ui-monospace,"SF Mono",monospace;
-    font-size:0.8rem; overflow-x:auto; white-space:pre;
-    margin-top:1rem; max-height:420px; line-height:1.65;
-  }
+/* ============ BUTTONS ============ */
+.btn {
+  padding: 12px 20px; border: none; border-radius: var(--radius-pill);
+  font-family: inherit; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: 0.15s;
+  background: var(--ink); color: var(--bg);
+  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+}
+.btn:hover { opacity: 0.88; }
+.btn.secondary { background: var(--bg-alt); color: var(--ink); border: 1px solid var(--border); }
+.btn.secondary:hover { background: var(--card); border-color: var(--border-strong); opacity: 1; }
+.btn.accent { background: var(--accent); color: white; }
+.btn.accent:hover { opacity: 0.88; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
+.btn.ghost:hover { background: var(--bg-alt); opacity: 1; }
+.btn.danger { background: var(--error); color: white; }
+.btn.full { width: 100%; }
 
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; margin-top:1rem; }
-  .spec-card { border:1px solid var(--border); border-radius:10px; padding:1rem; background:white; }
-  .spec-card strong { font-size:0.9rem; display:block; }
-  .spec-card .steps { font-size:0.8rem; color:var(--muted); margin-top:0.25rem; }
-  .spec-card button { margin-top:0.75rem; width:100%; }
-  .spec-card .kind { display:inline-block; font-size:0.68rem; font-weight:600; text-transform:uppercase;
-                     padding:2px 8px; border-radius:5px; margin-top:0.4rem; letter-spacing:0.4px; }
-  .kind.ui   { background:#EDE9FE; color:#6D28D9; }
-  .kind.api  { background:#D1FAE5; color:#047857; }
-  .kind.data { background:#CFFAFE; color:#0E7490; }
+/* ============ FORMS ============ */
+.field { margin-bottom: 16px; }
+.field-label {
+  display: block; font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.8px;
+  color: var(--muted); margin-bottom: 8px;
+}
+.field-hint { font-size: 12px; color: var(--muted-2); margin-top: 6px; }
+.input, .select, .textarea {
+  width: 100%; padding: 14px 16px;
+  font-family: inherit; font-size: 15px; color: var(--ink);
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); outline: none;
+  transition: 0.15s; -webkit-appearance: none;
+}
+.input:focus, .select:focus, .textarea:focus {
+  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(178, 106, 52, 0.15);
+}
+.textarea { font-family: ui-monospace, "SF Mono", monospace; font-size: 13px; resize: vertical; min-height: 140px; line-height: 1.65; }
 
-  .error-list { color:#B91C1C; background:#FEF2F2; padding:1rem 1.25rem;
-                border-radius:10px; margin-top:1rem; border-left:4px solid var(--error); }
-  .error-list ul { margin-left:1.25rem; margin-top:0.5rem; }
-  .error-list li { font-size:0.9rem; }
+/* ============ DROP ZONE ============ */
+.drop {
+  border: 1.5px dashed var(--border-strong); border-radius: var(--radius);
+  padding: 36px 24px; text-align: center; cursor: pointer;
+  background: var(--card); transition: 0.2s;
+}
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop-icon { width: 36px; height: 36px; stroke: var(--muted); margin: 0 auto 14px; display: block; }
+.drop strong { display: block; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.drop span { font-size: 13px; color: var(--muted); }
+.drop-formats { margin-top: 12px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+.format-pill {
+  padding: 3px 9px; background: var(--bg-alt); border-radius: 5px;
+  font-family: ui-monospace, monospace; font-size: 11px;
+  color: var(--muted); letter-spacing: 0.3px;
+}
 
-  .schema-hint { font-size:0.82rem; color:var(--muted); margin-top:1.25rem;
-                 padding:0.85rem 1rem; background:white; border-radius:8px; border:1px solid var(--border); }
-  .schema-hint code {
-    background:#F1F5F9; padding:1px 6px; border-radius:4px;
-    font-size:0.8rem; font-family:ui-monospace,monospace; color:var(--slate);
-  }
-  .schema-hint .row { margin-bottom:0.6rem; }
-  .schema-hint .row:last-child { margin-bottom:0; }
+/* ============ SUB TABS ============ */
+.subtabs {
+  display: inline-flex; background: var(--bg-alt); border-radius: var(--radius-pill);
+  padding: 4px; gap: 2px; margin-bottom: 20px;
+}
+.subtab {
+  padding: 8px 18px; border: none; background: transparent;
+  border-radius: var(--radius-pill); font-family: inherit; font-size: 13px;
+  font-weight: 500; color: var(--muted); cursor: pointer; transition: 0.15s;
+}
+.subtab.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
-  .template-bar {
-    display:flex; justify-content:space-between; align-items:center; gap:1rem;
-    flex-wrap:wrap; margin-top:1rem; padding:0.85rem 1rem;
-    background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px;
-  }
-  .template-bar span { font-size:0.85rem; color:var(--slate); }
+/* ============ TABLE ============ */
+.data-table {
+  width: 100%; border-collapse: collapse; background: var(--card);
+  border-radius: var(--radius); overflow: hidden;
+  border: 1px solid var(--border); font-size: 13px;
+}
+.data-table th {
+  padding: 10px 14px; text-align: left;
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
+  color: var(--muted); font-weight: 600;
+  background: var(--bg-alt); border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+.data-table td {
+  padding: 11px 14px; border-bottom: 1px solid var(--border);
+  font-family: ui-monospace, "SF Mono", monospace; font-size: 12.5px;
+  color: var(--ink-2); vertical-align: top;
+  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table td[contenteditable="true"]:focus {
+  outline: 2px solid var(--accent); background: var(--accent-soft);
+  white-space: normal; max-width: none;
+}
 
-  details summary { cursor:pointer; font-size:0.85rem; color:var(--muted); padding:0.5rem 0; list-style:none; }
-  details summary::-webkit-details-marker { display:none; }
-  details summary::before { content:'▸ '; display:inline-block; transition:transform 0.15s; }
-  details[open] summary::before { transform:rotate(90deg); }
+/* ============ BOTTOM NAV ============ */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0));
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; align-items: center;
+  z-index: 50; padding-left: 4px; padding-right: 4px;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 8px 4px;
+  background: none; border: none; cursor: pointer;
+  color: var(--muted); font-family: inherit; transition: 0.15s;
+  border-radius: 12px; min-width: 0; flex: 1; max-width: 90px;
+}
+.nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.nav-item .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.2px; }
+.nav-item.active { color: var(--ink); }
+.nav-item.active svg { stroke: var(--ink); }
+.nav-item.active::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 1px; }
+.nav-item:not(.active)::after { content: ''; height: 5px; }
 
-  .history-panel {
-    margin-top:1rem; padding:0.85rem 1rem;
-    background:white; border:1px solid var(--border); border-radius:10px;
+@media (min-width: 720px) {
+  body { padding-bottom: 40px; }
+  .bottom-nav {
+    position: static; height: auto; padding: 0; margin: 0 0 8px;
+    background: transparent; border: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+    justify-content: flex-start; gap: 4px; flex-wrap: wrap;
+    padding-bottom: 16px; border-bottom: 1px solid var(--border);
   }
-  .history-header {
-    display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;
+  .nav-item {
+    flex-direction: row; padding: 8px 14px; gap: 8px;
+    flex: 0 0 auto; font-size: 13px; font-weight: 500;
+    color: var(--muted); border-radius: var(--radius-pill);
+    border: 1px solid transparent; max-width: none;
   }
-  .history-header strong { font-size:0.85rem; color:var(--slate); }
-  .history-list { display:flex; flex-wrap:wrap; gap:0.5rem; }
-  .history-chip {
-    display:inline-flex; align-items:center; gap:0.4rem;
-    padding:0.35rem 0.7rem; background:var(--paper); border:1px solid var(--border);
-    border-radius:6px; font-size:0.8rem; cursor:pointer; transition:0.15s;
-    font-family:ui-monospace,monospace; color:var(--slate);
-  }
-  .history-chip:hover { border-color:var(--signal); background:#FFFBEB; }
-  .history-chip .count {
-    background:#E2E8F0; padding:0 6px; border-radius:4px;
-    font-size:0.7rem; font-weight:600; color:var(--muted);
-  }
+  .nav-item svg { width: 15px; height: 15px; }
+  .nav-item .nav-label { font-size: 13px; }
+  .nav-item.active { background: var(--card); color: var(--ink); border-color: var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .nav-item.active::after { display: none; }
+  .nav-item:not(.active)::after { display: none; }
+}
 
-  .pattern-card {
-    display:flex; justify-content:space-between; align-items:flex-start; gap:1rem;
-    padding:1rem 1.15rem; margin-top:0.75rem; background:white;
-    border:1px solid var(--border); border-radius:10px;
-  }
-  .pattern-card.disabled { opacity:0.5; }
-  .pattern-info { flex:1; min-width:0; }
-  .pattern-info .name { font-weight:600; font-size:0.95rem; margin-bottom:0.25rem; }
-  .pattern-info .regex {
-    font-family:ui-monospace,monospace; font-size:0.78rem;
-    background:var(--paper); padding:0.4rem 0.6rem; border-radius:5px;
-    color:var(--slate); overflow-x:auto; white-space:nowrap;
-  }
-  .pattern-info .meta { font-size:0.75rem; color:var(--muted); margin-top:0.4rem; }
-  .pattern-actions { display:flex; gap:0.4rem; align-items:center; }
-  .pattern-actions button { padding:0.4rem 0.75rem; font-size:0.8rem; }
+/* ============ SMALL PARTS ============ */
+.status-line {
+  padding: 12px 16px; background: var(--bg-alt);
+  border-radius: var(--radius-sm); font-size: 13px;
+  color: var(--muted); margin-bottom: 18px; line-height: 1.5;
+}
+.status-line code { background: var(--card); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-2); }
+.status-line.ok { background: #EAF3E5; color: #3D6B2C; }
+[data-theme="dark"] .status-line.ok { background: rgba(123,165,98,0.15); color: #A8D088; }
+.status-line.err { background: #FBEAE6; color: var(--error); }
+[data-theme="dark"] .status-line.err { background: rgba(224,120,102,0.15); }
+.status-line.warn { background: #FEF3E0; color: var(--accent); }
+[data-theme="dark"] .status-line.warn { background: rgba(212,136,74,0.15); }
+.empty { padding: 40px 20px; text-align: center; color: var(--muted-2); font-size: 14px; }
+.spinner {
+  display: inline-block; width: 12px; height: 12px;
+  border: 2px solid var(--border); border-top-color: var(--accent);
+  border-radius: 50%; animation: spin 0.6s linear infinite;
+  margin-right: 6px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.preview-block {
+  background: var(--code-bg); color: var(--code-text);
+  padding: 16px 20px; border-radius: var(--radius);
+  font-family: ui-monospace, monospace; font-size: 12.5px;
+  overflow-x: auto; white-space: pre; line-height: 1.7;
+  margin-top: 12px; max-height: 400px;
+}
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > * { flex: 1; min-width: 140px; }
 
-  .toggle-switch {
-    position:relative; display:inline-block; width:36px; height:20px;
-  }
-  .toggle-switch input { opacity:0; width:0; height:0; }
-  .toggle-switch .slider {
-    position:absolute; cursor:pointer; inset:0;
-    background:#CBD5E1; border-radius:20px; transition:0.2s;
-  }
-  .toggle-switch .slider::before {
-    content:''; position:absolute; height:14px; width:14px;
-    left:3px; bottom:3px; background:white; border-radius:50%; transition:0.2s;
-  }
-  .toggle-switch input:checked + .slider { background:var(--signal); }
-  .toggle-switch input:checked + .slider::before { transform:translateX(16px); }
+details summary { cursor: pointer; padding: 12px 0; list-style: none; font-size: 13px; color: var(--muted); font-weight: 500; }
+details summary::-webkit-details-marker { display: none; }
+details summary::before { content: '▸ '; display: inline-block; transition: transform 0.15s; margin-right: 4px; }
+details[open] summary::before { transform: rotate(90deg); }
 
-  .form-card {
-    padding:1.25rem; margin-top:1rem; background:white;
-    border:1px solid var(--border); border-radius:10px;
-  }
-  .form-row { margin-bottom:0.85rem; }
-  .form-row label {
-    display:block; font-size:0.82rem; font-weight:600;
-    color:var(--slate); margin-bottom:0.35rem;
-  }
-  .form-row .help {
-    font-size:0.75rem; color:var(--muted); margin-top:0.25rem;
-  }
+/* ============ PROFILE ============ */
+.profile-card {
+  display: flex; gap: 18px; align-items: center;
+  padding: 22px; background: linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-alt) 100%);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 20px;
+}
+.profile-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: var(--ink); color: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 25px; font-weight: 700; letter-spacing: -0.02em;
+  flex-shrink: 0; border: 3px solid var(--card);
+}
+.profile-info { min-width: 0; flex: 1; }
+.profile-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 3px; line-height: 1.2; }
+.profile-role { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 5px; }
+.profile-meta { font-size: 12px; color: var(--muted); line-height: 1.5; }
 
-  .ai-hero {
-    background:linear-gradient(135deg, #F5F3FF 0%, #FEF3C7 100%);
-    border:1px solid var(--border); border-radius:12px;
-    padding:1.5rem 1.75rem; margin-bottom:1.5rem;
-  }
-  .ai-hero h2 { font-size:1.15rem; margin-bottom:0.4rem; }
-  .ai-hero p { font-size:0.9rem; color:var(--slate); }
-  .ai-actions { display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem; }
+.social-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 8px; margin-top: 12px;
+}
+.social-link {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); text-decoration: none;
+  color: var(--ink); font-size: 13px; font-weight: 500;
+  transition: 0.15s;
+}
+.social-link:hover { border-color: var(--accent); background: var(--accent-soft); }
+.social-link svg { width: 16px; height: 16px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; }
+.social-link .handle { font-size: 11px; color: var(--muted-2); display: block; margin-top: 1px; font-weight: 400; }
 
-  .preview-table {
-    width:100%; border-collapse:collapse; margin-top:1rem;
-    font-size:0.78rem; background:white; border-radius:8px; overflow:hidden;
-    border:1px solid var(--border);
-  }
-  .preview-table th {
-    background:var(--slate); color:white; padding:0.55rem 0.7rem;
-    text-align:left; font-weight:600; font-size:0.72rem;
-    text-transform:uppercase; letter-spacing:0.4px; white-space:nowrap;
-  }
-  .preview-table td {
-    padding:0.5rem 0.7rem; border-bottom:1px solid var(--border);
-    font-family:ui-monospace,monospace; font-size:0.75rem;
-    vertical-align:top; max-width:200px; overflow:hidden;
-    text-overflow:ellipsis; white-space:nowrap;
-  }
-  .preview-table tr:last-child td { border-bottom:none; }
-  .preview-table tr:hover td { background:#FFFBEB; }
-  .preview-table td[contenteditable="true"]:focus {
-    outline:2px solid var(--signal); background:#FFFBEB;
-    white-space:normal; max-width:none;
-  }
+/* Tag cloud — clickable */
+.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tag-btn {
+  padding: 6px 12px; background: var(--card);
+  border: 1px solid var(--border); border-radius: var(--radius-pill);
+  font-size: 12px; font-weight: 500; color: var(--ink-2);
+  cursor: pointer; transition: 0.15s; font-family: inherit;
+  display: inline-flex; align-items: center; gap: 5px;
+}
+.tag-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.tag-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; opacity: 0.6; }
+.tag-btn:hover svg { opacity: 1; }
 
-  .ai-privacy {
-    font-size:0.78rem; color:var(--muted); margin-top:0.85rem;
-    padding:0.6rem 0.85rem; background:rgba(255,255,255,0.7);
-    border-radius:6px; border:1px dashed #FDE68A;
-  }
+/* Manual */
+.manual-item {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); margin-bottom: 10px;
+  overflow: hidden;
+}
+.manual-item summary {
+  padding: 16px 20px; font-size: 14px; font-weight: 600;
+  color: var(--ink); display: flex; align-items: center;
+  gap: 10px; margin: 0;
+}
+.manual-item summary::before { display: none; }
+.manual-item summary .chev {
+  margin-left: auto; transition: transform 0.2s;
+  color: var(--muted-2); font-size: 12px;
+}
+.manual-item[open] summary .chev { transform: rotate(90deg); }
+.manual-item summary .step-num {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; flex-shrink: 0;
+}
+.manual-body {
+  padding: 0 20px 20px; font-size: 14px;
+  color: var(--ink-2); line-height: 1.7;
+}
+.manual-body p { margin-bottom: 10px; }
+.manual-body ul { padding-left: 20px; margin-bottom: 10px; }
+.manual-body li { margin-bottom: 6px; }
+.manual-body code {
+  background: var(--bg-alt); padding: 1px 6px;
+  border-radius: 4px; font-family: ui-monospace, monospace;
+  font-size: 12px; color: var(--ink);
+}
+.manual-body strong { color: var(--ink); }
 
-  .footer {
-    margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
-    font-size:0.8rem; color:var(--muted);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-  }
-  .footer a { color:var(--signal); text-decoration:none; }
-  .footer a:hover { text-decoration:underline; }
+.kbd {
+  display: inline-block; padding: 2px 7px;
+  background: var(--card); border: 1px solid var(--border-strong);
+  border-bottom-width: 2px; border-radius: 5px;
+  font-family: ui-monospace, monospace; font-size: 11px;
+  font-weight: 600; color: var(--ink-2);
+  min-width: 20px; text-align: center;
+}
+
+.footer-note {
+  text-align: center; padding: 32px 20px 20px;
+  font-size: 12px; color: var(--muted-2); line-height: 1.6;
+}
+.footer-note a { color: var(--accent); text-decoration: none; font-weight: 500; }
+.footer-note a:hover { text-decoration: underline; }
 </style>
 </head>
 <body>
 
-<div class="header">
-  <img src="erplorer-logo.png" alt="ERplorer logo">
-  <h1><span class="er">ER</span>plorer</h1>
-</div>
-<p class="subtitle">Error Resolution Explorer — Java, Node.js, Databricks, configs.</p>
+<div class="shell">
 
-<div class="tabs">
-  <button class="tab active" data-tab="explorer">Error Explorer</button>
-  <button class="tab" data-tab="ai-excel">🤖 AI → Excel</button>
-  <button class="tab" data-tab="generator">Test Cases → Code</button>
-  <button class="tab" data-tab="patterns">🎯 Patterns</button>
-  <button class="tab" data-tab="settings">⚙️ Settings</button>
-</div>
+  <!-- HEADER -->
+  <header class="app-header">
+    <img src="erplorer-logo.png" alt="ERplorer" class="app-logo-img">
+    <div class="app-title-wrap">
+      <div class="app-title"><span class="er">ER</span>plorer</div>
+      <div class="app-tagline">Error Resolution Explorer</div>
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </header>
 
-<!-- ============ EXPLORER ============ -->
-<div class="panel active" id="panel-explorer">
-  <div id="index-status" class="status"><span class="spinner"></span>Loading search index...</div>
+  <!-- NAV -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-panel="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span class="nav-label">Search</span>
+    </button>
+    <button class="nav-item" data-panel="ask">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="nav-label">Ask</span>
+    </button>
+    <button class="nav-item" data-panel="lab">
+      <svg viewBox="0 0 24 24"><path d="M9 3h6v6l4 9a1 1 0 0 1-1 1.4H6A1 1 0 0 1 5 18l4-9V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>
+      <span class="nav-label">Lab</span>
+    </button>
+    <button class="nav-item" data-panel="ingest">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span class="nav-label">Ingest</span>
+    </button>
+    <button class="nav-item" data-panel="about">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+      <span class="nav-label">About</span>
+    </button>
+    <button class="nav-item" data-panel="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
 
-  <div class="mode-toggle" style="margin-top:1rem;">
-    <button class="mode-btn active" data-mode="exact" onclick="setMode('exact')">🔍 Exact search</button>
-    <button class="mode-btn" data-mode="ai" onclick="setMode('ai')">💬 Ask AI</button>
-  </div>
+  <!-- SEARCH -->
+  <section class="panel active" id="panel-search">
+    <div class="hero">
+      <div class="hero-eyebrow">Error Resolution Explorer</div>
+      <h1 class="hero-title">From stack trace to <em>source line.</em></h1>
+      <p class="hero-desc">Paste an exception, SQL error, or failing assertion. ERplorer locates the file, line, and surrounding code across Java, Node, Python, SQL, configs, and notebooks.</p>
+      <div class="stat-row" id="stat-row">
+        <div class="stat"><span class="num">—</span><span class="lbl">files</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">entries</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">thrown</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">tests</span></div>
+      </div>
+    </div>
 
-  <div id="mode-exact">
-    <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Paste an error, stack trace, SQL..." autofocus>
+    </div>
+
+    <div class="chips" id="filter-chips"></div>
     <div id="results"></div>
-  </div>
 
-  <div id="mode-ai" style="display:none;">
-    <div class="search-row">
-      <input type="text" id="nl-input" placeholder="Ask in plain English: 'Show Java errors in auth module'">
-      <button class="ai" onclick="askNatural()">Ask</button>
+    <div id="history-wrap" style="display:none; margin-top:32px;">
+      <div class="hero-eyebrow" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Recent</span>
+        <button class="chip" onclick="clearHistory()">Clear</button>
+      </div>
+      <div class="chips" id="history-list"></div>
     </div>
-    <div class="ai-hint">
-      Examples: <em>"List all SQL errors"</em> · <em>"Which file has the most errors?"</em> · <em>"Show config errors"</em>
-    </div>
-    <div id="nl-answer"></div>
-  </div>
+  </section>
 
-  <div class="history-panel" id="history-panel" style="display:none;">
-    <div class="history-header">
-      <strong>🕘 Recent searches</strong>
-      <button class="ghost" style="padding:0.3rem 0.7rem; font-size:0.75rem;" onclick="clearHistory()">Clear all</button>
-    </div>
-    <div class="history-list" id="history-list"></div>
-  </div>
-
-  <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
-    <h3 style="font-size:1rem; margin-bottom:0.75rem;">➕ Add more content to search</h3>
-
-    <div class="search-row" style="margin-bottom:0.5rem;">
-      <input type="text" id="crawl-url" placeholder="Tier 1 · Crawl a URL (https://docs.example.com)">
-      <button class="ghost" onclick="tryTier1Crawl()">🕷️ Crawl</button>
+  <!-- ASK -->
+  <section class="panel" id="panel-ask">
+    <div class="hero" style="margin-bottom:20px;">
+      <div class="hero-eyebrow">Ask</div>
+      <h1 class="hero-title">Question the index.</h1>
+      <p class="hero-desc">Natural language over the local error catalog. Matches stay on-device; only the top hits go to the model for a short briefing.</p>
     </div>
 
-    <div class="search-row" style="margin-bottom:0.5rem;">
-      <input type="text" id="repo-scan" placeholder="Tier 2 · Scan a GitHub repo (owner/repo)">
-      <button class="ghost" onclick="tryTier2Repo()">🐙 Scan repo</button>
+    <div id="chat-thread" class="chat-thread">
+      <div class="chat-bubble ai">
+        <div class="ai-src">ERplorer</div>
+        Ask me anything about the indexed errors. For example:
+        <div class="tag-row" style="margin-top:10px;">
+          <button class="tag-btn" onclick="quickAsk('Show Java errors in auth')">Show Java errors in auth</button>
+          <button class="tag-btn" onclick="quickAsk('Which file has login validation errors?')">Login validation errors</button>
+          <button class="tag-btn" onclick="quickAsk('List all SQL errors')">All SQL errors</button>
+          <button class="tag-btn" onclick="quickAsk('Which test expects alice?')">Test expects alice</button>
+        </div>
+      </div>
     </div>
 
-    <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-      <button class="ghost" onclick="tryTier3Folder()" style="flex:1;">📁 Tier 3 · Open folder</button>
-      <button class="ghost" onclick="tryTier3File()" style="flex:1;">📄 Or drop files</button>
-      <input type="file" id="tier3-file" multiple style="display:none;">
+    <div style="position:sticky; bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom, 0)); margin-top:16px; padding:10px; background:var(--glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:var(--radius-pill); border:1px solid var(--border); z-index:20;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="text" class="search-input" id="nl-input" placeholder="Ask about your index..." style="padding:12px 18px; font-size:14px;">
+        <button class="btn accent" onclick="askNatural()" style="padding:12px 18px; border-radius:50%; width:44px; height:44px; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
     </div>
 
-    <details style="margin-bottom:0.5rem;">
-      <summary>📋 Tier 4 · Paste text manually (always works)</summary>
-      <textarea id="tier4-text" placeholder="Paste any text, stack trace, error log, or file content..."></textarea>
-      <button class="secondary" onclick="tryTier4Paste()" style="margin-top:0.5rem;">Add to index</button>
+    <details style="margin-top:16px;">
+      <summary>Advanced: enable deep search</summary>
+      <div style="padding:12px 0; font-size:13px; color:var(--muted);">
+        <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer;">
+          <input type="checkbox" id="rag-deep-toggle" onchange="onDeepToggle(this.checked)" style="margin-top:2px; accent-color:var(--accent);">
+          <span>Add semantic embeddings for paraphrase matching. First use loads a 25 MB model.</span>
+        </label>
+        <div id="rag-model-status" class="status-line" style="display:none; margin-top:10px;"></div>
+      </div>
     </details>
+  </section>
 
-    <div id="add-status" class="status" style="margin-top:0.75rem; display:none;"></div>
-  </div>
-</div>
+  <!-- LAB -->
+  <section class="panel" id="panel-lab">
+    <div class="hero">
+      <div class="hero-eyebrow">Lab</div>
+      <h1 class="hero-title">Test cases to code.</h1>
+      <p class="hero-desc">Describe a flow in English, or drop a spreadsheet. ERplorer emits Playwright specs and PySpark pytest files with the columns your suite already uses.</p>
+    </div>
 
-<!-- ============ AI → EXCEL ============ -->
-<div class="panel" id="panel-ai-excel">
-  <div class="ai-hero">
-    <h2>🤖 AI → Excel</h2>
-    <p>Paste test scenarios in plain English. AI converts them into the exact columns the <strong>Test Cases → Code</strong> tab expects — ready to download as CSV or XLSX, or send straight to the generator.</p>
-  </div>
+    <div class="subtabs">
+      <button class="subtab active" data-lab="scenarios">Scenarios</button>
+      <button class="subtab" data-lab="specs">Specs</button>
+    </div>
 
-  <label style="display:block; font-size:0.85rem; font-weight:600; margin-bottom:0.4rem;">Paste your test scenarios</label>
-  <textarea id="ai-input" style="min-height:200px; font-family:system-ui, sans-serif; font-size:0.9rem;" placeholder="Example:
-
-Test the login page:
+    <div id="lab-scenarios">
+      <textarea class="textarea" id="ai-input" placeholder="Test the login page:
 1. Go to /login
 2. Enter &quot;admin&quot; in the username field
 3. Enter &quot;secret123&quot; in the password field
 4. Click the submit button
-5. Verify that the dashboard shows &quot;Welcome admin&quot;
+5. Verify that the dashboard shows &quot;Welcome admin&quot;"></textarea>
 
-Test the users API:
-- GET /api/users should return 200
-- The first user's name should be &quot;alice&quot;
-
-Test the users table migration:
-- Run SELECT COUNT(*) FROM users
-- Expect 1 row back
-- There should be no nulls in the email column"></textarea>
-
-  <div class="ai-actions">
-    <button class="ai" id="btn-ai" onclick="runAITransform()">🤖 Convert with AI</button>
-    <button class="ghost" onclick="runRuleTransform()">📏 Convert with rules (offline)</button>
-    <button class="secondary" onclick="clearAITab()">Clear</button>
-  </div>
-
-  <div class="ai-privacy">
-    <strong>Privacy:</strong> "Convert with AI" sends your pasted text to
-    <code style="background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;">ragina-crawler-ragina.vercel.app/api/ask</code> first.
-    If that fails, it falls back to <code style="background:rgba(255,255,255,0.7);padding:1px 5px;border-radius:3px;">text.pollinations.ai</code>.
-    If both are blocked, use <strong>Convert with rules</strong> — it runs 100% in your browser.
-  </div>
-
-  <div id="ai-status" style="margin-top:1rem;"></div>
-  <div id="ai-preview"></div>
-</div>
-
-<!-- ============ GENERATOR ============ -->
-<div class="panel" id="panel-generator">
-  <div class="drop" id="drop-zone">
-    <strong>📂 Drop a test case file here</strong>
-    <span>or click to browse</span>
-    <div class="formats">
-      <span class="format-pill">.XLSX</span>
-      <span class="format-pill">.XLS</span>
-      <span class="format-pill">.CSV</span>
-      <span class="format-pill">.TSV</span>
-    </div>
-  </div>
-  <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
-
-  <div class="template-bar">
-    <span>💡 Download a starter template showing UI, API, and Data test types.</span>
-    <div style="display:flex; gap:0.5rem;">
-      <button class="ghost" onclick="downloadTemplate('csv')">⬇️ CSV template</button>
-      <button class="ghost" onclick="downloadTemplate('tsv')">⬇️ TSV template</button>
-    </div>
-  </div>
-
-  <div id="gen-output"></div>
-
-  <div class="schema-hint">
-    <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code> <code>.xls</code> <code>.csv</code> <code>.tsv</code></div>
-    <div class="row"><strong>Columns:</strong> <code>id</code> <code>scenario</code> <code>step</code> <code>action</code> <code>method</code> <code>url</code> <code>headers</code> <code>body</code> <code>selector</code> <code>value</code> <code>expected</code> <code>jsonpath</code></div>
-    <div class="row"><strong>🧪 UI actions:</strong> <code>goto</code> <code>fill</code> <code>click</code> <code>expectText</code> <code>expectVisible</code> <code>expectUrl</code> <code>wait</code></div>
-    <div class="row"><strong>🔌 API actions:</strong> <code>apiRequest</code> <code>expectStatus</code> <code>expectJson</code> <code>expectHeader</code></div>
-    <div class="row"><strong>📊 Data actions:</strong> <code>runSql</code> <code>expectRowCount</code> <code>expectNoNulls</code> <code>expectUnique</code> <code>expectValue</code></div>
-    <div class="row"><strong>CSV tip:</strong> Wrap values with commas or quotes in double quotes — e.g. <code>"Welcome, admin"</code></div>
-  </div>
-</div>
-
-<!-- ============ PATTERNS ============ -->
-<div class="panel" id="panel-patterns">
-  <h3 style="font-size:1.1rem; margin-bottom:0.5rem;">🎯 Custom error patterns</h3>
-  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1.25rem;">
-    Define team-specific regex rules to detect errors ERplorer's built-in patterns don't catch.
-    Patterns are stored in your browser (IndexedDB) and applied the next time you crawl, scan, or paste content.
-  </p>
-
-  <div class="form-card">
-    <h4 style="font-size:0.95rem; margin-bottom:0.75rem;">➕ Add a new pattern</h4>
-
-    <div class="form-row">
-      <label for="pat-name">Name</label>
-      <input type="text" id="pat-name" class="small" placeholder="e.g. MyApp internal error">
+      <div class="row" style="margin-top:12px;">
+        <button class="btn accent" onclick="runAITransform()">Convert with AI</button>
+        <button class="btn secondary" onclick="runRuleTransform()">Convert with rules</button>
+      </div>
+      <button class="btn ghost" style="margin-top:8px; width:100%;" onclick="loadSampleScenarios()">Load sample</button>
+      <div id="ai-status" style="margin-top:16px;"></div>
+      <div id="ai-preview" style="margin-top:24px;"></div>
     </div>
 
-    <div class="form-row">
-      <label for="pat-regex">Regex pattern</label>
-      <input type="text" id="pat-regex" class="small" placeholder="e.g. MY_APP_ERROR_\\d+: ([^\\n]+)" style="font-family:ui-monospace,monospace;">
-      <div class="help">Use a capture group <code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;">( )</code> to mark which part is the error message.</div>
+    <div id="lab-specs" style="display:none;">
+      <div class="drop" id="drop-zone">
+        <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-6"/><path d="M3 21V13a2 2 0 0 1 2-2h6"/></svg>
+        <strong>Drop a test case file, or click to browse</strong>
+        <span>One row per step</span>
+        <div class="drop-formats">
+          <span class="format-pill">.xlsx</span>
+          <span class="format-pill">.xls</span>
+          <span class="format-pill">.csv</span>
+          <span class="format-pill">.tsv</span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
+
+      <div class="row" style="margin-top:16px;">
+        <button class="btn ghost" onclick="downloadTemplate('csv')">CSV template</button>
+        <button class="btn ghost" onclick="downloadTemplate('tsv')">TSV template</button>
+      </div>
+
+      <div id="gen-output" style="margin-top:24px;"></div>
+    </div>
+  </section>
+
+  <!-- INGEST -->
+  <section class="panel" id="panel-ingest">
+    <div class="hero">
+      <div class="hero-eyebrow">Ingest</div>
+      <h1 class="hero-title">Grow the index.</h1>
+      <p class="hero-desc">Four ways in: fetch a URL, scan a GitHub repo, drop local files, or paste a log. Patterns you define are applied on ingest. Added entries stay in this browser.</p>
+      <div class="stat-row">
+        <div class="stat"><span class="num" id="ingest-count">0</span><span class="lbl">ingested this session</span></div>
+      </div>
     </div>
 
-    <div class="form-row">
-      <label for="pat-type">Result type</label>
-      <input type="text" id="pat-type" class="small" placeholder="custom-error" value="custom-error">
-      <div class="help">Shown as the badge on results. Use <code style="background:#F1F5F9;padding:1px 4px;border-radius:3px;">custom-error</code> for a teal border.</div>
+    <div class="card">
+      <div class="card-title">Fetch a URL</div>
+      <div class="card-desc" style="margin-bottom:14px;">The RAGina crawler fetches up to 20 pages and extracts errors from each.</div>
+      <input type="text" class="input" id="crawl-url" placeholder="https://docs.example.com/errors" style="margin-bottom:10px;">
+      <button class="btn full" onclick="tryTier1Crawl()">Fetch</button>
     </div>
 
-    <div class="form-row">
-      <label for="pat-exts">File extensions (optional)</label>
-      <input type="text" id="pat-exts" class="small" placeholder=".js,.ts,.java — leave empty for all files">
-      <div class="help">Comma-separated. Leave blank to apply the pattern to every indexed file.</div>
+    <div class="card">
+      <div class="card-title">Scan a GitHub repo</div>
+      <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token. Private repos need a PAT in Settings. First 40 indexable files.</div>
+      <input type="text" class="input" id="repo-scan" placeholder="owner/repo" style="margin-bottom:10px;">
+      <button class="btn full" onclick="tryTier2Repo()">Scan</button>
     </div>
 
-    <div style="display:flex; gap:0.5rem; margin-top:1rem;">
-      <button onclick="addPattern()">Save pattern</button>
-      <button class="secondary" onclick="testPattern()">Test against sample</button>
+    <div class="card">
+      <div class="card-title">Drop files</div>
+      <div class="card-desc" style="margin-bottom:14px;">.js .ts .java .py .sql .yaml .json .ipynb and related.</div>
+      <button class="btn secondary full" onclick="tryTier3File()">Choose files</button>
+      <input type="file" id="tier3-file" multiple style="display:none;">
     </div>
 
-    <div id="pattern-test" style="margin-top:1rem; display:none;"></div>
-  </div>
+    <div class="card">
+      <div class="card-title">Paste text</div>
+      <textarea class="textarea" id="tier4-text" placeholder="Paste a stack trace, log, or source file..." style="margin:12px 0 10px;"></textarea>
+      <button class="btn secondary full" onclick="tryTier4Paste()">Add to index</button>
+    </div>
 
-  <h4 style="font-size:0.95rem; margin-top:2rem; margin-bottom:0.5rem;">
-    Your patterns <span id="pattern-count" style="color:var(--muted); font-weight:normal;">(0)</span>
-  </h4>
-  <div id="pattern-list"></div>
-</div>
+    <div id="add-status" class="status-line" style="display:none;"></div>
+  </section>
 
-<!-- ============ SETTINGS ============ -->
-<div class="panel" id="panel-settings">
-  <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
-  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-    Paste a Personal Access Token to enable live GitHub API queries. Stored in
-    <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">sessionStorage</code> only.
-  </p>
-  <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
-  <div style="margin-top:1rem; display:flex; gap:0.5rem;">
-    <button onclick="saveToken()">Save Token</button>
-    <button class="secondary" onclick="clearToken()">Clear Token</button>
-  </div>
-  <div id="token-status" class="status" style="margin-top:1rem;"></div>
+  <!-- ABOUT -->
+  <section class="panel" id="panel-about">
+    <div class="hero">
+      <div class="hero-eyebrow">About</div>
+      <h1 class="hero-title">Built by a <em>Techno Agilist.</em></h1>
+      <p class="hero-desc">ERplorer is a hands-on tool from someone who has shipped code, broken builds, chased flaky tests, and sat in enough retrospectives to know what QA actually needs.</p>
+    </div>
 
-  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI endpoints</h3>
-  <p style="color:var(--muted); font-size:0.9rem;">
-    <strong>Primary:</strong> your Vercel deployment at
-    <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">ragina-crawler-ragina.vercel.app/api/ask</code><br>
-    <strong>Fallback:</strong> <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">text.pollinations.ai</code><br>
-    <strong>Offline:</strong> rule-based parser runs entirely in the browser.
-  </p>
-  <div id="api-status" class="status" style="margin-top:1rem;">⏳ Checking AI endpoint...</div>
+    <div class="profile-card">
+      <div class="profile-avatar">VS</div>
+      <div class="profile-info">
+        <div class="profile-name">Varakala Sai (Surya)</div>
+        <div class="profile-role">Techno Agilist · Dev Engineer · Strategic Consultant</div>
+        <div class="profile-meta">
+          6+ years at Tata Consultancy Services<br>
+          SAFe Scrum Master · QA → Full Stack → Java Backend → Agile
+        </div>
+      </div>
+    </div>
 
-  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">Local storage</h3>
-  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-    ERplorer stores search history and custom patterns in your browser using IndexedDB. Nothing is sent to any server.
-  </p>
-  <button class="danger" onclick="resetAllLocalData()">🗑️ Reset all local data</button>
-</div>
+    <div class="card">
+      <div class="card-title">Areas of strength</div>
+      <div class="card-desc">Tap any tag to search the index for related content.</div>
+      <div class="tag-row" id="about-tags"></div>
+    </div>
 
-<div class="footer">
-  <span>ERplorer — Error Resolution Explorer</span>
-  <span>Built with vanilla JS · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
+    <div class="card">
+      <div class="card-title">Connect</div>
+      <div class="card-desc" style="margin-bottom:4px;">Open to Scrum Master and AI-Integrated Delivery roles.</div>
+      <div class="social-grid">
+        <a href="https://github.com/suryasticsai" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+          <span>GitHub<span class="handle">@suryasticsai</span></span>
+        </a>
+        <a href="https://linkedin.com/in/suryasticsai" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+          <span>LinkedIn<span class="handle">/in/suryasticsai</span></span>
+        </a>
+        <a href="https://suryasticsai.medium.com" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24"><path d="M2 6h4l4 10 4-10h4l-6 14h-4z"/><circle cx="20" cy="7" r="2"/></svg>
+          <span>Medium<span class="handle">@suryasticsai</span></span>
+        </a>
+        <a href="https://huggingface.co/suryasticsai" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M16 12h.01M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg>
+          <span>HuggingFace<span class="handle">@suryasticsai</span></span>
+        </a>
+        <a href="https://instagram.com/suryasticsai" target="_blank" class="social-link">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1" fill="currentColor"/></svg>
+          <span>Instagram<span class="handle">@suryasticsai</span></span>
+        </a>
+        <a href="mailto:sai.varakala13@gmail.com" class="social-link">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+          <span>Email<span class="handle">sai.varakala13@gmail.com</span></span>
+        </a>
+      </div>
+    </div>
+
+    <div class="hero-eyebrow" style="margin-top:32px;">How to use ERplorer</div>
+    <p style="font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
+      A quick walkthrough of every tab. Each panel is self-contained — use what you need, ignore the rest.
+    </p>
+
+    <details class="manual-item" open>
+      <summary>
+        <span class="step-num">1</span>
+        Search — find where an error lives
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>The fastest way to locate any error in the codebase.</p>
+        <ul>
+          <li>Paste an <strong>error message</strong>, a <strong>stack trace line</strong>, or a <strong>SQL keyword</strong> into the search box.</li>
+          <li>Results show the file, line number, and the surrounding 5 lines of code.</li>
+          <li>The matched text is highlighted in amber inside the code block.</li>
+          <li>Use the <strong>filter chips</strong> (All / Errors / Java / Python / SQL / Config / Tests) to narrow by type.</li>
+          <li>Press <span class="kbd">Enter</span> to save a query to your recent history.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="manual-item">
+      <summary>
+        <span class="step-num">2</span>
+        Ask — natural language over the index
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>Ask questions in plain English instead of guessing keywords.</p>
+        <ul>
+          <li>Type something like <em>"Which file has the login validation errors?"</em></li>
+          <li>ERplorer finds the top matching entries locally, then sends only those to the AI.</li>
+          <li>Answers come with clickable <strong>[1] [2]</strong> citations.</li>
+          <li>If AI is unavailable, matches are shown as a chat-style list — the tool always works.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="manual-item">
+      <summary>
+        <span class="step-num">3</span>
+        Lab — turn test cases into code
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>Two ways in: write scenarios in English, or drop a spreadsheet.</p>
+        <ul>
+          <li><strong>Scenarios:</strong> describe test steps. Convert with AI or rules. Edit the table, then generate specs.</li>
+          <li><strong>Specs:</strong> drop an Excel/CSV with test rows. Get Playwright and pytest files.</li>
+        </ul>
+      </div>
+    </details>
+
+    <details class="manual-item">
+      <summary>
+        <span class="step-num">4</span>
+        Ingest — grow the searchable index
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>Four ways: fetch a URL, scan a GitHub repo, drop files, or paste text. Everything stays in your browser.</p>
+      </div>
+    </details>
+
+    <details class="manual-item">
+      <summary>
+        <span class="step-num">5</span>
+        Rules — teach ERplorer your team's errors
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>Add regex patterns for error formats specific to your codebase. Applied automatically on the next crawl, scan, or paste.</p>
+      </div>
+    </details>
+
+    <details class="manual-item">
+      <summary>
+        <span class="step-num">6</span>
+        Settings — theme, token, and local data
+        <span class="chev">▶</span>
+      </summary>
+      <div class="manual-body">
+        <p>Toggle dark mode via the sun/moon icon in the header. Configure GitHub token for private repo scanning. Reset local data to clear all history and patterns.</p>
+      </div>
+    </details>
+
+    <div class="footer-note">
+      ERplorer · Error Resolution Explorer · v1.0<br>
+      Built with vanilla JavaScript. Zero build step. Zero servers. Zero cost.<br>
+      <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
+    </div>
+  </section>
+
+  <!-- SETTINGS -->
+  <section class="panel" id="panel-settings">
+    <div class="hero">
+      <div class="hero-eyebrow">Settings</div>
+      <h1 class="hero-title">Configure.</h1>
+      <p class="hero-desc">Everything below stays in your browser. Nothing is sent to any server unless you explicitly request it.</p>
+    </div>
+
+    <!-- FIRST TILE: About Me -->
+    <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-alt) 100%); border-color:#F0E2C8;">
+      <div class="card-title" style="font-size:17px;">About me</div>
+      <div class="card-desc" style="color:var(--ink-2); margin-top:8px;">
+        I've been a QA engineer, a full stack developer, a Java backend dev, and a Scrum Master. In every one of those roles, I watched teams lose hours to the same problem: an error message in a CI log that nobody could locate in the codebase.
+        <br><br>
+        ERplorer is my answer. Paste an error, get the file and line. No IDE, no clone, no context switch. Built entirely in vanilla JavaScript so it runs from any browser, on any machine, for any team — no install, no build, no cost.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Appearance</div>
+      <div class="card-desc" style="margin-bottom:14px;">Choose light or dark. Your preference is saved to this browser.</div>
+      <div class="subtabs" style="margin-bottom:0;">
+        <button class="subtab" id="theme-light-btn" onclick="setTheme('light')">Light</button>
+        <button class="subtab" id="theme-dark-btn" onclick="setTheme('dark')">Dark</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">GitHub token</div>
+      <div class="card-desc" style="margin-bottom:14px;">Optional. Enables live GitHub API queries against private repos. Stored in sessionStorage only — cleared when this tab closes.</div>
+      <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
+      <div class="row">
+        <button class="btn" onclick="saveToken()">Save</button>
+        <button class="btn secondary" onclick="clearToken()">Clear</button>
+      </div>
+      <div id="token-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">AI endpoints</div>
+      <div class="card-desc">
+        Primary: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">ragina-crawler-ragina.vercel.app/api/ask</code><br>
+        Fallback: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">text.pollinations.ai</code><br>
+        Offline: rule-based parser runs in-browser.
+      </div>
+      <div id="api-status" class="status-line" style="margin-top:14px;">Checking AI endpoint…</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Local data</div>
+      <div class="card-desc" style="margin-bottom:14px;">Search history and custom patterns live in IndexedDB in this browser. Clearing removes everything.</div>
+      <button class="btn danger full" onclick="resetAllLocalData()">Reset all local data</button>
+    </div>
+
+    <div class="card" style="background:var(--bg-alt);">
+      <div class="card-title" style="font-size:14px;">Tip</div>
+      <div class="card-desc" style="font-size:13px;">Use <code style="background:var(--card);padding:1px 6px;border-radius:4px;">?repo=owner/name</code> in the URL to point ERplorer at another repo's search-index.json.</div>
+    </div>
+  </section>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
@@ -560,12 +1006,39 @@ Test the users table migration:
 
 <script>
 // ============================================================
-// 1. INDEXEDDB
+// THEME
+// ============================================================
+function setTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('erplorer_theme', t);
+  document.getElementById('theme-light-btn')?.classList.toggle('active', t === 'light');
+  document.getElementById('theme-dark-btn')?.classList.toggle('active', t === 'dark');
+}
+function toggleTheme() {
+  const cur = document.documentElement.getAttribute('data-theme') || 'light';
+  setTheme(cur === 'dark' ? 'light' : 'dark');
+}
+(function initTheme() {
+  const saved = localStorage.getItem('erplorer_theme') || 'light';
+  setTheme(saved);
+})();
+
+// ============================================================
+// STATE
 // ============================================================
 const DB_NAME = 'erplorer';
 const DB_VERSION = 1;
 let dbPromise = null;
+let documents = [];
+let flexIndex = null;
+let activeFilter = 'all';
+let customPatterns = [];
+let OctokitClass = null;
+const chatHistory = [];
 
+// ============================================================
+// INDEXEDDB
+// ============================================================
 function openDB() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
@@ -586,19 +1059,11 @@ function openDB() {
   });
   return dbPromise;
 }
-async function dbAdd(store, value) {
+async function dbAdd(store, v) {
   const db = await openDB();
   return new Promise((res, rej) => {
     const tx = db.transaction(store, 'readwrite');
-    const r = tx.objectStore(store).add(value);
-    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
-  });
-}
-async function dbPut(store, value) {
-  const db = await openDB();
-  return new Promise((res, rej) => {
-    const tx = db.transaction(store, 'readwrite');
-    const r = tx.objectStore(store).put(value);
+    const r = tx.objectStore(store).add(v);
     r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
   });
 }
@@ -628,703 +1093,546 @@ async function dbClear(store) {
 }
 
 // ============================================================
-// 2. SEARCH HISTORY
+// HELPERS
 // ============================================================
-const HISTORY_LIMIT = 25;
+const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+function downloadFile(name, content, mime = 'text/plain') {
+  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
-async function recordSearch(query, mode, resultCount) {
-  if (!query || query.length < 2) return;
+// ============================================================
+// NAV
+// ============================================================
+document.querySelectorAll('.nav-item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+document.querySelectorAll('.subtab').forEach(t => {
+  t.addEventListener('click', () => {
+    if (!t.dataset.lab) return;
+    document.querySelectorAll('.subtab[data-lab]').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById('lab-scenarios').style.display = t.dataset.lab === 'scenarios' ? 'block' : 'none';
+    document.getElementById('lab-specs').style.display = t.dataset.lab === 'specs' ? 'block' : 'none';
+  });
+});
+
+// ============================================================
+// LOAD INDEX
+// ============================================================
+async function loadIndex() {
   try {
-    const all = await dbGetAll('searches');
-    for (const s of all) {
-      if (s.query === query && s.mode === mode) await dbDelete('searches', s.id);
-    }
-    await dbAdd('searches', { query, mode, resultCount, timestamp: Date.now() });
-    const current = await dbGetAll('searches');
-    if (current.length > HISTORY_LIMIT) {
-      current.sort((a, b) => a.timestamp - b.timestamp);
-      for (const s of current.slice(0, current.length - HISTORY_LIMIT)) {
-        await dbDelete('searches', s.id);
-      }
-    }
-    renderHistory();
-  } catch (err) { console.warn('History save failed:', err); }
+    const res = await fetch('search-index.json', { cache: 'no-cache' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    documents = await res.json();
+    flexIndex = new FlexSearch.Document({
+      document: { id: 'id', index: ['text'], store: true },
+      tokenize: 'forward', resolution: 9, cache: true
+    });
+    documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
+    renderStats();
+    renderChips();
+    renderAboutTags();
+  } catch (err) {
+    document.getElementById('stat-row').innerHTML =
+      `<div class="status-line warn">No search-index.json yet. Add content via the <strong>Ingest</strong> tab.</div>`;
+    documents = [];
+    renderAboutTags();
+  }
+}
+
+function renderStats() {
+  const files = new Set(documents.map(d => d.file)).size;
+  const thrown = documents.filter(d => d.type && d.type.includes('error')).length;
+  const tests = documents.filter(d => d.type === 'test-failure').length;
+  document.getElementById('stat-row').innerHTML = `
+    <div class="stat"><span class="num">${files}</span><span class="lbl">files</span></div>
+    <div class="stat"><span class="num">${documents.length}</span><span class="lbl">entries</span></div>
+    <div class="stat"><span class="num">${thrown}</span><span class="lbl">thrown</span></div>
+    <div class="stat"><span class="num">${tests}</span><span class="lbl">tests</span></div>
+  `;
+}
+
+function renderChips() {
+  const counts = { all: documents.length };
+  for (const d of documents) {
+    const t = d.type || 'code';
+    counts[t] = (counts[t] || 0) + 1;
+  }
+  const order = ['all','error','java-error','python-error','sql-error','config-error','test-failure','crawled','custom-error'];
+  const labels = { all:'All','error':'Errors','java-error':'Java','python-error':'Python','sql-error':'SQL','config-error':'Config','test-failure':'Tests','crawled':'Crawled','custom-error':'Custom' };
+  document.getElementById('filter-chips').innerHTML = order.filter(k => counts[k]).map(k =>
+    `<button class="chip ${k === activeFilter ? 'active' : ''}" onclick="setFilter('${k}')">${labels[k] || k} <span class="count">${counts[k]}</span></button>`
+  ).join('');
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  renderChips();
+  if (document.getElementById('search-input').value.trim().length >= 2) runSearch();
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+const searchInput = document.getElementById('search-input');
+let debounce;
+searchInput.addEventListener('input', () => {
+  clearTimeout(debounce);
+  debounce = setTimeout(() => runSearch(), 180);
+});
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter') { clearTimeout(debounce); runSearch(true); }
+});
+
+function runSearch(save = false) {
+  const q = searchInput.value.trim();
+  const el = document.getElementById('results');
+  if (q.length < 2) { el.innerHTML = ''; return; }
+
+  const raw = flexIndex ? flexIndex.search(q, { enrich: true }) : [];
+  let hits = raw.flatMap(r => r.result);
+  if (activeFilter !== 'all') hits = hits.filter(h => documents[h.id]?.type === activeFilter);
+
+  if (!hits.length) {
+    el.innerHTML = '<div class="empty">No matches found.</div>';
+    if (save) recordSearch(q, 'exact', 0);
+    return;
+  }
+  const allHits = hits.map(h => documents[h.id]).filter(Boolean).slice(0, 30);
+  el.innerHTML = allHits.map((doc) => renderResult(doc, q)).join('');
+  if (save) recordSearch(q, 'exact', allHits.length);
+}
+
+function renderResult(doc, query) {
+  const lines = (doc.context || doc.text || '').split('\n');
+  const codeLines = lines.map((line, i) => {
+    const num = (doc.line || 1) - Math.floor(lines.length / 2) + i;
+    const isHit = query && line.toLowerCase().includes(query.toLowerCase());
+    const text = isHit
+      ? escapeHtml(line).replace(new RegExp(`(${escapeRegex(query)})`, 'gi'), '<span class="mark">$1</span>')
+      : escapeHtml(line);
+    return `<div class="code-line ${isHit ? 'hit' : ''}"><span class="code-num">${num}</span><span class="code-text">${text}</span></div>`;
+  }).join('');
+  const type = doc.type || 'code';
+  return `
+    <div class="result">
+      <div class="result-head">
+        <div class="result-file"><strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}</div>
+        <span class="result-badge ${type}">${type.replace('-error', '').replace('-failure', '')}</span>
+      </div>
+      <div class="result-msg">${escapeHtml(doc.text || '')}</div>
+      ${codeLines ? `<div class="code-block">${codeLines}</div>` : ''}
+    </div>
+  `;
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+async function recordSearch(query, mode, count) {
+  if (!query || query.length < 2) return;
+  const all = await dbGetAll('searches').catch(() => []);
+  for (const s of all) {
+    if (s.query === query && s.mode === mode) await dbDelete('searches', s.id).catch(() => {});
+  }
+  await dbAdd('searches', { query, mode, resultCount: count, timestamp: Date.now() }).catch(() => {});
+  const cur = await dbGetAll('searches').catch(() => []);
+  if (cur.length > 25) {
+    cur.sort((a, b) => a.timestamp - b.timestamp);
+    for (const s of cur.slice(0, cur.length - 25)) await dbDelete('searches', s.id).catch(() => {});
+  }
+  renderHistory();
 }
 
 async function renderHistory() {
-  const panel = document.getElementById('history-panel');
+  const wrap = document.getElementById('history-wrap');
   const list = document.getElementById('history-list');
-  try {
-    const all = await dbGetAll('searches');
-    if (!all.length) { panel.style.display = 'none'; return; }
-    all.sort((a, b) => b.timestamp - a.timestamp);
-    panel.style.display = 'block';
-    list.innerHTML = all.map(s => `
-      <div class="history-chip" onclick="rerunSearch(${s.id})">
-        <span>${escapeHtml(s.query.length > 40 ? s.query.slice(0, 40) + '…' : s.query)}</span>
-        ${s.resultCount != null ? `<span class="count">${s.resultCount}</span>` : ''}
-      </div>`).join('');
-  } catch (err) { console.warn('History render failed:', err); }
+  const all = await dbGetAll('searches').catch(() => []);
+  if (!all.length) { wrap.style.display = 'none'; return; }
+  all.sort((a, b) => b.timestamp - a.timestamp);
+  wrap.style.display = 'block';
+  list.innerHTML = all.slice(0, 8).map(s =>
+    `<button class="chip" onclick="rerunSearch(${s.id})">${escapeHtml(s.query.length > 32 ? s.query.slice(0, 32) + '…' : s.query)} <span class="count">${s.resultCount ?? '—'}</span></button>`
+  ).join('');
 }
 
 async function rerunSearch(id) {
   const all = await dbGetAll('searches');
   const entry = all.find(s => s.id === id);
   if (!entry) return;
-  setMode(entry.mode || 'exact');
   if (entry.mode === 'ai') {
+    document.querySelector('.nav-item[data-panel="ask"]').click();
     document.getElementById('nl-input').value = entry.query;
     askNatural();
   } else {
-    document.getElementById('search-input').value = entry.query;
+    document.querySelector('.nav-item[data-panel="search"]').click();
+    searchInput.value = entry.query;
     runSearch();
   }
 }
-async function clearHistory() { await dbClear('searches'); renderHistory(); }
-
-// ============================================================
-// 3. CUSTOM PATTERNS
-// ============================================================
-let customPatterns = [];
-
-async function loadCustomPatterns() {
-  try { customPatterns = await dbGetAll('patterns'); renderPatterns(); }
-  catch (err) { console.warn('Pattern load failed:', err); }
-}
-
-function renderPatterns() {
-  const list = document.getElementById('pattern-list');
-  const count = document.getElementById('pattern-count');
-  count.textContent = `(${customPatterns.length})`;
-
-  if (!customPatterns.length) {
-    list.innerHTML = '<p style="color:var(--muted); padding:1rem 0; font-size:0.9rem;">No custom patterns yet. Add one above.</p>';
-    return;
-  }
-  list.innerHTML = customPatterns.map(p => `
-    <div class="pattern-card ${p.enabled === false ? 'disabled' : ''}" data-id="${p.id}">
-      <div class="pattern-info">
-        <div class="name">${escapeHtml(p.name)}</div>
-        <div class="regex">${escapeHtml(p.pattern)}</div>
-        <div class="meta">Type: <strong>${escapeHtml(p.type)}</strong>${p.exts ? ` · Files: <strong>${escapeHtml(p.exts)}</strong>` : ' · All files'}</div>
-      </div>
-      <div class="pattern-actions">
-        <label class="toggle-switch">
-          <input type="checkbox" ${p.enabled === false ? '' : 'checked'} onchange="togglePattern(${p.id}, this.checked)">
-          <span class="slider"></span>
-        </label>
-        <button class="danger" onclick="deletePattern(${p.id})">Delete</button>
-      </div>
-    </div>`).join('');
-}
-
-async function addPattern() {
-  const name = document.getElementById('pat-name').value.trim();
-  const pattern = document.getElementById('pat-regex').value.trim();
-  const type = document.getElementById('pat-type').value.trim() || 'custom-error';
-  const exts = document.getElementById('pat-exts').value.trim();
-
-  if (!name || !pattern) { alert('Name and regex pattern are required.'); return; }
-  try { new RegExp(pattern, 'g'); }
-  catch (err) { alert('Invalid regex: ' + err.message); return; }
-
-  await dbAdd('patterns', { name, pattern, type, exts, enabled: true, createdAt: Date.now() });
-  document.getElementById('pat-name').value = '';
-  document.getElementById('pat-regex').value = '';
-  document.getElementById('pat-exts').value = '';
-  document.getElementById('pattern-test').style.display = 'none';
-  await loadCustomPatterns();
-}
-async function togglePattern(id, enabled) {
-  const p = customPatterns.find(x => x.id === id); if (!p) return;
-  p.enabled = enabled; await dbPut('patterns', p); renderPatterns();
-}
-async function deletePattern(id) {
-  if (!confirm('Delete this pattern?')) return;
-  await dbDelete('patterns', id); await loadCustomPatterns();
-}
-function testPattern() {
-  const pattern = document.getElementById('pat-regex').value.trim();
-  const output = document.getElementById('pattern-test');
-  output.style.display = 'block';
-  if (!pattern) { output.innerHTML = '<div class="error-list">Enter a regex pattern first.</div>'; return; }
-
-  const sample = `This is a sample.\nMY_APP_ERROR_42: Something broke\nAnother line without the pattern.\nMY_APP_ERROR_99: Second issue here`;
-  try {
-    const re = new RegExp(pattern, 'g');
-    const matches = [...sample.matchAll(re)];
-    if (!matches.length) { output.innerHTML = `<div class="status">No matches in the built-in sample.</div>`; return; }
-    output.innerHTML = `<div class="status">✅ Found <strong>${matches.length}</strong> match(es):<ul style="margin-left:1.25rem; margin-top:0.5rem;">${matches.map(m => `<li><code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">${escapeHtml(m[1] || m[0])}</code></li>`).join('')}</ul></div>`;
-  } catch (err) {
-    output.innerHTML = `<div class="error-list">Invalid regex: ${escapeHtml(err.message)}</div>`;
-  }
-}
-async function resetAllLocalData() {
-  if (!confirm('Delete all search history and custom patterns?')) return;
-  await dbClear('searches'); await dbClear('patterns');
-  customPatterns = []; renderPatterns(); renderHistory();
-  alert('Local data cleared.');
+async function clearHistory() {
+  await dbClear('searches').catch(() => {});
+  renderHistory();
 }
 
 // ============================================================
-// 4. OCTOKIT
-// ============================================================
-let OctokitClass = null;
-(async () => {
-  try { const m = await import("https://esm.sh/@octokit/rest"); OctokitClass = m.Octokit; }
-  catch (e) { console.warn("⚠️ Octokit unavailable:", e.message); }
-})();
-function getOctokit() {
-  if (!OctokitClass) return null;
-  const token = sessionStorage.getItem('gh_token');
-  return new OctokitClass(token ? { auth: token } : {});
-}
-
-// ============================================================
-// 5. SEARCH INDEX
-// ============================================================
-let flexIndex = null, documents = [];
-
-async function loadIndex() {
-  const status = document.getElementById('index-status');
-  try {
-    const res = await fetch('search-index.json', { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    documents = await res.json();
-
-    flexIndex = new FlexSearch.Document({
-      document: { id: 'id', index: ['text'], store: true },
-      tokenize: 'forward', resolution: 9, cache: true
-    });
-    documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
-
-    const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
-    const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
-    status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
-  } catch (err) {
-    status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator and Add Content still work.<br><small style="color:#94A3B8">${err.message}</small>`;
-    documents = [];
-    flexIndex = new FlexSearch.Document({
-      document: { id: 'id', index: ['text'], store: true },
-      tokenize: 'forward', resolution: 9, cache: true
-    });
-  }
-}
-loadIndex();
-
-// ============================================================
-// 6. EXACT SEARCH
-// ============================================================
-const searchInput = document.getElementById('search-input');
-const resultsEl = document.getElementById('results');
-let debounce;
-searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(runSearch, 180); });
-searchInput.addEventListener('keydown', e => {
-  if (e.key === 'Enter') { clearTimeout(debounce); runSearch(true); }
-});
-
-function runSearch(saveToHistory = false) {
-  const q = searchInput.value.trim();
-  resultsEl.innerHTML = '';
-  if (q.length < 2 || !flexIndex) return;
-
-  const raw = flexIndex.search(q, { enrich: true });
-  const hits = raw.flatMap(r => r.result).slice(0, 20);
-  if (!hits.length) {
-    resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>';
-    if (saveToHistory) recordSearch(q, 'exact', 0);
-    return;
-  }
-  hits.forEach(({ id }) => {
-    const doc = documents[id]; if (!doc) return;
-    const el = document.createElement('div');
-    el.className = `result ${doc.type || 'code'}`;
-    let snippet = doc.context || doc.text || '';
-    const re = new RegExp(`(${escapeRegex(q)})`, 'gi');
-    snippet = escapeHtml(snippet).replace(re, '<span class="highlight">$1</span>');
-    el.innerHTML = `
-      <div class="meta">
-        <strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}
-        <span class="badge">${doc.type || 'code'}</span>
-        ${doc.testTitle ? `<em>— ${escapeHtml(doc.testTitle)}</em>` : ''}
-      </div>
-      <div class="snippet">${snippet}</div>`;
-    resultsEl.appendChild(el);
-  });
-  if (saveToHistory) recordSearch(q, 'exact', hits.length);
-}
-function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-// ============================================================
-// 7. MODE TOGGLE
-// ============================================================
-function setMode(mode) {
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
-  document.getElementById('mode-exact').style.display = mode === 'exact' ? 'block' : 'none';
-  document.getElementById('mode-ai').style.display = mode === 'ai' ? 'block' : 'none';
-  if (mode === 'ai') setTimeout(() => document.getElementById('nl-input').focus(), 50);
-  if (mode === 'exact') setTimeout(() => document.getElementById('search-input').focus(), 50);
-}
-
-// ============================================================
-// 8. ASK AI (natural language over the local index)
+// ASK — chat-style with fallback
 // ============================================================
 const AI_PRIMARY = 'https://ragina-crawler-ragina.vercel.app/api/ask';
 const AI_FALLBACK = 'https://text.pollinations.ai/openai';
-const AI_TIMEOUT_MS = 45000;
+
+function pushChat(role, html, isHtml = false) {
+  const thread = document.getElementById('chat-thread');
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'ai');
+  if (role === 'ai' && isHtml) {
+    bubble.innerHTML = html;
+  } else {
+    bubble.textContent = html;
+  }
+  thread.appendChild(bubble);
+  bubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return bubble;
+}
+
+function pushTyping() {
+  const thread = document.getElementById('chat-thread');
+  const bubble = document.createElement('div');
+  bubble.className = 'chat-bubble ai';
+  bubble.id = 'typing-bubble';
+  bubble.innerHTML = `<div class="ai-src">ERplorer</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
+  thread.appendChild(bubble);
+  bubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  return bubble;
+}
+
+function quickAsk(text) {
+  document.getElementById('nl-input').value = text;
+  askNatural();
+}
 
 async function askNatural() {
-  const input = document.getElementById('nl-input');
-  const answerEl = document.getElementById('nl-answer');
-  const q = input.value.trim();
+  const q = document.getElementById('nl-input').value.trim();
   if (!q) return;
+  document.getElementById('nl-input').value = '';
 
-  if (!flexIndex) {
-    answerEl.innerHTML = '<div class="ai-answer">⚠️ Search index not loaded yet.</div>';
+  pushChat('user', q);
+  const typing = pushTyping();
+
+  if (!documents.length) {
+    typing.remove();
+    pushChat('ai', '<div class="ai-src">ERplorer</div>Index is empty. Add content via the Ingest tab first.', true);
     return;
   }
 
-  // Step 1: Local search to find candidate entries
-  const raw = flexIndex.search(q, { enrich: true });
-  const hits = raw.flatMap(r => r.result).slice(0, 20);
-  const matchedDocs = hits.map(h => documents[h.id]).filter(Boolean);
+  // Local search
+  const raw = flexIndex ? flexIndex.search(q, { enrich: true }) : [];
+  const hits = raw.flatMap(r => r.result).slice(0, 8).map(h => documents[h.id]).filter(Boolean);
 
-  if (!matchedDocs.length) {
-    answerEl.innerHTML = '<div class="ai-answer">No matching entries found in the index. Try different keywords.</div>';
-    recordSearch(q, 'ai', 0);
+  if (!hits.length) {
+    typing.remove();
+    pushChat('ai', '<div class="ai-src">ERplorer</div>I couldn\'t find any matching entries for that. Try different keywords, or check the <strong>Search</strong> tab with a filter chip.', true);
     return;
   }
 
-  answerEl.innerHTML = '<div class="ai-answer loading">Searching the index and asking AI…</div>';
+  const context = hits.map((d, i) => `[${i + 1}] ${d.file}${d.line ? ':' + d.line : ''} (${d.type || 'code'})\n${(d.text || '').slice(0, 300)}`).join('\n\n');
+  const prompt = `User query: "${q}"\n\nTop matching entries:\n\n${context}\n\nGive a short answer for a QA engineer. Cite sources as [1], [2] etc. Under 150 words.`;
 
-  // Step 2: Format context for the LLM
-  const context = matchedDocs.slice(0, 15).map((d, i) =>
-    `[${i + 1}] ${d.file || 'unknown'}${d.line ? ':' + d.line : ''} (${d.type || 'code'})\n${d.text || ''}`
-  ).join('\n\n');
-
-  const prompt = `The user searched a codebase error index for: "${q}"
-
-Top matching entries from the index:
-
-${context}
-
-Give a short, useful answer for a QA engineer. Point out the most relevant files and line numbers. Keep it under 200 words.`;
-
-  // Step 3: Call AI endpoints with fallback
-  let aiAnswer = null;
-  let aiSource = '';
-
+  let answer = '';
+  let source = '';
   try {
-    const res = await fetchWithTimeout(AI_PRIMARY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        question: prompt,
-        context: 'You are a helpful assistant answering questions about a codebase search index.'
-      })
+    const res = await fetch(AI_PRIMARY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: prompt, context: 'QA assistant' })
     });
     if (res.ok) {
       const data = await res.json();
-      aiAnswer = data.answer || data.response || data.content ||
-                 data.choices?.[0]?.message?.content ||
-                 (typeof data === 'string' ? data : null);
-      if (aiAnswer) aiSource = 'Vercel';
+      answer = data.answer || data.content || data.response || data.choices?.[0]?.message?.content || '';
+      if (answer) source = 'Vercel';
     }
-  } catch (err) { console.warn('Vercel ask failed:', err.message); }
+  } catch {}
 
-  if (!aiAnswer) {
+  if (!answer) {
     try {
-      const res = await fetchWithTimeout(AI_FALLBACK, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch(AI_FALLBACK, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'openai',
           messages: [
-            { role: 'system', content: 'You are a helpful assistant answering questions about a codebase.' },
+            { role: 'system', content: 'Answer about codebase errors with [n] citations. Short and clear.' },
             { role: 'user', content: prompt }
           ]
         })
       });
       if (res.ok) {
-        const data = await res.json();
-        aiAnswer = data.choices?.[0]?.message?.content;
-        if (aiAnswer) aiSource = 'Pollinations';
+        const d = await res.json();
+        answer = d.choices?.[0]?.message?.content || '';
+        if (answer) source = 'Pollinations';
       }
-    } catch (err) { console.warn('Pollinations ask failed:', err.message); }
+    } catch {}
   }
 
-  // Step 4: Render answer + matched entries
-  let html = '';
-  if (aiAnswer) {
-    html += `<div class="ai-answer"><small style="color:var(--muted);">Answered by ${aiSource}</small><br><br>${escapeHtml(aiAnswer).replace(/\n/g, '<br>')}</div>`;
+  typing.remove();
+
+  // Build the reply
+  let replyHtml = '';
+  if (answer) {
+    replyHtml += `<div class="ai-src">${source}</div>`;
+    replyHtml += escapeHtml(answer).replace(/\n/g, '<br>');
   } else {
-    html += `<div class="ai-answer">⚠️ AI summarization unavailable. Showing raw matches below.</div>`;
+    replyHtml += `<div class="ai-src">ERplorer · offline mode</div>`;
+    replyHtml += `AI endpoints are unavailable right now, but I found <strong>${hits.length}</strong> matching entries in the index. Here they are, most relevant first:`;
   }
 
-  html += `<h4 style="margin-top:1.5rem; font-size:0.9rem;">Top matches (${matchedDocs.length})</h4>`;
-  html += matchedDocs.slice(0, 8).map(d => `
-    <div class="result ${d.type || 'code'}">
-      <div class="meta">
-        <strong>${escapeHtml(d.file || 'unknown')}</strong>${d.line ? ':' + d.line : ''}
-        <span class="badge">${d.type || 'code'}</span>
-      </div>
-      <div class="snippet">${escapeHtml((d.text || d.context || '').slice(0, 400))}</div>
+  // Always show matches — they're useful even when AI works
+  replyHtml += `<div class="matches-head">Top matches</div>`;
+  replyHtml += hits.slice(0, 5).map((d, i) => `
+    <div class="chat-match">
+      <div class="f">[${i + 1}] ${escapeHtml(d.file || 'unknown')}${d.line ? ':' + d.line : ''}</div>
+      <div class="t">${escapeHtml((d.text || '').slice(0, 200))}</div>
     </div>
   `).join('');
 
-  answerEl.innerHTML = html;
-  recordSearch(q, 'ai', matchedDocs.length);
+  pushChat('ai', replyHtml, true);
+  recordSearch(q, 'ai', hits.length);
 }
 
-async function fetchWithTimeout(url, options) {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
-  try {
-    return await fetch(url, { ...options, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
+async function onDeepToggle(enabled) {
+  const el = document.getElementById('rag-model-status');
+  if (!enabled) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<span class="spinner"></span>Deep search is planned for a future release. Keyword search covers most queries.';
+  setTimeout(() => { el.innerHTML = 'Keyword search is what you have now; embeddings require a build step.'; }, 2500);
 }
-document.getElementById('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') askNatural(); });
 
-// ============================================================
-// 9. TABS
-// ============================================================
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
-  });
+document.getElementById('nl-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') askNatural();
 });
 
 // ============================================================
-// 10. AI → EXCEL
+// ABOUT — clickable tags
 // ============================================================
-const AI_SYSTEM_PROMPT = `You are a QA test case parser. You convert free-form test scenario text into structured JSON test steps.
+const ABOUT_TAGS = [
+  'SAFe ART coordination', 'PI Planning', 'Cross-team dependencies',
+  'AI-assisted Agile tooling', 'Jira automation', 'Confluence',
+  'Data-driven delivery', 'Team coaching', 'Retrospective innovation',
+  'Stakeholder engagement', 'QA engineering', 'Full stack development',
+  'Java backend', 'Scrum Master'
+];
 
-You output ONLY valid JSON. No markdown, no explanation, no code fences.
-
-The output must be a JSON object with a single key "steps" containing an array of step objects, each with exactly these fields:
-
-{
-  "id": "TC001",
-  "scenario": "short scenario name",
-  "step": 1,
-  "action": "goto|fill|click|expectText|expectVisible|expectUrl|wait|apiRequest|expectStatus|expectJson|expectHeader|runSql|expectRowCount|expectNoNulls|expectUnique|expectValue",
-  "method": "",
-  "url": "",
-  "headers": "",
-  "body": "",
-  "selector": "",
-  "value": "",
-  "expected": "",
-  "jsonpath": ""
+function renderAboutTags() {
+  const el = document.getElementById('about-tags');
+  if (!el) return;
+  el.innerHTML = ABOUT_TAGS.map(tag =>
+    `<button class="tag-btn" onclick="searchTag('${escapeHtml(tag)}')">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      ${escapeHtml(tag)}
+    </button>`
+  ).join('');
 }
 
-Rules:
-1. Detect each test case from the text. Assign sequential IDs TC001, TC002, etc.
-2. Every logical action becomes one row.
-3. Convert natural language to the closest action:
-   - "go to X" / "navigate to X" / "open X" / "visit X" → goto, url=X
-   - "enter X in Y" / "type X into Y" / "fill X in Y" → fill, value=X, selector=Y
-   - "click X" / "press X" / "tap X" → click, selector=X
-   - "verify X" / "should see X" / "expect X" / "check X" → expectText, expected=X
-   - "wait N seconds" → wait, value=(N*1000 as string)
-   - HTTP methods like GET/POST/PUT/DELETE with a URL → apiRequest with method and url
-   - "should return 200" / "expect status 200" → expectStatus, expected=200
-   - "SQL:" / "run SQL" / "SELECT ..." → runSql, value=the SQL
-   - "no nulls in X" → expectNoNulls, selector=X
-   - "N rows" → expectRowCount, expected=N
-4. For selectors, use the most likely CSS selector. If unsure, use "#field-name" or ".element-class" based on context.
-5. Leave fields as empty strings ("") when not applicable.
-6. Every field must be present in every row.`;
+function searchTag(tag) {
+  document.querySelector('.nav-item[data-panel="search"]').click();
+  searchInput.value = tag;
+  runSearch(true);
+}
+
+// ============================================================
+// LAB — scenarios
+// ============================================================
+function loadSampleScenarios() {
+  document.getElementById('ai-input').value = `Test the login page:
+1. Go to /login
+2. Enter "admin" in the username field
+3. Enter "secret123" in the password field
+4. Click the submit button
+5. Verify that the dashboard shows "Welcome admin"
+
+Test the users API:
+- GET /api/users should return 200
+- The first user's name should be "alice"
+
+Test the users table:
+- Run SELECT COUNT(*) FROM users
+- Expect 1 row back
+- There should be no nulls in the email column`;
+}
 
 async function runAITransform() {
   const text = document.getElementById('ai-input').value.trim();
-  const statusEl = document.getElementById('ai-status');
-  const previewEl = document.getElementById('ai-preview');
-  if (!text) { statusEl.innerHTML = '<div class="error-list">Paste some test scenarios first.</div>'; return; }
+  const status = document.getElementById('ai-status');
+  const preview = document.getElementById('ai-preview');
+  if (!text) { status.innerHTML = '<div class="status-line err">Paste scenarios first.</div>'; return; }
 
-  statusEl.innerHTML = '<div class="status"><span class="spinner"></span>Asking AI to convert your scenarios…</div>';
-  previewEl.innerHTML = '';
+  status.innerHTML = '<div class="status-line"><span class="spinner"></span>Asking AI…</div>';
+  preview.innerHTML = '';
 
-  const userPrompt = `Convert these test scenarios into JSON:\n\n${text}`;
+  const prompt = `Convert these test scenarios into JSON. Output only {"steps":[...]} where each step has: id, scenario, step, action, method, url, headers, body, selector, value, expected, jsonpath. Actions: goto, fill, click, expectText, expectVisible, expectUrl, wait, apiRequest, expectStatus, expectJson, expectHeader, runSql, expectRowCount, expectNoNulls, expectUnique, expectValue.\n\nScenarios:\n${text}`;
 
-  const attempts = [
-    { label: 'Vercel /api/ask', call: () => callVercelAsk(userPrompt) },
-    { label: 'Pollinations fallback', call: () => callPollinations(userPrompt) }
-  ];
-
-  let lastError = null;
-
-  for (const attempt of attempts) {
-    try {
-      statusEl.innerHTML = `<div class="status"><span class="spinner"></span>Trying ${attempt.label}…</div>`;
-      const rawText = await attempt.call();
-      const rows = normalizeAIResponse(rawText);
-      if (!rows.length) throw new Error('AI returned no usable rows');
-      renderAIPreview(rows, attempt.label);
-      return;
-    } catch (err) {
-      lastError = err;
-      console.warn(`${attempt.label} failed:`, err.message);
-    }
-  }
-
-  statusEl.innerHTML = `<div class="error-list">
-    ❌ Both AI endpoints failed: ${escapeHtml(lastError?.message || 'unknown error')}<br><br>
-    <strong>Try "Convert with rules"</strong> — it runs entirely in your browser with no network call.
-  </div>`;
-}
-
-async function callVercelAsk(userPrompt) {
-  const res = await fetchWithTimeout(AI_PRIMARY, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ question: userPrompt, context: AI_SYSTEM_PROMPT })
-  });
-  if (!res.ok) throw new Error(`Vercel HTTP ${res.status}`);
-  const data = await res.json();
-  const content =
-    data.answer || data.response || data.content ||
-    data.message?.content || data.choices?.[0]?.message?.content ||
-    (typeof data === 'string' ? data : null);
-  if (!content) throw new Error('Vercel returned no answer field');
-  return typeof content === 'string' ? content : JSON.stringify(content);
-}
-
-async function callPollinations(userPrompt) {
-  const res = await fetchWithTimeout(AI_FALLBACK, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'openai',
-      messages: [
-        { role: 'system', content: AI_SYSTEM_PROMPT },
-        { role: 'user', content: userPrompt }
-      ],
-      response_format: { type: 'json_object' }
-    })
-  });
-  if (!res.ok) throw new Error(`Pollinations HTTP ${res.status}`);
-  const data = await res.json();
-  const content = data.choices?.[0]?.message?.content;
-  if (!content) throw new Error('Pollinations returned empty content');
-  return content;
-}
-
-function normalizeAIResponse(rawText) {
-  let content = String(rawText).trim();
-  content = content.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
-
-  let parsed;
+  let content = '';
   try {
-    parsed = JSON.parse(content);
-  } catch {
-    const arrMatch = content.match(/\[[\s\S]*\]/);
-    const objMatch = content.match(/\{[\s\S]*\}/);
-    if (arrMatch) { try { parsed = JSON.parse(arrMatch[0]); } catch {} }
-    if (!parsed && objMatch) { try { parsed = JSON.parse(objMatch[0]); } catch {} }
-    if (!parsed) throw new Error('AI returned invalid JSON');
+    const res = await fetch(AI_PRIMARY, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: prompt, context: 'Output only valid JSON.' })
+    });
+    if (res.ok) { const d = await res.json(); content = d.answer || d.content || d.response || ''; }
+  } catch {}
+
+  if (!content) {
+    try {
+      const res = await fetch(AI_FALLBACK, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'openai',
+          messages: [
+            { role: 'system', content: 'You output only valid JSON.' },
+            { role: 'user', content: prompt }
+          ],
+          response_format: { type: 'json_object' }
+        })
+      });
+      if (res.ok) { const d = await res.json(); content = d.choices?.[0]?.message?.content || ''; }
+    } catch {}
   }
 
-  let steps;
-  if (Array.isArray(parsed)) steps = parsed;
-  else if (parsed.steps) steps = parsed.steps;
-  else if (parsed.testCases) steps = parsed.testCases;
-  else if (parsed.data) steps = parsed.data;
-  else if (parsed.result) steps = parsed.result;
-  else if (parsed.answer && typeof parsed.answer === 'object') steps = parsed.answer.steps || parsed.answer;
-  else steps = Object.values(parsed).find(v => Array.isArray(v));
+  if (!content) {
+    status.innerHTML = '<div class="status-line err">Both AI endpoints failed. Falling back to rules…</div>';
+    setTimeout(() => runRuleTransform(), 600);
+    return;
+  }
 
-  if (!Array.isArray(steps)) throw new Error('AI response has no steps array');
-
-  return steps.map((s, i) => ({
-    id: String(s.id || `TC${String(i + 1).padStart(3, '0')}`),
-    scenario: String(s.scenario || s.name || 'Test scenario'),
-    step: String(s.step ?? i + 1),
-    action: String(s.action || ''),
-    method: String(s.method || ''),
-    url: String(s.url || ''),
-    headers: typeof s.headers === 'object' ? JSON.stringify(s.headers) : String(s.headers || ''),
-    body: typeof s.body === 'object' ? JSON.stringify(s.body) : String(s.body || ''),
-    selector: String(s.selector || ''),
-    value: String(s.value || ''),
-    expected: String(s.expected || ''),
-    jsonpath: String(s.jsonpath || s.jsonPath || '')
-  }));
+  try {
+    const clean = content.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+    const parsed = JSON.parse(clean);
+    const steps = parsed.steps || parsed;
+    if (!Array.isArray(steps) || !steps.length) throw new Error('No steps');
+    renderScenarioTable(steps, 'AI');
+  } catch (err) {
+    status.innerHTML = `<div class="status-line warn">AI returned unparseable output. Falling back to rules…</div>`;
+    setTimeout(() => runRuleTransform(), 600);
+  }
 }
 
 function runRuleTransform() {
   const text = document.getElementById('ai-input').value.trim();
-  const statusEl = document.getElementById('ai-status');
-  const previewEl = document.getElementById('ai-preview');
-  if (!text) { statusEl.innerHTML = '<div class="error-list">Paste some test scenarios first.</div>'; return; }
-
-  statusEl.innerHTML = '<div class="status"><span class="spinner"></span>Parsing with rules…</div>';
-  previewEl.innerHTML = '';
-
-  try {
-    const rows = ruleBasedParse(text);
-    if (!rows.length) {
-      statusEl.innerHTML = '<div class="error-list">📏 Rules couldn\'t find any steps. Try phrasing steps as numbered lists or bullet points with action verbs (go to, enter, click, verify).</div>';
-      return;
-    }
-    renderAIPreview(rows, 'Rules');
-  } catch (err) {
-    statusEl.innerHTML = `<div class="error-list">❌ Rule parsing failed: ${escapeHtml(err.message)}</div>`;
-  }
+  const status = document.getElementById('ai-status');
+  if (!text) { status.innerHTML = '<div class="status-line err">Paste scenarios first.</div>'; return; }
+  const steps = ruleBasedParse(text);
+  if (!steps.length) { status.innerHTML = '<div class="status-line warn">No steps detected. Try numbered lists with verbs like go to, enter, click, verify.</div>'; return; }
+  renderScenarioTable(steps, 'Rules');
 }
 
 function ruleBasedParse(text) {
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   const rows = [];
-  let currentId = 'TC001';
-  let currentScenario = 'Test scenario';
-  let stepNum = 0;
-  let tcCounter = 0;
-
-  for (const raw of lines) {
-    const cleaned = raw
-      .replace(/^[-*•●▪]\s+/, '')
-      .replace(/^\d+[.):\]]\s*/, '')
-      .replace(/^step\s*\d+[:.)]?\s*/i, '')
-      .trim();
+  let id = 'TC001', scenario = 'Test scenario', stepNum = 0, tcCount = 0;
+  for (const raw of text.split('\n')) {
+    const cleaned = raw.trim().replace(/^[-*•]\s+/, '').replace(/^\d+[.):\]]\s*/, '').trim();
     if (!cleaned) continue;
 
     const tcMatch = cleaned.match(/TC\d+/i);
-    const headerMatch = cleaned.match(/^(test|scenario|verify)\s+(?:the\s+)?(.+?)(?:\s*[:.]|$)/i);
+    const headMatch = cleaned.match(/^(test|scenario|verify)\s+(?:the\s+)?(.+?)(?::|\.|$)/i);
 
-    if (tcMatch && cleaned.length < 80 && !/^\s*(go|enter|click|verify|wait)/i.test(cleaned)) {
-      tcCounter++;
-      currentId = tcMatch[0].toUpperCase();
-      currentScenario = cleaned.replace(tcMatch[0], '').replace(/[:\-]/g, '').trim() || currentScenario;
-      stepNum = 0;
-      continue;
+    if (tcMatch && cleaned.length < 80) {
+      tcCount++; id = tcMatch[0].toUpperCase();
+      scenario = cleaned.replace(tcMatch[0], '').replace(/[:\-]/g, '').trim() || scenario;
+      stepNum = 0; continue;
     }
-    if (headerMatch && cleaned.length < 80 && !/^\s*(go|enter|click|verify|wait)\s/i.test(cleaned)) {
-      tcCounter++;
-      currentId = `TC${String(tcCounter).padStart(3, '0')}`;
-      currentScenario = headerMatch[2].trim();
-      stepNum = 0;
-      continue;
+    if (headMatch && cleaned.length < 80 && !/^(go|enter|click|verify|wait|get|post|sql|run|select|expect)/i.test(cleaned)) {
+      tcCount++; id = 'TC' + String(tcCount).padStart(3, '0');
+      scenario = headMatch[2].trim(); stepNum = 0; continue;
     }
 
-    let action = '', url = '', selector = '', value = '', expected = '', method = '', headers = '', body = '', jsonpath = '';
     const quoted = cleaned.match(/["']([^"']+)["']/);
     const sel = cleaned.match(/[#.][\w-]+|\[[\w-]+=[^\]]+\]/);
+    let action = '', url = '', selector = '', value = '', expected = '', method = '';
 
-    if (/^(go to|navigate to|navigate|open|visit)\s/i.test(cleaned)) {
-      action = 'goto';
-      url = cleaned.replace(/^(go to|navigate to|navigate|open|visit)\s+/i, '').trim();
-      const urlMatch = url.match(/https?:\/\/\S+|\/\S+/);
-      if (urlMatch) url = urlMatch[0];
+    if (/^(go to|navigate to|open|visit)\s/i.test(cleaned)) {
+      action = 'goto'; url = cleaned.replace(/^(go to|navigate to|open|visit)\s+/i, '').trim();
+      const m = url.match(/https?:\/\/\S+|\/\S+/); if (m) url = m[0];
     } else if (/^(enter|type|input|fill)\s/i.test(cleaned)) {
-      action = 'fill';
-      if (quoted) value = quoted[1];
+      action = 'fill'; if (quoted) value = quoted[1];
       if (sel) selector = sel[0];
-      else {
-        const fieldMatch = cleaned.match(/(?:in|into)\s+the\s+([\w-]+)/i);
-        if (fieldMatch) selector = `#${fieldMatch[1].toLowerCase()}`;
-      }
+      else { const f = cleaned.match(/(?:in|into)\s+the\s+([\w-]+)/i); if (f) selector = '#' + f[1].toLowerCase(); }
     } else if (/^(click|press|tap)\s/i.test(cleaned)) {
-      action = 'click';
-      if (sel) selector = sel[0];
-      else if (quoted) selector = `text=${quoted[1]}`;
+      action = 'click'; if (sel) selector = sel[0]; else if (quoted) selector = 'text=' + quoted[1];
     } else if (/^(verify|check|expect|should see|should show|assert|confirm)\s/i.test(cleaned)) {
       action = 'expectText';
       if (quoted) expected = quoted[1];
       else expected = cleaned.replace(/^(verify|check|expect|should see|should show|assert|confirm)\s+(that\s+)?/i, '').trim();
-      if (sel) selector = sel[0];
-    } else if (/^wait\s/i.test(cleaned)) {
-      action = 'wait';
-      const num = cleaned.match(/\d+/);
-      value = num ? String(parseInt(num[0], 10) * 1000) : '1000';
     } else if (/^(get|post|put|delete|patch)\s+/i.test(cleaned)) {
       action = 'apiRequest';
       const m = cleaned.match(/^(GET|POST|PUT|DELETE|PATCH)\s+(\S+)/i);
       if (m) { method = m[1].toUpperCase(); url = m[2]; }
     } else if (/should return\s+(\d+)/i.test(cleaned)) {
-      action = 'expectStatus';
-      expected = cleaned.match(/should return\s+(\d+)/i)[1];
+      action = 'expectStatus'; expected = cleaned.match(/should return\s+(\d+)/i)[1];
     } else if (/^sql[:\s]|^run sql|^select\s/i.test(cleaned)) {
-      action = 'runSql';
-      value = cleaned.replace(/^(sql[:\s]+|run sql\s+)/i, '').trim();
+      action = 'runSql'; value = cleaned.replace(/^(sql[:\s]+|run sql\s+)/i, '').trim();
     } else if (/no nulls in\s+([\w.]+)/i.test(cleaned)) {
-      action = 'expectNoNulls';
-      selector = cleaned.match(/no nulls in\s+([\w.]+)/i)[1];
+      action = 'expectNoNulls'; selector = cleaned.match(/no nulls in\s+([\w.]+)/i)[1];
     } else if (/(\d+)\s+rows?/i.test(cleaned)) {
-      action = 'expectRowCount';
-      expected = cleaned.match(/(\d+)\s+rows?/i)[1];
+      action = 'expectRowCount'; expected = cleaned.match(/(\d+)\s+rows?/i)[1];
     }
 
     if (action) {
       stepNum++;
-      rows.push({
-        id: currentId, scenario: currentScenario, step: String(stepNum),
-        action, method, url, headers, body, selector, value, expected, jsonpath
-      });
+      rows.push({ id, scenario, step: String(stepNum), action, method, url, headers: '', body: '', selector, value, expected, jsonpath: '' });
     }
   }
   return rows;
 }
 
-let currentAIPreviewRows = [];
-
-function renderAIPreview(rows, sourceLabel) {
-  currentAIPreviewRows = rows;
-  const statusEl = document.getElementById('ai-status');
-  const previewEl = document.getElementById('ai-preview');
-
+let currentRows = [];
+function renderScenarioTable(rows, source) {
+  currentRows = rows;
   const testCaseCount = new Set(rows.map(r => r.id)).size;
-  statusEl.innerHTML = `<div class="status">✅ <strong>${sourceLabel}</strong> produced <strong>${rows.length}</strong> steps across <strong>${testCaseCount}</strong> test case(s).<br><small>Cells are editable — click any cell to fix values before downloading.</small></div>`;
-
+  document.getElementById('ai-status').innerHTML = `<div class="status-line ok">${source} produced ${rows.length} steps across ${testCaseCount} test case${testCaseCount === 1 ? '' : 's'}. Cells are editable.</div>`;
   const cols = ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'];
-  previewEl.innerHTML = `
-    <div style="overflow-x:auto; margin-top:1rem;">
-      <table class="preview-table" id="ai-table">
+  document.getElementById('ai-preview').innerHTML = `
+    <div style="overflow-x:auto; border-radius:var(--radius);">
+      <table class="data-table">
         <thead><tr>${cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
-        <tbody>
-          ${rows.map((r, i) => `<tr data-row="${i}">${cols.map(c => `<td contenteditable="true" data-col="${c}">${escapeHtml(String(r[c] ?? ''))}</td>`).join('')}</tr>`).join('')}
-        </tbody>
+        <tbody>${rows.map((r, i) => `<tr data-row="${i}">${cols.map(c => `<td contenteditable="true" data-col="${c}">${escapeHtml(String(r[c] ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody>
       </table>
     </div>
-    <div style="display:flex; gap:0.5rem; flex-wrap:wrap; margin-top:1rem;">
-      <button class="ghost" onclick="downloadAIPreview('csv')">⬇️ Download CSV</button>
-      <button class="ghost" onclick="downloadAIPreview('xlsx')">⬇️ Download XLSX</button>
-      <button class="ai" onclick="sendAIPreviewToGenerator()">→ Send to Test Cases tab</button>
+    <div class="row" style="margin-top:14px;">
+      <button class="btn" onclick="generateFromRows()">Generate specs</button>
+      <button class="btn secondary" onclick="downloadRows('csv')">Download CSV</button>
+      <button class="btn secondary" onclick="downloadRows('xlsx')">Download XLSX</button>
     </div>
   `;
-
-  previewEl.querySelectorAll('td[contenteditable]').forEach(td => {
+  document.getElementById('ai-preview').querySelectorAll('td[contenteditable]').forEach(td => {
     td.addEventListener('blur', () => {
-      const rowIdx = parseInt(td.closest('tr').dataset.row, 10);
-      const col = td.dataset.col;
-      currentAIPreviewRows[rowIdx][col] = td.textContent.trim();
+      const i = parseInt(td.closest('tr').dataset.row, 10);
+      currentRows[i][td.dataset.col] = td.textContent.trim();
     });
   });
 }
 
-function downloadAIPreview(format) {
-  if (!currentAIPreviewRows.length) return;
+function downloadRows(format) {
+  if (!currentRows.length) return;
   const cols = ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'];
-
+  const csvEscape = v => {
+    const s = String(v ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
   if (format === 'csv') {
-    const body = [
-      cols.join(','),
-      ...currentAIPreviewRows.map(r => cols.map(c => csvEscape(r[c] ?? '')).join(','))
-    ].join('\n');
+    const body = [cols.join(','), ...currentRows.map(r => cols.map(c => csvEscape(r[c])).join(','))].join('\n');
     downloadFile('ai-test-cases.csv', body, 'text/csv');
-    return;
-  }
-
-  if (format === 'xlsx') {
-    if (typeof XLSX === 'undefined') { alert('XLSX library not loaded.'); return; }
-    const aoa = [cols, ...currentAIPreviewRows.map(r => cols.map(c => String(r[c] ?? '')))];
+  } else {
+    const aoa = [cols, ...currentRows.map(r => cols.map(c => String(r[c] ?? '')))];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'TestCases');
@@ -1332,31 +1640,16 @@ function downloadAIPreview(format) {
   }
 }
 
-function sendAIPreviewToGenerator() {
-  if (!currentAIPreviewRows.length) { alert('Nothing to send.'); return; }
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-  document.querySelector('.tab[data-tab="generator"]').classList.add('active');
-  document.getElementById('panel-generator').classList.add('active');
-  renderGenerated(currentAIPreviewRows, 'AI-generated');
-  document.getElementById('gen-output').scrollIntoView({ behavior: 'smooth', block: 'start' });
-}
-
-function clearAITab() {
-  document.getElementById('ai-input').value = '';
-  document.getElementById('ai-status').innerHTML = '';
-  document.getElementById('ai-preview').innerHTML = '';
-  currentAIPreviewRows = [];
+function generateFromRows() {
+  document.querySelector('.subtab[data-lab="specs"]').click();
+  renderSpecs(currentRows, 'AI-generated');
 }
 
 // ============================================================
-// 11. FILE → PLAYWRIGHT / PYTEST
+// LAB — specs
 // ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
-const genOut = document.getElementById('gen-output');
-const ACCEPTED = ['xlsx','xls','csv','tsv','txt'];
-
 dropZone.addEventListener('click', () => fileInput.click());
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
@@ -1366,29 +1659,20 @@ dropZone.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
 
-function getExt(name) { return name.split('.').pop().toLowerCase(); }
-
 function handleFile(file) {
-  const ext = getExt(file.name);
-  if (!ACCEPTED.includes(ext)) {
-    genOut.innerHTML = `<div class="error-list">❌ Unsupported file ".${escapeHtml(ext)}". Use: ${ACCEPTED.map(e => '.'+e).join(', ')}</div>`;
-    return;
-  }
+  const ext = file.name.split('.').pop().toLowerCase();
   const reader = new FileReader();
   reader.onload = e => {
     try {
       let wb;
-      if (['csv','tsv','txt'].includes(ext)) {
-        wb = XLSX.read(e.target.result, { type: 'string', raw: false });
-      } else {
-        wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      }
+      if (['csv','tsv','txt'].includes(ext)) wb = XLSX.read(e.target.result, { type: 'string', raw: false });
+      else wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
       const sheet = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      if (!rows.length) { genOut.innerHTML = '<div class="error-list">❌ No rows found.</div>'; return; }
-      renderGenerated(rows, file.name);
+      if (!rows.length) { document.getElementById('gen-output').innerHTML = '<div class="status-line err">No rows found.</div>'; return; }
+      renderSpecs(rows, file.name);
     } catch (err) {
-      genOut.innerHTML = `<div class="error-list">❌ Failed to parse <strong>${escapeHtml(file.name)}</strong>: ${escapeHtml(err.message)}</div>`;
+      document.getElementById('gen-output').innerHTML = `<div class="status-line err">Failed: ${escapeHtml(err.message)}</div>`;
     }
   };
   if (['csv','tsv','txt'].includes(ext)) reader.readAsText(file, 'utf-8');
@@ -1401,66 +1685,60 @@ const ACTIONS = {
   DATA: ['runSql','expectRowCount','expectNoNulls','expectUnique','expectValue']
 };
 const ALL_ACTIONS = [...ACTIONS.UI, ...ACTIONS.API, ...ACTIONS.DATA];
-const kindOf = a => ACTIONS.UI.includes(a) ? 'ui'
-                  : ACTIONS.API.includes(a) ? 'api'
-                  : ACTIONS.DATA.includes(a) ? 'data' : 'ui';
+const kindOf = a => ACTIONS.UI.includes(a) ? 'ui' : ACTIONS.API.includes(a) ? 'api' : ACTIONS.DATA.includes(a) ? 'data' : 'ui';
 
-function renderGenerated(rows, filename) {
+function renderSpecs(rows, filename) {
   const cases = {}; const errors = [];
-
   rows.forEach((row, i) => {
     if (!row.id) return;
-    Object.keys(row).forEach(k => { row[k] = String(row[k] ?? '').trim(); });
+    Object.keys(row).forEach(k => row[k] = String(row[k] ?? '').trim());
     if (!row.action) { errors.push(`Row ${i+2}: missing action`); return; }
-    if (!ALL_ACTIONS.includes(row.action)) {
-      errors.push(`Row ${i+2}: unknown action "${row.action}". Valid: ${ALL_ACTIONS.join(', ')}`);
-      return;
-    }
+    if (!ALL_ACTIONS.includes(row.action)) { errors.push(`Row ${i+2}: unknown action "${row.action}"`); return; }
     if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
     cases[row.id].steps.push(row);
   });
 
   if (errors.length) {
-    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
+    document.getElementById('gen-output').innerHTML = `<div class="status-line err">${errors.map(escapeHtml).join('<br>')}</div>`;
     return;
   }
 
   const specs = [];
-  Object.values(cases).forEach(tc => {
+  for (const tc of Object.values(cases)) {
     const pw = tc.steps.filter(s => ['ui','api'].includes(kindOf(s.action)));
     const data = tc.steps.filter(s => kindOf(s.action) === 'data');
-    if (pw.length)   specs.push({ name: `${tc.id}.spec.js`, code: buildPlaywright(tc, pw, filename),
-                                  kind: 'playwright', kindLabel: pw.every(s=>kindOf(s.action)==='api') ? 'api' : 'ui' });
-    if (data.length) specs.push({ name: `${tc.id}_test.py`, code: buildPytest(tc, data, filename),
-                                  kind: 'pytest', kindLabel: 'data' });
-  });
+    if (pw.length) specs.push({ name: `${tc.id}.spec.js`, code: buildPlaywright(tc, pw, filename), label: 'Playwright · ' + (pw.every(s => kindOf(s.action) === 'api') ? 'api' : 'ui') });
+    if (data.length) specs.push({ name: `${tc.id}_test.py`, code: buildPytest(tc, data, filename), label: 'pytest + PySpark · data' });
+  }
 
-  if (!specs.length) { genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found.</p>'; return; }
+  if (!specs.length) { document.getElementById('gen-output').innerHTML = '<div class="status-line warn">No test cases found.</div>'; return; }
 
-  genOut.innerHTML = `
-    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} file(s) from ${escapeHtml(filename)}</h3>
-    <div class="grid">
-      ${specs.map((s, i) => `
-        <div class="spec-card">
-          <strong>${escapeHtml(s.name)}</strong>
-          <div class="steps">${s.kind === 'playwright' ? 'Playwright' : 'pytest + PySpark'}</div>
-          <span class="kind ${s.kindLabel}">${s.kindLabel}</span>
-          <button class="secondary" data-spec="${i}">⬇️ Download</button>
-        </div>`).join('')}
-    </div>
-    <h4 style="margin-top:1.75rem;">Preview: ${escapeHtml(specs[0].name)}</h4>
-    <div class="preview">${escapeHtml(specs[0].code)}</div>
+  document.getElementById('gen-output').innerHTML = `
+    <div class="hero-eyebrow" style="margin-top:24px;">Generated ${specs.length} file${specs.length === 1 ? '' : 's'}</div>
+    ${specs.map((s, i) => `
+      <div class="card">
+        <div class="card-title" style="font-family:ui-monospace,monospace; font-size:14px;">${escapeHtml(s.name)}</div>
+        <div class="card-desc">${escapeHtml(s.label)}</div>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn secondary" onclick="previewSpec(${i})">Preview</button>
+          <button class="btn" onclick="downloadSpec(${i})">Download</button>
+        </div>
+      </div>
+    `).join('')}
+    <div id="spec-preview"></div>
   `;
-
-  genOut.querySelectorAll('button[data-spec]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const s = specs[parseInt(btn.dataset.spec)];
-      downloadFile(s.name, s.code, s.kind === 'playwright' ? 'text/javascript' : 'text/x-python');
-    });
-  });
+  window._specs = specs;
 }
 
-function buildPlaywright(tc, steps, sourceFile) {
+function previewSpec(i) {
+  document.getElementById('spec-preview').innerHTML = `<div class="hero-eyebrow" style="margin-top:24px;">Preview</div><div class="preview-block">${escapeHtml(window._specs[i].code)}</div>`;
+}
+function downloadSpec(i) {
+  const s = window._specs[i];
+  downloadFile(s.name, s.code, s.name.endsWith('.py') ? 'text/x-python' : 'text/javascript');
+}
+
+function buildPlaywright(tc, steps, source) {
   const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
   const lines = steps.map(s => {
     const { action, method='', url='', headers='', body='', selector='', value='', expected='', jsonpath='' } = s;
@@ -1477,90 +1755,34 @@ function buildPlaywright(tc, steps, sourceFile) {
         const opts = [];
         if (headers) opts.push(`headers: ${headers}`);
         if (body)    opts.push(`data: ${body}`);
-        const optsStr = opts.length ? `, { ${opts.join(', ')} }` : '';
-        return `  const response = await request.${m.toLowerCase()}('${esc(url)}'${optsStr});`;
+        return `  const response = await request.${m.toLowerCase()}('${esc(url)}'${opts.length ? ', { ' + opts.join(', ') + ' }' : ''});`;
       }
       case 'expectStatus':  return `  expect(response.status()).toBe(${Number(expected) || 200});`;
-      case 'expectJson':    return `  expect((await response.json())${jsonPathToJs(jsonpath)}).toBe('${esc(expected)}');`;
+      case 'expectJson':    return `  expect((await response.json())${(jsonpath || '').replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]')}).toBe('${esc(expected)}');`;
       case 'expectHeader':  return `  expect(response.headers()['${esc(selector.toLowerCase())}']).toBe('${esc(expected)}');`;
-      default:              return `  // TODO: unsupported "${esc(action)}"`;
+      default:              return `  // unsupported: ${esc(action)}`;
     }
   }).join('\n');
-
-  return `// AUTO-GENERATED from ${sourceFile} — do not edit manually
-const { test, expect } = require('@playwright/test');
-
-test('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page, request }) => {
-${lines}
-});
-`;
+  return `// AUTO-GENERATED from ${source}\nconst { test, expect } = require('@playwright/test');\n\ntest('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page, request }) => {\n${lines}\n});\n`;
 }
-function jsonPathToJs(path) {
-  if (!path) return '';
-  return path.replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]');
-}
-function buildPytest(tc, steps, sourceFile) {
+
+function buildPytest(tc, steps, source) {
   const esc = s => String(s).replace(/\\/g,'\\\\').replace(/"""/g,'\\"\\"\\"');
   const setup = []; const tests = [];
-  let queryVar = null, queryCounter = 0;
-
-  steps.forEach(s => {
-    const { action, selector='', value='', expected='', jsonpath='' } = s;
-    switch (action) {
-      case 'runSql':
-        queryCounter++; queryVar = `result_${queryCounter}`;
-        setup.push(`${queryVar} = spark.sql("""${esc(value)}""").collect()`);
-        break;
-      case 'expectRowCount':
-        tests.push(`    assert len(${queryVar}) == ${Number(expected) || 0}, f"Expected ${esc(expected)} rows, got {len(${queryVar})}"`);
-        break;
-      case 'expectNoNulls':
-        tests.push(`    nulls = spark.sql("SELECT COUNT(*) AS c FROM ${esc(selector)} WHERE ${esc(selector)} IS NULL").collect()[0]['c']\n    assert nulls == 0, f"Found {nulls} NULLs in ${esc(selector)}"`);
-        break;
-      case 'expectUnique':
-        tests.push(`    dupes = spark.sql("SELECT ${esc(selector)}, COUNT(*) AS c FROM ${esc(selector)} GROUP BY ${esc(selector)} HAVING c > 1").collect()\n    assert len(dupes) == 0, f"Found {len(dupes)} duplicate values in ${esc(selector)}"`);
-        break;
-      case 'expectValue':
-        tests.push(`    assert str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip() == '${esc(expected)}', f"Expected '${esc(expected)}', got '{str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip()}'"`);
-        break;
-    }
-  });
-
-  return `# AUTO-GENERATED from ${sourceFile} — do not edit manually
-# Test type: Data validation (Databricks / PySpark)
-import pytest
-from pyspark.sql import SparkSession
-
-
-@pytest.fixture(scope="session")
-def spark():
-    return SparkSession.builder.appName("erplorer-tests").getOrCreate()
-
-
-def test_${tc.id.toLowerCase()}_${slug(tc.scenario)}(spark):
-    """${esc(tc.scenario)}"""
-${setup.map(l => '    ' + l).join('\n')}
-
-${tests.join('\n') || '    pass  # no assertions generated'}
-`;
-}
-function jsonPathToPy(path) {
-  if (!path) return '';
-  return path.replace(/\[(\d+)\]/g, '[$1]').replace(/\.([A-Za-z_$][\w$]*)/g, "['$1']");
-}
-function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
-
-function downloadFile(name, content, mime = 'text/plain') {
-  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  let qv = null, qn = 0;
+  for (const s of steps) {
+    const { action, selector='', value='', expected='' } = s;
+    if (action === 'runSql') { qn++; qv = `result_${qn}`; setup.push(`${qv} = spark.sql("""${esc(value)}""").collect()`); }
+    else if (action === 'expectRowCount') tests.push(`    assert len(${qv}) == ${Number(expected) || 0}`);
+    else if (action === 'expectNoNulls') tests.push(`    nulls = spark.sql("SELECT COUNT(*) FROM ${esc(selector)} WHERE ${esc(selector)} IS NULL").collect()[0][0]\n    assert nulls == 0, f"Found {nulls} NULLs in ${esc(selector)}"`);
+    else if (action === 'expectUnique') tests.push(`    dupes = spark.sql("SELECT ${esc(selector)} FROM ${esc(selector)} GROUP BY ${esc(selector)} HAVING COUNT(*) > 1").collect()\n    assert len(dupes) == 0`);
+    else if (action === 'expectValue') tests.push(`    assert str(${qv}[0][0]).strip() == '${esc(expected)}'`);
+  }
+  return `# AUTO-GENERATED from ${source}\nimport pytest\nfrom pyspark.sql import SparkSession\n\n\n@pytest.fixture(scope="session")\ndef spark():\n    return SparkSession.builder.appName("erplorer").getOrCreate()\n\n\ndef test_${slug(tc.id + '_' + tc.scenario)}(spark):\n    """${esc(tc.scenario)}"""\n${setup.map(l => '    ' + l).join('\n')}\n${tests.join('\n') || '    pass'}\n`;
 }
 
 // ============================================================
-// 12. TEMPLATE DOWNLOAD
+// TEMPLATES
 // ============================================================
 const TEMPLATE_ROWS = [
   ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
@@ -1572,58 +1794,30 @@ const TEMPLATE_ROWS = [
   ['TC002','Users API returns alice','1','apiRequest','GET','/api/users','{"Accept":"application/json"}','','','','',''],
   ['TC002','Users API returns alice','2','expectStatus','','','','','','','200',''],
   ['TC002','Users API returns alice','3','expectJson','','','','','','','alice','data[0].name'],
-  ['TC002','Users API returns alice','4','expectHeader','','','','','content-type','','application/json',''],
-  ['TC003','Users table has no nulls in email','1','runSql','','','','','','SELECT COUNT(*) AS c FROM users','',''],
-  ['TC003','Users table has no nulls in email','2','expectRowCount','','','','','','','1',''],
-  ['TC003','Users table has no nulls in email','3','expectNoNulls','','','','','users','','',''],
-  ['TC004','Migration added expected rows','1','runSql','','','','','','SELECT COUNT(*) FROM orders','',''],
-  ['TC004','Migration added expected rows','2','expectRowCount','','','','','','','10000','']
+  ['TC003','Users table has no nulls','1','runSql','','','','','','SELECT COUNT(*) FROM users','',''],
+  ['TC003','Users table has no nulls','2','expectRowCount','','','','','','','1',''],
+  ['TC003','Users table has no nulls','3','expectNoNulls','','','','','users','','','']
 ];
-
-function csvEscape(v) {
-  const s = String(v ?? '');
-  return (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r'))
-    ? '"' + s.replace(/"/g,'""') + '"'
-    : s;
-}
 function downloadTemplate(format) {
   const isTsv = format === 'tsv';
-  const body = TEMPLATE_ROWS.map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(',')).join('\n');
+  const csvEsc = v => { const s = String(v ?? ''); return (s.includes(',') || s.includes('"')) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  const body = TEMPLATE_ROWS.map(r => isTsv ? r.join('\t') : r.map(csvEsc).join(',')).join('\n');
   downloadFile(`TEMPLATE.${isTsv ? 'tsv' : 'csv'}`, body, isTsv ? 'text/tab-separated-values' : 'text/csv');
 }
 
 // ============================================================
-// 13. SETTINGS
-// ============================================================
-function saveToken() {
-  const t = document.getElementById('token-input').value.trim();
-  if (t) { sessionStorage.setItem('gh_token', t); document.getElementById('token-status').innerHTML = '✅ Token saved.'; }
-}
-function clearToken() {
-  sessionStorage.removeItem('gh_token');
-  document.getElementById('token-input').value = '';
-  document.getElementById('token-status').innerHTML = '🗑️ Token cleared.';
-}
-(function () {
-  const e = sessionStorage.getItem('gh_token');
-  if (e) { document.getElementById('token-input').value = e; document.getElementById('token-status').innerHTML = '✅ Token loaded.'; }
-})();
-
-// ============================================================
-// 14. DYNAMIC INDEX
+// INGEST
 // ============================================================
 const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
-const RAGINA_TIMEOUT_MS = 30000;
-
 const BUILTIN_PATTERNS = [
-  { type: 'error',         re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
-  { type: 'java-error',    re: /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g },
-  { type: 'java-error',    re: /LOG(?:GER)?\.(?:error|warn|severe)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi },
-  { type: 'python-error',  re: /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
-  { type: 'python-error',  re: /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
-  { type: 'sql-error',     re: /RAISE\s+EXCEPTION\s+'([^']+)'/gi },
-  { type: 'sql-error',     re: /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g },
-  { type: 'config-error',  re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
+  { type: 'error',        re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
+  { type: 'java-error',   re: /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g },
+  { type: 'java-error',   re: /LOG(?:GER)?\.(?:error|warn|severe)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi },
+  { type: 'python-error', re: /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
+  { type: 'python-error', re: /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
+  { type: 'sql-error',    re: /RAISE\s+EXCEPTION\s+'([^']+)'/gi },
+  { type: 'sql-error',    re: /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g },
+  { type: 'config-error', re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
 ];
 
 function getActivePatterns() {
@@ -1631,196 +1825,148 @@ function getActivePatterns() {
   for (const p of customPatterns) {
     if (p.enabled === false) continue;
     try {
-      merged.push({
-        type: p.type || 'custom-error',
-        re: new RegExp(p.pattern, 'g'),
-        exts: p.exts ? p.exts.split(',').map(e => e.trim()).filter(Boolean) : null
-      });
-    } catch (err) { console.warn(`Pattern "${p.name}" invalid:`, err.message); }
+      merged.push({ type: p.type || 'custom-error', re: new RegExp(p.pattern, 'g'), exts: p.exts ? p.exts.split(',').map(e => e.trim()).filter(Boolean) : null });
+    } catch {}
   }
   return merged;
 }
 
-function detectType(filename) {
-  const ext = (filename.split('.').pop() || '').toLowerCase();
+function detectType(name) {
+  const ext = (name.split('.').pop() || '').toLowerCase();
   if (['java','kt','groovy','scala'].includes(ext)) return 'java-error';
-  if (['py'].includes(ext)) return 'python-error';
-  if (['sql'].includes(ext)) return 'sql-error';
+  if (ext === 'py') return 'python-error';
+  if (ext === 'sql') return 'sql-error';
   if (['yaml','yml','properties','env','json'].includes(ext)) return 'config-error';
   return 'code';
 }
 
-function parseText(text, sourceName) {
+function parseText(text, name) {
   const entries = [];
   const lines = text.split('\n');
-  const defaultType = detectType(sourceName);
-  const fileExt = sourceName.includes('.') ? '.' + sourceName.split('.').pop().toLowerCase() : '';
-
+  const defType = detectType(name);
+  const fileExt = name.includes('.') ? '.' + name.split('.').pop().toLowerCase() : '';
   for (const { type, re, exts } of getActivePatterns()) {
     if (exts && exts.length && !exts.includes(fileExt)) continue;
     re.lastIndex = 0;
     let m;
     while ((m = re.exec(text)) !== null) {
-      let message = null;
-      for (let i = 1; i < m.length; i++) if (m[i]) { message = m[i]; break; }
-      if (!message || message.trim().length < 3) continue;
+      let msg = null;
+      for (let i = 1; i < m.length; i++) if (m[i]) { msg = m[i]; break; }
+      if (!msg || msg.trim().length < 3) continue;
       const lineNum = text.substring(0, m.index).split('\n').length;
       const start = Math.max(0, lineNum - 3);
       const end = Math.min(lines.length, lineNum + 2);
-      entries.push({
-        type: type || defaultType,
-        text: message.trim(),
-        file: sourceName,
-        line: lineNum,
-        context: lines.slice(start, end).join('\n')
-      });
+      entries.push({ type: type || defType, text: msg.trim(), file: name, line: lineNum, context: lines.slice(start, end).join('\n') });
     }
   }
   return entries;
 }
 
-function appendToIndex(newEntries, sourceLabel) {
-  if (!newEntries.length) { showAddStatus('warn', `No errors found in ${sourceLabel}.`); return 0; }
-  const baseId = documents.length;
-  newEntries.forEach((doc, i) => {
-    documents.push(doc);
-    if (flexIndex) flexIndex.add({ ...doc, id: baseId + i });
+let ingestCount = 0;
+function appendToIndex(entries, label) {
+  if (!entries.length) { showAddStatus('warn', `No errors found in ${label}.`); return 0; }
+  const base = documents.length;
+  entries.forEach((e, i) => {
+    documents.push(e);
+    if (flexIndex) flexIndex.add({ ...e, id: base + i });
   });
-  showAddStatus('ok', `✅ Added ${newEntries.length} entries from ${sourceLabel}. Total: ${documents.length}.`);
-  return newEntries.length;
+  ingestCount += entries.length;
+  document.getElementById('ingest-count').textContent = ingestCount;
+  renderStats();
+  renderChips();
+  showAddStatus('ok', `Added ${entries.length} entries from ${label}. Total: ${documents.length}.`);
+  return entries.length;
 }
 
 function showAddStatus(kind, html) {
   const el = document.getElementById('add-status');
   el.style.display = 'block';
+  el.className = 'status-line ' + (kind === 'ok' ? 'ok' : kind === 'warn' ? 'warn' : 'err');
   el.innerHTML = html;
-  el.style.background = kind === 'ok' ? '#DCFCE7' : kind === 'warn' ? '#FEF3C7' : '#FEE2E2';
-  el.style.color = kind === 'ok' ? '#166534' : kind === 'warn' ? '#92400E' : '#991B1B';
 }
 function setAddLoading(html) {
   const el = document.getElementById('add-status');
   el.style.display = 'block';
-  el.innerHTML = `<span class="spinner"></span>${html}`;
-  el.style.background = '#F1F5F9';
-  el.style.color = '#64748B';
+  el.className = 'status-line';
+  el.innerHTML = '<span class="spinner"></span>' + html;
 }
 
 async function tryTier1Crawl() {
   const url = document.getElementById('crawl-url').value.trim();
-  if (!url) return;
-  if (!/^https?:\/\//.test(url)) { showAddStatus('error', '❌ URL must start with http:// or https://'); return; }
-
-  setAddLoading(`Crawling ${url}...`);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), RAGINA_TIMEOUT_MS);
-
+  if (!/^https?:\/\//.test(url)) { showAddStatus('err', 'URL must start with http:// or https://'); return; }
+  setAddLoading('Fetching ' + url + '…');
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 30000);
   try {
     const res = await fetch(RAGINA_CRAWL_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, maxPages: 20 }),
-      signal: controller.signal
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, maxPages: 20 }), signal: ctrl.signal
     });
     clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     const pages = data.pages || data.results || (Array.isArray(data) ? data : []);
     if (!pages.length) throw new Error('Crawl returned 0 pages');
-
-    const allEntries = [];
-    for (const p of pages) {
-      const text = p.text || p.content || p.markdown || '';
-      const src = p.url || p.title || url;
-      allEntries.push(...parseText(text, src));
-    }
-    if (!allEntries.length) throw new Error('No errors found in crawled pages');
-    appendToIndex(allEntries, `${pages.length} crawled pages`);
+    const entries = [];
+    for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));
+    if (!entries.length) throw new Error('No errors found in crawled pages');
+    appendToIndex(entries, `${pages.length} crawled pages`);
   } catch (err) {
     clearTimeout(timer);
-    showAddStatus('error', `❌ Tier 1 (crawl) failed: ${escapeHtml(err.message)}.<br><strong>Try Tier 2</strong> or <strong>Tier 4</strong> below.`);
+    showAddStatus('err', `Crawl failed: ${escapeHtml(err.message)}. Try scan, drop, or paste instead.`);
   }
 }
 
 async function tryTier2Repo() {
-  const repoInput = document.getElementById('repo-scan').value.trim();
-  if (!repoInput) return;
-  const parts = repoInput.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
-  if (parts.length < 2) { showAddStatus('error', '❌ Format must be owner/repo'); return; }
+  const input = document.getElementById('repo-scan').value.trim();
+  const parts = input.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
+  if (parts.length < 2) { showAddStatus('err', 'Format must be owner/repo'); return; }
   const [owner, repo] = parts;
-  setAddLoading(`Fetching ${owner}/${repo}...`);
-  const octokit = getOctokit();
-  if (!octokit) { showAddStatus('error', '❌ Octokit not loaded. Try Tier 3 or Tier 4.'); return; }
+
+  if (!OctokitClass) {
+    try { const m = await import('https://esm.sh/@octokit/rest'); OctokitClass = m.Octokit; }
+    catch { showAddStatus('err', 'Octokit failed to load.'); return; }
+  }
+  const token = sessionStorage.getItem('gh_token');
+  const octokit = new OctokitClass(token ? { auth: token } : {});
+
+  setAddLoading(`Fetching ${owner}/${repo}…`);
   try {
     const { data: tree } = await octokit.rest.git.getTree({ owner, repo, tree_sha: 'main', recursive: 'true' });
-    const files = (tree.tree || []).filter(f => {
-      if (f.type !== 'blob') return false;
-      if (f.size && f.size > 500000) return false;
-      return /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path);
-    }).slice(0, 200);
+    const files = (tree.tree || []).filter(f =>
+      f.type === 'blob' && (!f.size || f.size < 500000) &&
+      /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path)
+    ).slice(0, 40);
+
     if (!files.length) { showAddStatus('warn', 'No indexable files found.'); return; }
-    setAddLoading(`Parsing ${files.length} files from ${owner}/${repo}...`);
-    const allEntries = [];
+    setAddLoading(`Parsing ${files.length} files…`);
+
+    const entries = [];
     for (const f of files) {
       try {
         const { data } = await octokit.rest.repos.getContent({ owner, repo, path: f.path });
         const content = atob(data.content.replace(/\n/g, ''));
-        allEntries.push(...parseText(content, f.path));
+        entries.push(...parseText(content, f.path));
       } catch {}
     }
-    if (!allEntries.length) { showAddStatus('warn', 'No errors extracted from repo.'); return; }
-    appendToIndex(allEntries, `${owner}/${repo} (${files.length} files)`);
+    if (!entries.length) { showAddStatus('warn', 'No errors extracted.'); return; }
+    appendToIndex(entries, `${owner}/${repo} (${files.length} files)`);
   } catch (err) {
-    showAddStatus('error', `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br><strong>If the repo is private</strong>, add a token in Settings.`);
-  }
-}
-
-async function tryTier3Folder() {
-  if (!window.showDirectoryPicker) { showAddStatus('warn', '⚠️ Folder picker not supported. Use "Or drop files".'); return; }
-  try {
-    const dir = await window.showDirectoryPicker();
-    setAddLoading(`Reading folder "${dir.name}"...`);
-    const allEntries = [];
-    async function walk(handle, prefix = '') {
-      for await (const entry of handle.values()) {
-        const path = prefix ? `${prefix}/${entry.name}` : entry.name;
-        if (entry.kind === 'directory') {
-          if (['node_modules', '.git', 'dist', 'build', 'target'].includes(entry.name)) continue;
-          await walk(entry, path);
-        } else if (entry.kind === 'file') {
-          if (!/\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(entry.name)) continue;
-          try {
-            const file = await entry.getFile();
-            if (file.size > 500000) continue;
-            const text = await file.text();
-            allEntries.push(...parseText(text, path));
-          } catch {}
-        }
-      }
-    }
-    await walk(dir);
-    if (!allEntries.length) { showAddStatus('warn', 'No errors found in folder.'); return; }
-    appendToIndex(allEntries, `folder "${dir.name}"`);
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    showAddStatus('error', `❌ Folder read failed: ${escapeHtml(err.message)}.`);
+    showAddStatus('err', `Scan failed: ${escapeHtml(err.message)}. Private repos need a token in Settings.`);
   }
 }
 
 function tryTier3File() { document.getElementById('tier3-file').click(); }
-
 document.getElementById('tier3-file').addEventListener('change', async e => {
   const files = Array.from(e.target.files);
   if (!files.length) return;
-  setAddLoading(`Reading ${files.length} files...`);
-  const allEntries = [];
-  for (const file of files) {
-    try {
-      const text = await file.text();
-      allEntries.push(...parseText(text, file.name));
-    } catch {}
+  setAddLoading(`Reading ${files.length} file${files.length === 1 ? '' : 's'}…`);
+  const entries = [];
+  for (const f of files) {
+    try { const text = await f.text(); entries.push(...parseText(text, f.name)); } catch {}
   }
-  if (!allEntries.length) { showAddStatus('warn', 'No errors found in dropped files.'); return; }
-  appendToIndex(allEntries, `${files.length} files`);
+  if (!entries.length) { showAddStatus('warn', 'No errors found.'); return; }
+  appendToIndex(entries, `${files.length} files`);
   e.target.value = '';
 });
 
@@ -1837,27 +1983,115 @@ function tryTier4Paste() {
 }
 
 // ============================================================
-// 15. BOOT
+// PATTERNS
+// ============================================================
+async function loadCustomPatterns() {
+  try { customPatterns = await dbGetAll('patterns'); renderPatterns(); } catch {}
+}
+function renderPatterns() {
+  const count = document.getElementById('pattern-count');
+  if (count) count.textContent = `(${customPatterns.length})`;
+  const list = document.getElementById('pattern-list');
+  if (!list) return;
+  if (!customPatterns.length) { list.innerHTML = '<div class="empty">No custom patterns yet.</div>'; return; }
+  list.innerHTML = customPatterns.map(p => `
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; gap:12px;">
+        <div style="flex:1; min-width:0;">
+          <div class="card-title" style="font-size:15px;">${escapeHtml(p.name)}</div>
+          <div style="font-family:ui-monospace,monospace; font-size:12px; color:var(--muted); background:var(--bg-alt); padding:6px 10px; border-radius:6px; margin:8px 0; overflow-x:auto; white-space:nowrap;">${escapeHtml(p.pattern)}</div>
+          <div style="font-size:12px; color:var(--muted-2);">Type: ${escapeHtml(p.type)}${p.exts ? ' · Files: ' + escapeHtml(p.exts) : ' · All files'}</div>
+        </div>
+        <button class="btn danger" style="padding:8px 14px; font-size:12px;" onclick="deletePattern(${p.id})">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+async function addPattern() {
+  const name = document.getElementById('pat-name').value.trim();
+  const pattern = document.getElementById('pat-regex').value.trim();
+  const type = document.getElementById('pat-type').value.trim() || 'custom-error';
+  const exts = document.getElementById('pat-exts').value.trim();
+  if (!name || !pattern) { alert('Name and regex are required.'); return; }
+  try { new RegExp(pattern, 'g'); } catch (e) { alert('Invalid regex: ' + e.message); return; }
+  await dbAdd('patterns', { name, pattern, type, exts, enabled: true, createdAt: Date.now() });
+  document.getElementById('pat-name').value = '';
+  document.getElementById('pat-regex').value = '';
+  document.getElementById('pat-exts').value = '';
+  document.getElementById('pattern-test').innerHTML = '';
+  await loadCustomPatterns();
+}
+async function deletePattern(id) {
+  if (!confirm('Delete this pattern?')) return;
+  await dbDelete('patterns', id);
+  await loadCustomPatterns();
+}
+function testPattern() {
+  const pattern = document.getElementById('pat-regex').value.trim();
+  const el = document.getElementById('pattern-test');
+  if (!pattern) { el.innerHTML = '<div class="status-line err">Enter a regex first.</div>'; return; }
+  const sample = `MY_APP_ERROR_42: Something broke\nMY_APP_ERROR_99: Second issue`;
+  try {
+    const matches = [...sample.matchAll(new RegExp(pattern, 'g'))];
+    if (!matches.length) { el.innerHTML = '<div class="status-line warn">No matches in sample.</div>'; return; }
+    el.innerHTML = `<div class="status-line ok">Found ${matches.length} match(es):<br>${matches.map(m => `<code>${escapeHtml(m[1] || m[0])}</code>`).join('<br>')}</div>`;
+  } catch (e) {
+    el.innerHTML = `<div class="status-line err">Invalid regex: ${escapeHtml(e.message)}</div>`;
+  }
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveToken() {
+  const t = document.getElementById('token-input').value.trim();
+  if (t) { sessionStorage.setItem('gh_token', t); document.getElementById('token-status').textContent = 'Token saved to session.'; }
+}
+function clearToken() {
+  sessionStorage.removeItem('gh_token');
+  document.getElementById('token-input').value = '';
+  document.getElementById('token-status').textContent = 'Token cleared.';
+}
+async function resetAllLocalData() {
+  if (!confirm('Delete all search history and custom patterns?')) return;
+  await dbClear('searches').catch(() => {});
+  await dbClear('patterns').catch(() => {});
+  customPatterns = [];
+  renderPatterns();
+  renderHistory();
+}
+
+// ============================================================
+// BOOT
 // ============================================================
 (async function boot() {
+  // Sync theme buttons
+  const theme = document.documentElement.getAttribute('data-theme') || 'light';
+  document.getElementById('theme-light-btn')?.classList.toggle('active', theme === 'light');
+  document.getElementById('theme-dark-btn')?.classList.toggle('active', theme === 'dark');
+
   await loadCustomPatterns();
   await renderHistory();
+  await loadIndex();
 
-  // AI endpoint reachability check
-  const status = document.getElementById('api-status');
+  const existing = sessionStorage.getItem('gh_token');
+  if (existing) {
+    document.getElementById('token-input').value = existing;
+    document.getElementById('token-status').textContent = 'Token loaded from session.';
+  }
+
   try {
     const r = await fetch(AI_PRIMARY, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ question: 'ping', context: '' })
     });
-    if (r.ok) {
-      status.innerHTML = '✅ AI endpoint reachable (Vercel /api/ask)';
-    } else {
-      status.innerHTML = `⚠️ Vercel responded ${r.status}. Fallback: Pollinations.`;
-    }
+    const el = document.getElementById('api-status');
+    if (r.ok) { el.className = 'status-line ok'; el.textContent = 'AI endpoint reachable.'; }
+    else { el.className = 'status-line warn'; el.textContent = `Vercel responded ${r.status}. Fallback: Pollinations.`; }
   } catch (err) {
-    status.innerHTML = `⚠️ Vercel unreachable (${escapeHtml(err.message)}). Fallback: Pollinations, then rules.`;
+    const el = document.getElementById('api-status');
+    el.className = 'status-line warn';
+    el.textContent = 'Vercel unreachable. Fallback: Pollinations, then rules.';
   }
 })();
 </script>

@@ -8,1006 +8,811 @@
 <link rel="apple-touch-icon" href="erplorer-logo.png">
 <style>
 :root {
-  --bg: #FAF9F5;
-  --bg-alt: #F4F2EC;
-  --card: #FFFFFF;
-  --card-hover: #FCFBF8;
-  --code-bg: #1C1A16;
-  --code-text: #E8E6DE;
-  --code-muted: #7A7568;
-  --border: #E7E4DC;
-  --border-strong: #D4D0C4;
-  --ink: #14120D;
-  --ink-2: #45413A;
-  --muted: #7A7568;
-  --muted-2: #A8A396;
-  --accent: #B26A34;
-  --accent-soft: #FBF3E4;
-  --error: #B94A3C;
-  --success: #4C7A38;
-  --info: #3D6494;
-  --purple: #6E4F9E;
-  --radius: 18px;
-  --radius-sm: 10px;
-  --radius-pill: 999px;
-  --nav-h: 68px;
-  --glass: rgba(250, 249, 245, 0.94);
-  --bubble-me: #F4F2EC;
-  --bubble-ai: #FFFFFF;
+  --bg:#FAF9F5; --bg-alt:#F4F2EC; --card:#FFF; --code-bg:#1C1A16; --code-text:#E8E6DE; --code-muted:#7A7568;
+  --border:#E7E4DC; --border-strong:#D4D0C4; --ink:#14120D; --ink-2:#45413A; --muted:#7A7568; --muted-2:#A8A396;
+  --accent:#B26A34; --accent-soft:#FBF3E4; --error:#B94A3C; --success:#4C7A38; --info:#3D6494; --purple:#6E4F9E;
+  --radius:18px; --radius-sm:10px; --radius-pill:999px; --nav-h:68px;
+  --glass:rgba(250,249,245,0.94); --bubble-ai:#FFF;
 }
-
 [data-theme="dark"] {
-  --bg: #1A1815;
-  --bg-alt: #24211C;
-  --card: #262320;
-  --card-hover: #2D2A25;
-  --code-bg: #0F0E0B;
-  --code-text: #E8E6DE;
-  --code-muted: #6B665D;
-  --border: #35312B;
-  --border-strong: #4A453D;
-  --ink: #F0EDE6;
-  --ink-2: #C9C4BA;
-  --muted: #A8A29A;
-  --muted-2: #7A7568;
-  --accent: #D4884A;
-  --accent-soft: #3A2E1F;
-  --error: #E07866;
-  --success: #7BA562;
-  --info: #7EA6D6;
-  --purple: #A98CD9;
-  --glass: rgba(26, 24, 21, 0.92);
-  --bubble-me: #2D2A25;
-  --bubble-ai: #262320;
+  --bg:#1A1815; --bg-alt:#24211C; --card:#262320; --code-bg:#0F0E0B; --code-text:#E8E6DE; --code-muted:#6B665D;
+  --border:#35312B; --border-strong:#4A453D; --ink:#F0EDE6; --ink-2:#C9C4BA; --muted:#A8A29A; --muted-2:#7A7568;
+  --accent:#D4884A; --accent-soft:#3A2E1F; --error:#E07866; --success:#7BA562; --info:#7EA6D6; --purple:#A98CD9;
+  --glass:rgba(26,24,21,0.92); --bubble-ai:#262320;
 }
-
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-html { height: auto; }
+* { box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
+html { height:auto; }
 body {
-  min-height: 100vh;
-  height: auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--ink);
-  line-height: 1.5;
-  font-size: 15px;
-  -webkit-font-smoothing: antialiased;
-  padding-bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0));
-  transition: background 0.25s, color 0.25s;
+  min-height:100vh; height:auto;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  background:var(--bg); color:var(--ink); line-height:1.5; font-size:15px;
+  -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(var(--nav-h) + 40px + env(safe-area-inset-bottom,0));
+  transition:background .25s, color .25s;
 }
-.shell { max-width: 760px; margin: 0 auto; padding: 0 20px; }
+.shell { max-width:760px; margin:0 auto; padding:0 20px; }
 
-/* ============ HEADER ============ */
+/* HEADER */
 .app-header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 40;
-  background: var(--glass);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  display:flex; align-items:center; gap:14px; padding:14px 0;
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:40; background:var(--glass);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
 }
-.app-logo-img {
-  width: 48px;
-  height: 48px;
-  object-fit: contain;
-  flex-shrink: 0;
-  mix-blend-mode: multiply;
-}
-[data-theme="dark"] .app-logo-img {
-  mix-blend-mode: screen;
-  filter: invert(1) hue-rotate(180deg) brightness(1.2) saturate(0.9);
-}
-.app-title-wrap { min-width: 0; flex: 1; }
-.app-title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.045em;
-  line-height: 1;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-}
-.app-title .er { color: var(--accent); }
-.app-tagline {
-  font-size: 10px;
-  color: var(--muted-2);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  font-weight: 600;
-  margin-top: 3px;
-}
+.app-logo-img { width:48px; height:48px; object-fit:contain; flex-shrink:0; mix-blend-mode:multiply; }
+[data-theme="dark"] .app-logo-img { mix-blend-mode:screen; filter:invert(1) hue-rotate(180deg) brightness(1.2) saturate(.9); }
+.app-title-wrap { min-width:0; flex:1; }
+.app-title { font-size:22px; font-weight:800; letter-spacing:-.045em; line-height:1; }
+.app-title .er { color:var(--accent); }
+.app-tagline { font-size:10px; color:var(--muted-2); letter-spacing:1.5px; text-transform:uppercase; font-weight:600; margin-top:3px; }
 .theme-toggle {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--card);
-  color: var(--ink-2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: 0.15s;
-  flex-shrink: 0;
+  width:40px; height:40px; border-radius:50%; border:1px solid var(--border);
+  background:var(--card); color:var(--ink-2); cursor:pointer;
+  display:flex; align-items:center; justify-content:center; transition:.15s; flex-shrink:0;
 }
-.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-.theme-toggle svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.theme-toggle .moon { display: none; }
-.theme-toggle .sun { display: block; }
-[data-theme="dark"] .theme-toggle .moon { display: block; }
-[data-theme="dark"] .theme-toggle .sun { display: none; }
+.theme-toggle:hover { border-color:var(--accent); color:var(--accent); }
+.theme-toggle svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; }
+.theme-toggle .moon { display:none; }
+[data-theme="dark"] .theme-toggle .moon { display:block; }
+[data-theme="dark"] .theme-toggle .sun { display:none; }
 
-/* ============ PANELS ============ */
-.panel { display: none; padding-top: 28px; animation: fade 0.22s ease; }
-.panel.active { display: block; }
-@keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+/* PANELS */
+.panel { display:none; padding-top:28px; animation:fade .22s ease; }
+.panel.active { display:block; }
+@keyframes fade { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:none; } }
 
-/* ============ HERO ============ */
-.hero { margin-bottom: 28px; }
-.hero-eyebrow {
-  font-size: 11px; text-transform: uppercase; letter-spacing: 1.8px;
-  color: var(--muted-2); font-weight: 600; margin-bottom: 14px;
-}
-.hero-title {
-  font-size: 32px; line-height: 1.1; font-weight: 700;
-  letter-spacing: -0.03em; margin-bottom: 14px; color: var(--ink);
-}
-.hero-title em { font-style: normal; color: var(--accent); }
-.hero-desc { font-size: 15px; color: var(--muted); line-height: 1.6; max-width: 560px; }
-@media (min-width: 720px) {
-  .hero-title { font-size: 42px; }
-  .hero-desc { font-size: 16px; }
-}
+/* HERO */
+.hero { margin-bottom:28px; }
+.hero-eyebrow { font-size:11px; text-transform:uppercase; letter-spacing:1.8px; color:var(--muted-2); font-weight:600; margin-bottom:14px; }
+.hero-title { font-size:32px; line-height:1.1; font-weight:700; letter-spacing:-.03em; margin-bottom:14px; color:var(--ink); }
+.hero-title em { font-style:normal; color:var(--accent); }
+.hero-desc { font-size:15px; color:var(--muted); line-height:1.6; max-width:560px; }
+@media (min-width:720px) { .hero-title { font-size:42px; } .hero-desc { font-size:16px; } }
 
-/* ============ STATS ============ */
-.stat-row {
-  display: flex; gap: 20px; flex-wrap: wrap;
-  margin-top: 22px; padding-top: 20px;
-  border-top: 1px solid var(--border);
-}
-.stat { display: flex; align-items: baseline; gap: 6px; font-family: ui-monospace, "SF Mono", monospace; font-size: 14px; }
-.stat .num { font-weight: 700; color: var(--ink); }
-.stat .lbl { color: var(--muted); font-weight: 400; }
+/* STATS */
+.stat-row { display:flex; gap:20px; flex-wrap:wrap; margin-top:22px; padding-top:20px; border-top:1px solid var(--border); }
+.stat { display:flex; align-items:baseline; gap:6px; font-family:ui-monospace,"SF Mono",monospace; font-size:14px; }
+.stat .num { font-weight:700; color:var(--ink); }
+.stat .lbl { color:var(--muted); font-weight:400; }
 
-/* ============ SEARCH ============ */
-.search-box { position: relative; margin-bottom: 20px; }
-.search-box svg {
-  position: absolute; left: 20px; top: 50%; transform: translateY(-50%);
-  width: 18px; height: 18px; stroke: var(--muted); pointer-events: none;
-}
+/* SEARCH */
+.search-box { position:relative; margin-bottom:20px; }
+.search-box svg { position:absolute; left:20px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:var(--muted); pointer-events:none; }
 .search-input {
-  width: 100%; padding: 18px 20px 18px 52px;
-  font-size: 15px; font-family: inherit; color: var(--ink);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-pill); outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s, background 0.25s;
+  width:100%; padding:18px 20px 18px 52px;
+  font-size:15px; font-family:inherit; color:var(--ink);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-pill); outline:none;
+  transition:border-color .15s, box-shadow .15s, background .25s;
 }
-.search-input::placeholder { color: var(--muted-2); }
-.search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(178, 106, 52, 0.15); }
+.search-input::placeholder { color:var(--muted-2); }
+.search-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(178,106,52,.15); }
 
-/* ============ CHIPS ============ */
-.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+/* CHIPS */
+.chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
 .chip {
-  padding: 8px 14px; background: var(--card);
-  border: 1px solid var(--border); border-radius: var(--radius-pill);
-  font-size: 13px; font-family: inherit; color: var(--ink-2);
-  cursor: pointer; transition: 0.15s; display: inline-flex; gap: 6px; align-items: center;
+  padding:8px 14px; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-pill); font-size:13px; font-family:inherit; color:var(--ink-2);
+  cursor:pointer; transition:.15s; display:inline-flex; gap:6px; align-items:center;
 }
-.chip:hover { border-color: var(--border-strong); }
-.chip.active { background: var(--ink); color: var(--bg); border-color: var(--ink); }
-.chip.active .count { color: var(--muted-2); }
-.chip .count { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); font-weight: 500; }
+.chip:hover { border-color:var(--border-strong); }
+.chip.active { background:var(--ink); color:var(--bg); border-color:var(--ink); }
+.chip.active .count { color:var(--muted-2); }
+.chip .count { font-family:ui-monospace,monospace; font-size:11px; color:var(--muted); font-weight:500; }
 
-/* ============ CARD ============ */
-.card {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 20px;
-  margin-bottom: 14px; transition: 0.15s;
-}
-.card:hover { border-color: var(--border-strong); }
-.card-title { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 6px; }
-.card-desc { font-size: 14px; color: var(--muted); line-height: 1.6; }
+/* CARD */
+.card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; margin-bottom:14px; transition:.15s; }
+.card:hover { border-color:var(--border-strong); }
+.card-title { font-size:16px; font-weight:600; letter-spacing:-.01em; margin-bottom:6px; }
+.card-desc { font-size:14px; color:var(--muted); line-height:1.6; }
 
-/* ============ RESULT ============ */
-.result {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 12px;
-  overflow: hidden; transition: 0.15s;
-}
-.result:hover { border-color: var(--border-strong); }
-.result-head {
-  padding: 14px 18px 10px;
-  display: flex; justify-content: space-between; align-items: flex-start;
-  gap: 12px;
-}
-.result-file { font-family: ui-monospace, "SF Mono", monospace; font-size: 13px; color: var(--ink-2); }
-.result-file strong { font-weight: 600; color: var(--ink); }
+/* RESULT */
+.result { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:12px; overflow:hidden; transition:.15s; }
+.result:hover { border-color:var(--border-strong); }
+.result-head { padding:14px 18px 10px; display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap; }
+.result-file { font-family:ui-monospace,"SF Mono",monospace; font-size:13px; color:var(--ink-2); }
+.result-file strong { font-weight:600; color:var(--ink); }
+.result-badges { display:flex; gap:5px; flex-wrap:wrap; }
 .result-badge {
-  padding: 3px 9px; background: var(--bg-alt); border-radius: 6px;
-  font-size: 10px; text-transform: uppercase; font-weight: 700;
-  letter-spacing: 0.6px; color: var(--muted); flex-shrink: 0;
+  padding:3px 9px; background:var(--bg-alt); border-radius:6px;
+  font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:.6px; color:var(--muted);
 }
-.result-badge.error, .result-badge.java-error { background: #FBEAE6; color: var(--error); }
-[data-theme="dark"] .result-badge.error,
-[data-theme="dark"] .result-badge.java-error { background: rgba(224,120,102,0.15); }
-.result-badge.python-error { background: #E6F0FA; color: var(--info); }
-[data-theme="dark"] .result-badge.python-error { background: rgba(126,166,214,0.15); }
-.result-badge.sql-error, .result-badge.test-failure { background: #F0E8F8; color: var(--purple); }
-[data-theme="dark"] .result-badge.sql-error,
-[data-theme="dark"] .result-badge.test-failure { background: rgba(169,140,217,0.15); }
-.result-badge.config-error { background: #FEF3E0; color: var(--accent); }
-[data-theme="dark"] .result-badge.config-error { background: rgba(212,136,74,0.15); }
-.result-badge.crawled { background: #FCE8F3; color: #B0427A; }
-[data-theme="dark"] .result-badge.crawled { background: rgba(176,66,122,0.15); }
-.result-badge.custom-error { background: #E6F3EF; color: #2E7A6B; }
-[data-theme="dark"] .result-badge.custom-error { background: rgba(46,122,107,0.2); }
-.result-msg { padding: 0 18px 14px; font-size: 14px; color: var(--ink); font-weight: 500; line-height: 1.5; }
-.code-block {
-  background: var(--code-bg); color: var(--code-text);
-  font-family: ui-monospace, "SF Mono", monospace;
-  font-size: 12.5px; line-height: 1.75;
-  padding: 14px 0; overflow-x: auto;
-  border-top: 1px solid var(--border);
-}
-.code-line { display: flex; gap: 16px; padding: 0 18px; white-space: pre; }
-.code-line.hit { background: rgba(178, 106, 52, 0.15); }
-.code-num { color: var(--code-muted); min-width: 24px; text-align: right; user-select: none; flex-shrink: 0; }
-.code-text { flex: 1; }
-.code-text .mark { background: rgba(178, 106, 52, 0.45); color: #FFF3E0; padding: 0 2px; border-radius: 2px; }
+.result-badge.dna { background:#FCE8F3; color:#B0427A; font-weight:800; }
+[data-theme="dark"] .result-badge.dna { background:rgba(176,66,122,0.2); }
+.result-badge.error, .result-badge.java-error { background:#FBEAE6; color:var(--error); }
+[data-theme="dark"] .result-badge.error, [data-theme="dark"] .result-badge.java-error { background:rgba(224,120,102,.15); }
+.result-badge.python-error { background:#E6F0FA; color:var(--info); }
+[data-theme="dark"] .result-badge.python-error { background:rgba(126,166,214,.15); }
+.result-badge.sql-error, .result-badge.test-failure { background:#F0E8F8; color:var(--purple); }
+[data-theme="dark"] .result-badge.sql-error, [data-theme="dark"] .result-badge.test-failure { background:rgba(169,140,217,.15); }
+.result-badge.config-error { background:#FEF3E0; color:var(--accent); }
+[data-theme="dark"] .result-badge.config-error { background:rgba(212,136,74,.15); }
+.result-badge.crawled { background:#FCE8F3; color:#B0427A; }
+.result-badge.custom-error { background:#E6F3EF; color:#2E7A6B; }
+.result-msg { padding:0 18px 14px; font-size:14px; color:var(--ink); font-weight:500; line-height:1.5; }
 
-/* ============ CHAT BUBBLES ============ */
-.chat-thread { display: flex; flex-direction: column; gap: 12px; }
-.chat-bubble {
-  padding: 14px 18px; border-radius: 16px; font-size: 14px; line-height: 1.6;
-  max-width: 100%; word-break: break-word;
+/* ACTIONS BAR on result */
+.result-actions {
+  display:flex; gap:6px; flex-wrap:wrap;
+  padding:10px 18px 14px; border-top:1px solid var(--border);
+  background:var(--bg-alt);
 }
+.result-action {
+  padding:6px 11px; font-size:11px; font-weight:600;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-pill); color:var(--ink-2);
+  cursor:pointer; font-family:inherit; transition:.15s;
+  display:inline-flex; gap:4px; align-items:center;
+}
+.result-action:hover { border-color:var(--accent); color:var(--accent); background:var(--accent-soft); }
+.result-action svg { width:11px; height:11px; stroke:currentColor; fill:none; stroke-width:2; }
+.result-action.copied { background:var(--success); color:white; border-color:var(--success); }
+
+/* FIX RECIPE */
+.fix-recipe {
+  padding:12px 18px 14px; border-top:1px solid var(--border);
+  background:#FEF3E0;
+}
+[data-theme="dark"] .fix-recipe { background:rgba(212,136,74,.12); }
+.fix-recipe .label {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1px;
+  color:var(--accent); margin-bottom:5px; display:flex; align-items:center; gap:5px;
+}
+.fix-recipe .recipe { font-size:13px; color:var(--ink-2); line-height:1.55; }
+
+/* BLAST RADIUS */
+.blast-radius {
+  padding:10px 18px; border-top:1px solid var(--border);
+  font-size:12px; color:var(--muted);
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+}
+.blast-radius strong { color:var(--ink); }
+.blast-files { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; width:100%; }
+.blast-file {
+  padding:2px 8px; background:var(--bg-alt); border-radius:4px;
+  font-family:ui-monospace,monospace; font-size:11px; color:var(--ink-2);
+}
+
+/* CODE */
+.code-block {
+  background:var(--code-bg); color:var(--code-text);
+  font-family:ui-monospace,"SF Mono",monospace; font-size:12.5px;
+  line-height:1.75; padding:14px 0; overflow-x:auto; border-top:1px solid var(--border);
+}
+.code-line { display:flex; gap:16px; padding:0 18px; white-space:pre; }
+.code-line.hit { background:rgba(178,106,52,.15); }
+.code-num { color:var(--code-muted); min-width:24px; text-align:right; user-select:none; flex-shrink:0; }
+.code-text { flex:1; }
+.code-text .mark { background:rgba(178,106,52,.45); color:#FFF3E0; padding:0 2px; border-radius:2px; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:calc(var(--nav-h) + 20px + env(safe-area-inset-bottom,0));
+  left:50%; transform:translateX(-50%) translateY(20px);
+  background:var(--ink); color:var(--bg);
+  padding:12px 20px; border-radius:var(--radius-pill);
+  font-size:13px; font-weight:500; z-index:100;
+  opacity:0; pointer-events:none;
+  transition:opacity .25s, transform .25s;
+  max-width:calc(100vw - 40px); text-align:center;
+  box-shadow:0 4px 20px rgba(0,0,0,.15);
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* CHAT */
+.chat-thread { display:flex; flex-direction:column; gap:12px; }
+.chat-bubble { padding:14px 18px; border-radius:16px; font-size:14px; line-height:1.6; max-width:100%; word-break:break-word; }
 .chat-bubble.user {
-  background: var(--ink); color: var(--bg); align-self: flex-end;
-  border-bottom-right-radius: 6px; max-width: 82%;
+  background:var(--ink); color:var(--bg); align-self:flex-end;
+  border-bottom-right-radius:6px; max-width:82%;
 }
 .chat-bubble.ai {
-  background: var(--bubble-ai); border: 1px solid var(--border);
-  color: var(--ink); align-self: flex-start;
-  border-bottom-left-radius: 6px; max-width: 100%;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+  background:var(--bubble-ai); border:1px solid var(--border); color:var(--ink);
+  align-self:flex-start; border-bottom-left-radius:6px; max-width:100%;
+  box-shadow:0 1px 2px rgba(0,0,0,.03);
 }
 .chat-bubble.ai .ai-src {
-  font-size: 11px; color: var(--muted-2); text-transform: uppercase;
-  letter-spacing: 0.8px; font-weight: 600; margin-bottom: 8px;
+  font-size:11px; color:var(--muted-2); text-transform:uppercase;
+  letter-spacing:.8px; font-weight:600; margin-bottom:8px;
 }
 .chat-bubble.ai .matches-head {
-  font-size: 11px; color: var(--muted-2); text-transform: uppercase;
-  letter-spacing: 0.8px; font-weight: 600; margin: 14px 0 8px;
-  padding-top: 12px; border-top: 1px solid var(--border);
+  font-size:11px; color:var(--muted-2); text-transform:uppercase;
+  letter-spacing:.8px; font-weight:600; margin:14px 0 8px;
+  padding-top:12px; border-top:1px solid var(--border);
 }
-.chat-match {
-  padding: 10px 12px; margin-bottom: 8px; background: var(--bg-alt);
-  border-radius: 10px; border-left: 3px solid var(--accent);
-}
-.chat-match .f { font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink); font-weight: 600; }
-.chat-match .t { font-size: 13px; color: var(--ink-2); margin-top: 4px; line-height: 1.5; }
-.typing-dots {
-  display: inline-flex; gap: 4px; align-items: center;
-}
-.typing-dots span {
-  width: 6px; height: 6px; border-radius: 50%; background: var(--muted-2);
-  animation: bounce 1.2s infinite;
-}
-.typing-dots span:nth-child(2) { animation-delay: 0.15s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes bounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-4px); opacity: 1; } }
+.chat-match { padding:10px 12px; margin-bottom:8px; background:var(--bg-alt); border-radius:10px; border-left:3px solid var(--accent); }
+.chat-match .f { font-family:ui-monospace,monospace; font-size:12px; color:var(--ink); font-weight:600; }
+.chat-match .t { font-size:13px; color:var(--ink-2); margin-top:4px; line-height:1.5; }
+.typing-dots { display:inline-flex; gap:4px; align-items:center; }
+.typing-dots span { width:6px; height:6px; border-radius:50%; background:var(--muted-2); animation:bounce 1.2s infinite; }
+.typing-dots span:nth-child(2) { animation-delay:.15s; }
+.typing-dots span:nth-child(3) { animation-delay:.3s; }
+@keyframes bounce { 0%,60%,100% { transform:translateY(0); opacity:.4; } 30% { transform:translateY(-4px); opacity:1; } }
 
-/* ============ BUTTONS ============ */
+/* BUTTONS */
 .btn {
-  padding: 12px 20px; border: none; border-radius: var(--radius-pill);
-  font-family: inherit; font-size: 14px; font-weight: 500;
-  cursor: pointer; transition: 0.15s;
-  background: var(--ink); color: var(--bg);
-  display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+  padding:12px 20px; border:none; border-radius:var(--radius-pill);
+  font-family:inherit; font-size:14px; font-weight:500; cursor:pointer;
+  transition:.15s; background:var(--ink); color:var(--bg);
+  display:inline-flex; align-items:center; gap:8px; justify-content:center;
 }
-.btn:hover { opacity: 0.88; }
-.btn.secondary { background: var(--bg-alt); color: var(--ink); border: 1px solid var(--border); }
-.btn.secondary:hover { background: var(--card); border-color: var(--border-strong); opacity: 1; }
-.btn.accent { background: var(--accent); color: white; }
-.btn.accent:hover { opacity: 0.88; }
-.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--border); }
-.btn.ghost:hover { background: var(--bg-alt); opacity: 1; }
-.btn.danger { background: var(--error); color: white; }
-.btn.full { width: 100%; }
+.btn:hover { opacity:.88; }
+.btn.secondary { background:var(--bg-alt); color:var(--ink); border:1px solid var(--border); }
+.btn.secondary:hover { background:var(--card); border-color:var(--border-strong); opacity:1; }
+.btn.accent { background:var(--accent); color:white; }
+.btn.accent:hover { opacity:.88; }
+.btn.ghost { background:transparent; color:var(--ink); border:1px solid var(--border); }
+.btn.ghost:hover { background:var(--bg-alt); opacity:1; }
+.btn.danger { background:var(--error); color:white; }
+.btn.full { width:100%; }
 
-/* ============ FORMS ============ */
-.field { margin-bottom: 16px; }
-.field-label {
-  display: block; font-size: 12px; font-weight: 600;
-  text-transform: uppercase; letter-spacing: 0.8px;
-  color: var(--muted); margin-bottom: 8px;
-}
-.field-hint { font-size: 12px; color: var(--muted-2); margin-top: 6px; }
+/* FORMS */
+.field { margin-bottom:16px; }
+.field-label { display:block; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.8px; color:var(--muted); margin-bottom:8px; }
+.field-hint { font-size:12px; color:var(--muted-2); margin-top:6px; }
 .input, .select, .textarea {
-  width: 100%; padding: 14px 16px;
-  font-family: inherit; font-size: 15px; color: var(--ink);
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); outline: none;
-  transition: 0.15s; -webkit-appearance: none;
+  width:100%; padding:14px 16px; font-family:inherit; font-size:15px; color:var(--ink);
+  background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); outline:none; transition:.15s; -webkit-appearance:none;
 }
-.input:focus, .select:focus, .textarea:focus {
-  border-color: var(--accent); box-shadow: 0 0 0 3px rgba(178, 106, 52, 0.15);
-}
-.textarea { font-family: ui-monospace, "SF Mono", monospace; font-size: 13px; resize: vertical; min-height: 140px; line-height: 1.65; }
+.input:focus, .select:focus, .textarea:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(178,106,52,.15); }
+.textarea { font-family:ui-monospace,"SF Mono",monospace; font-size:13px; resize:vertical; min-height:140px; line-height:1.65; }
 
-/* ============ DROP ZONE ============ */
+/* DROP */
 .drop {
-  border: 1.5px dashed var(--border-strong); border-radius: var(--radius);
-  padding: 36px 24px; text-align: center; cursor: pointer;
-  background: var(--card); transition: 0.2s;
+  border:1.5px dashed var(--border-strong); border-radius:var(--radius);
+  padding:36px 24px; text-align:center; cursor:pointer;
+  background:var(--card); transition:.2s;
 }
-.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
-.drop-icon { width: 36px; height: 36px; stroke: var(--muted); margin: 0 auto 14px; display: block; }
-.drop strong { display: block; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
-.drop span { font-size: 13px; color: var(--muted); }
-.drop-formats { margin-top: 12px; display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-.format-pill {
-  padding: 3px 9px; background: var(--bg-alt); border-radius: 5px;
-  font-family: ui-monospace, monospace; font-size: 11px;
-  color: var(--muted); letter-spacing: 0.3px;
-}
+.drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+.drop-icon { width:36px; height:36px; stroke:var(--muted); margin:0 auto 14px; display:block; }
+.drop strong { display:block; font-size:15px; font-weight:600; margin-bottom:6px; }
+.drop span { font-size:13px; color:var(--muted); }
+.drop-formats { margin-top:12px; display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.format-pill { padding:3px 9px; background:var(--bg-alt); border-radius:5px; font-family:ui-monospace,monospace; font-size:11px; color:var(--muted); letter-spacing:.3px; }
 
-/* ============ SUB TABS ============ */
-.subtabs {
-  display: inline-flex; background: var(--bg-alt); border-radius: var(--radius-pill);
-  padding: 4px; gap: 2px; margin-bottom: 20px;
-}
+/* SUBTABS */
+.subtabs { display:inline-flex; background:var(--bg-alt); border-radius:var(--radius-pill); padding:4px; gap:2px; margin-bottom:20px; }
 .subtab {
-  padding: 8px 18px; border: none; background: transparent;
-  border-radius: var(--radius-pill); font-family: inherit; font-size: 13px;
-  font-weight: 500; color: var(--muted); cursor: pointer; transition: 0.15s;
+  padding:8px 18px; border:none; background:transparent; border-radius:var(--radius-pill);
+  font-family:inherit; font-size:13px; font-weight:500; color:var(--muted); cursor:pointer; transition:.15s;
 }
-.subtab.active { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.subtab.active { background:var(--card); color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.06); }
 
-/* ============ TABLE ============ */
-.data-table {
-  width: 100%; border-collapse: collapse; background: var(--card);
-  border-radius: var(--radius); overflow: hidden;
-  border: 1px solid var(--border); font-size: 13px;
-}
+/* TABLE */
+.data-table { width:100%; border-collapse:collapse; background:var(--card); border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); font-size:13px; }
 .data-table th {
-  padding: 10px 14px; text-align: left;
-  font-size: 10px; text-transform: uppercase; letter-spacing: 0.7px;
-  color: var(--muted); font-weight: 600;
-  background: var(--bg-alt); border-bottom: 1px solid var(--border); white-space: nowrap;
+  padding:10px 14px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.7px;
+  color:var(--muted); font-weight:600; background:var(--bg-alt); border-bottom:1px solid var(--border); white-space:nowrap;
 }
 .data-table td {
-  padding: 11px 14px; border-bottom: 1px solid var(--border);
-  font-family: ui-monospace, "SF Mono", monospace; font-size: 12.5px;
-  color: var(--ink-2); vertical-align: top;
-  max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  padding:11px 14px; border-bottom:1px solid var(--border);
+  font-family:ui-monospace,"SF Mono",monospace; font-size:12.5px; color:var(--ink-2);
+  vertical-align:top; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-.data-table tr:last-child td { border-bottom: none; }
-.data-table td[contenteditable="true"]:focus {
-  outline: 2px solid var(--accent); background: var(--accent-soft);
-  white-space: normal; max-width: none;
-}
+.data-table tr:last-child td { border-bottom:none; }
+.data-table td[contenteditable="true"]:focus { outline:2px solid var(--accent); background:var(--accent-soft); white-space:normal; max-width:none; }
 
-/* ============ BOTTOM NAV ============ */
+/* BOTTOM NAV */
 .bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  height: calc(var(--nav-h) + env(safe-area-inset-bottom, 0));
-  padding-bottom: env(safe-area-inset-bottom, 0);
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-top: 1px solid var(--border);
-  display: flex; justify-content: space-around; align-items: center;
-  z-index: 50; padding-left: 4px; padding-right: 4px;
+  position:fixed; bottom:0; left:0; right:0;
+  height:calc(var(--nav-h) + env(safe-area-inset-bottom,0));
+  padding-bottom:env(safe-area-inset-bottom,0);
+  background:var(--glass); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex; justify-content:space-around; align-items:center;
+  z-index:50; padding-left:4px; padding-right:4px;
 }
 .nav-item {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; padding: 8px 4px;
-  background: none; border: none; cursor: pointer;
-  color: var(--muted); font-family: inherit; transition: 0.15s;
-  border-radius: 12px; min-width: 0; flex: 1; max-width: 90px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:3px; padding:8px 4px; background:none; border:none; cursor:pointer;
+  color:var(--muted); font-family:inherit; transition:.15s;
+  border-radius:12px; min-width:0; flex:1; max-width:90px;
 }
-.nav-item svg { width: 20px; height: 20px; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.nav-item .nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.2px; }
-.nav-item.active { color: var(--ink); }
-.nav-item.active svg { stroke: var(--ink); }
-.nav-item.active::after { content: ''; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-top: 1px; }
-.nav-item:not(.active)::after { content: ''; height: 5px; }
+.nav-item svg { width:20px; height:20px; stroke:currentColor; fill:none; stroke-width:1.8; }
+.nav-item .nav-label { font-size:10px; font-weight:500; letter-spacing:.2px; }
+.nav-item.active { color:var(--ink); }
+.nav-item.active svg { stroke:var(--ink); }
+.nav-item.active::after { content:''; width:4px; height:4px; border-radius:50%; background:var(--accent); margin-top:1px; }
+.nav-item:not(.active)::after { content:''; height:5px; }
 
-@media (min-width: 720px) {
-  body { padding-bottom: 40px; }
+@media (min-width:720px) {
+  body { padding-bottom:40px; }
   .bottom-nav {
-    position: static; height: auto; padding: 0; margin: 0 0 8px;
-    background: transparent; border: none; backdrop-filter: none; -webkit-backdrop-filter: none;
-    justify-content: flex-start; gap: 4px; flex-wrap: wrap;
-    padding-bottom: 16px; border-bottom: 1px solid var(--border);
+    position:static; height:auto; padding:0; margin:0 0 8px;
+    background:transparent; border:none; backdrop-filter:none; -webkit-backdrop-filter:none;
+    justify-content:flex-start; gap:4px; flex-wrap:wrap;
+    padding-bottom:16px; border-bottom:1px solid var(--border);
   }
   .nav-item {
-    flex-direction: row; padding: 8px 14px; gap: 8px;
-    flex: 0 0 auto; font-size: 13px; font-weight: 500;
-    color: var(--muted); border-radius: var(--radius-pill);
-    border: 1px solid transparent; max-width: none;
+    flex-direction:row; padding:8px 14px; gap:8px;
+    flex:0 0 auto; font-size:13px; font-weight:500;
+    color:var(--muted); border-radius:var(--radius-pill); border:1px solid transparent; max-width:none;
   }
-  .nav-item svg { width: 15px; height: 15px; }
-  .nav-item .nav-label { font-size: 13px; }
-  .nav-item.active { background: var(--card); color: var(--ink); border-color: var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-  .nav-item.active::after { display: none; }
-  .nav-item:not(.active)::after { display: none; }
+  .nav-item svg { width:15px; height:15px; }
+  .nav-item .nav-label { font-size:13px; }
+  .nav-item.active { background:var(--card); color:var(--ink); border-color:var(--border); box-shadow:0 1px 3px rgba(0,0,0,.04); }
+  .nav-item.active::after { display:none; }
+  .nav-item:not(.active)::after { display:none; }
 }
 
-/* ============ SMALL PARTS ============ */
-.status-line {
-  padding: 12px 16px; background: var(--bg-alt);
-  border-radius: var(--radius-sm); font-size: 13px;
-  color: var(--muted); margin-bottom: 18px; line-height: 1.5;
-}
-.status-line code { background: var(--card); padding: 1px 6px; border-radius: 4px; font-family: ui-monospace, monospace; font-size: 12px; color: var(--ink-2); }
-.status-line.ok { background: #EAF3E5; color: #3D6B2C; }
-[data-theme="dark"] .status-line.ok { background: rgba(123,165,98,0.15); color: #A8D088; }
-.status-line.err { background: #FBEAE6; color: var(--error); }
-[data-theme="dark"] .status-line.err { background: rgba(224,120,102,0.15); }
-.status-line.warn { background: #FEF3E0; color: var(--accent); }
-[data-theme="dark"] .status-line.warn { background: rgba(212,136,74,0.15); }
-.empty { padding: 40px 20px; text-align: center; color: var(--muted-2); font-size: 14px; }
-.spinner {
-  display: inline-block; width: 12px; height: 12px;
-  border: 2px solid var(--border); border-top-color: var(--accent);
-  border-radius: 50%; animation: spin 0.6s linear infinite;
-  margin-right: 6px; vertical-align: middle;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-.preview-block {
-  background: var(--code-bg); color: var(--code-text);
-  padding: 16px 20px; border-radius: var(--radius);
-  font-family: ui-monospace, monospace; font-size: 12.5px;
-  overflow-x: auto; white-space: pre; line-height: 1.7;
-  margin-top: 12px; max-height: 400px;
-}
-.row { display: flex; gap: 10px; flex-wrap: wrap; }
-.row > * { flex: 1; min-width: 140px; }
+/* SMALL PARTS */
+.status-line { padding:12px 16px; background:var(--bg-alt); border-radius:var(--radius-sm); font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.5; }
+.status-line code { background:var(--card); padding:1px 6px; border-radius:4px; font-family:ui-monospace,monospace; font-size:12px; color:var(--ink-2); }
+.status-line.ok { background:#EAF3E5; color:#3D6B2C; }
+[data-theme="dark"] .status-line.ok { background:rgba(123,165,98,.15); color:#A8D088; }
+.status-line.err { background:#FBEAE6; color:var(--error); }
+[data-theme="dark"] .status-line.err { background:rgba(224,120,102,.15); }
+.status-line.warn { background:#FEF3E0; color:var(--accent); }
+[data-theme="dark"] .status-line.warn { background:rgba(212,136,74,.15); }
+.empty { padding:40px 20px; text-align:center; color:var(--muted-2); font-size:14px; }
+.spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin .6s linear infinite; margin-right:6px; vertical-align:middle; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.preview-block { background:var(--code-bg); color:var(--code-text); padding:16px 20px; border-radius:var(--radius); font-family:ui-monospace,monospace; font-size:12.5px; overflow-x:auto; white-space:pre; line-height:1.7; margin-top:12px; max-height:400px; }
+.row { display:flex; gap:10px; flex-wrap:wrap; }
+.row > * { flex:1; min-width:140px; }
+details summary { cursor:pointer; padding:12px 0; list-style:none; font-size:13px; color:var(--muted); font-weight:500; }
+details summary::-webkit-details-marker { display:none; }
+details summary::before { content:'▸ '; display:inline-block; transition:transform .15s; margin-right:4px; }
+details[open] summary::before { transform:rotate(90deg); }
 
-details summary { cursor: pointer; padding: 12px 0; list-style: none; font-size: 13px; color: var(--muted); font-weight: 500; }
-details summary::-webkit-details-marker { display: none; }
-details summary::before { content: '▸ '; display: inline-block; transition: transform 0.15s; margin-right: 4px; }
-details[open] summary::before { transform: rotate(90deg); }
-
-/* ============ PROFILE ============ */
+/* PROFILE */
 .profile-card {
-  display: flex; gap: 18px; align-items: center;
-  padding: 22px; background: linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-alt) 100%);
-  border: 1px solid var(--border); border-radius: var(--radius);
-  margin-bottom: 20px;
+  display:flex; gap:18px; align-items:center; padding:22px;
+  background:linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-alt) 100%);
+  border:1px solid var(--border); border-radius:var(--radius); margin-bottom:20px;
 }
 .profile-avatar {
-  width: 72px; height: 72px; border-radius: 50%;
-  background: var(--ink); color: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 25px; font-weight: 700; letter-spacing: -0.02em;
-  flex-shrink: 0; border: 3px solid var(--card);
+  width:72px; height:72px; border-radius:50%; background:var(--ink); color:var(--bg);
+  display:flex; align-items:center; justify-content:center;
+  font-size:25px; font-weight:700; letter-spacing:-.02em; flex-shrink:0;
+  border:3px solid var(--card);
 }
-.profile-info { min-width: 0; flex: 1; }
-.profile-name { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 3px; line-height: 1.2; }
-.profile-role { font-size: 13px; color: var(--accent); font-weight: 600; margin-bottom: 5px; }
-.profile-meta { font-size: 12px; color: var(--muted); line-height: 1.5; }
+.profile-info { min-width:0; flex:1; }
+.profile-name { font-size:20px; font-weight:700; letter-spacing:-.02em; margin-bottom:3px; line-height:1.2; }
+.profile-role { font-size:13px; color:var(--accent); font-weight:600; margin-bottom:5px; }
+.profile-meta { font-size:12px; color:var(--muted); line-height:1.5; }
 
-.social-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 8px; margin-top: 12px;
-}
+.social-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; margin-top:12px; }
 .social-link {
-  display: flex; align-items: center; gap: 10px;
-  padding: 12px 14px;
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); text-decoration: none;
-  color: var(--ink); font-size: 13px; font-weight: 500;
-  transition: 0.15s;
+  display:flex; align-items:center; gap:10px; padding:12px 14px;
+  background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm);
+  text-decoration:none; color:var(--ink); font-size:13px; font-weight:500; transition:.15s;
 }
-.social-link:hover { border-color: var(--accent); background: var(--accent-soft); }
-.social-link svg { width: 16px; height: 16px; flex-shrink: 0; stroke: currentColor; fill: none; stroke-width: 1.8; }
-.social-link .handle { font-size: 11px; color: var(--muted-2); display: block; margin-top: 1px; font-weight: 400; }
+.social-link:hover { border-color:var(--accent); background:var(--accent-soft); }
+.social-link svg { width:16px; height:16px; flex-shrink:0; stroke:currentColor; fill:none; stroke-width:1.8; }
+.social-link .handle { font-size:11px; color:var(--muted-2); display:block; margin-top:1px; font-weight:400; }
 
-/* Tag cloud — clickable */
-.tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.tag-btn {
-  padding: 6px 12px; background: var(--card);
-  border: 1px solid var(--border); border-radius: var(--radius-pill);
-  font-size: 12px; font-weight: 500; color: var(--ink-2);
-  cursor: pointer; transition: 0.15s; font-family: inherit;
-  display: inline-flex; align-items: center; gap: 5px;
-}
-.tag-btn:hover { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-.tag-btn svg { width: 11px; height: 11px; stroke: currentColor; fill: none; stroke-width: 2; opacity: 0.6; }
-.tag-btn:hover svg { opacity: 1; }
-
-/* Manual */
-.manual-item {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); margin-bottom: 10px;
-  overflow: hidden;
-}
-.manual-item summary {
-  padding: 16px 20px; font-size: 14px; font-weight: 600;
-  color: var(--ink); display: flex; align-items: center;
-  gap: 10px; margin: 0;
-}
-.manual-item summary::before { display: none; }
-.manual-item summary .chev {
-  margin-left: auto; transition: transform 0.2s;
-  color: var(--muted-2); font-size: 12px;
-}
-.manual-item[open] summary .chev { transform: rotate(90deg); }
+/* MANUAL */
+.manual-item { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+.manual-item summary { padding:16px 20px; font-size:14px; font-weight:600; color:var(--ink); display:flex; align-items:center; gap:10px; margin:0; }
+.manual-item summary::before { display:none; }
+.manual-item summary .chev { margin-left:auto; transition:transform .2s; color:var(--muted-2); font-size:12px; }
+.manual-item[open] summary .chev { transform:rotate(90deg); }
 .manual-item summary .step-num {
-  width: 22px; height: 22px; border-radius: 50%;
-  background: var(--accent-soft); color: var(--accent);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 700; flex-shrink: 0;
+  width:22px; height:22px; border-radius:50%; background:var(--accent-soft); color:var(--accent);
+  display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:700; flex-shrink:0;
 }
-.manual-body {
-  padding: 0 20px 20px; font-size: 14px;
-  color: var(--ink-2); line-height: 1.7;
-}
-.manual-body p { margin-bottom: 10px; }
-.manual-body ul { padding-left: 20px; margin-bottom: 10px; }
-.manual-body li { margin-bottom: 6px; }
-.manual-body code {
-  background: var(--bg-alt); padding: 1px 6px;
-  border-radius: 4px; font-family: ui-monospace, monospace;
-  font-size: 12px; color: var(--ink);
-}
-.manual-body strong { color: var(--ink); }
+.manual-body { padding:0 20px 20px; font-size:14px; color:var(--ink-2); line-height:1.7; }
+.manual-body p { margin-bottom:10px; }
+.manual-body ul { padding-left:20px; margin-bottom:10px; }
+.manual-body li { margin-bottom:6px; }
+.manual-body code { background:var(--bg-alt); padding:1px 6px; border-radius:4px; font-family:ui-monospace,monospace; font-size:12px; color:var(--ink); }
+.manual-body strong { color:var(--ink); }
+.kbd { display:inline-block; padding:2px 7px; background:var(--card); border:1px solid var(--border-strong); border-bottom-width:2px; border-radius:5px; font-family:ui-monospace,monospace; font-size:11px; font-weight:600; color:var(--ink-2); min-width:20px; text-align:center; }
 
-.kbd {
-  display: inline-block; padding: 2px 7px;
-  background: var(--card); border: 1px solid var(--border-strong);
-  border-bottom-width: 2px; border-radius: 5px;
-  font-family: ui-monospace, monospace; font-size: 11px;
-  font-weight: 600; color: var(--ink-2);
-  min-width: 20px; text-align: center;
+/* USP FEATURE BANNER */
+.usp-banner {
+  display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:10px; margin-bottom:20px;
 }
+.usp-tile {
+  padding:14px; background:var(--card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); text-align:left;
+}
+.usp-tile .ico { font-size:18px; margin-bottom:6px; display:block; }
+.usp-tile .t { font-size:12px; font-weight:700; color:var(--ink); margin-bottom:3px; }
+.usp-tile .d { font-size:11px; color:var(--muted); line-height:1.45; }
 
-.footer-note {
-  text-align: center; padding: 32px 20px 20px;
-  font-size: 12px; color: var(--muted-2); line-height: 1.6;
-}
-.footer-note a { color: var(--accent); text-decoration: none; font-weight: 500; }
-.footer-note a:hover { text-decoration: underline; }
+.footer-note { text-align:center; padding:32px 20px 20px; font-size:12px; color:var(--muted-2); line-height:1.6; }
+.footer-note a { color:var(--accent); text-decoration:none; font-weight:500; }
+.footer-note a:hover { text-decoration:underline; }
 </style>
 </head>
 <body>
 
 <div class="shell">
 
-  <!-- HEADER -->
-  <header class="app-header">
-    <img src="erplorer-logo.png" alt="ERplorer" class="app-logo-img">
-    <div class="app-title-wrap">
-      <div class="app-title"><span class="er">ER</span>plorer</div>
-      <div class="app-tagline">Error Resolution Explorer</div>
+<!-- HEADER -->
+<header class="app-header">
+  <img src="erplorer-logo.png" alt="ERplorer" class="app-logo-img">
+  <div class="app-title-wrap">
+    <div class="app-title"><span class="er">ER</span>plorer</div>
+    <div class="app-tagline">Error Resolution Explorer</div>
+  </div>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+  </button>
+</header>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-panel="search">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    <span class="nav-label">Search</span>
+  </button>
+  <button class="nav-item" data-panel="ask">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    <span class="nav-label">Ask</span>
+  </button>
+  <button class="nav-item" data-panel="lab">
+    <svg viewBox="0 0 24 24"><path d="M9 3h6v6l4 9a1 1 0 0 1-1 1.4H6A1 1 0 0 1 5 18l4-9V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>
+    <span class="nav-label">Lab</span>
+  </button>
+  <button class="nav-item" data-panel="ingest">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+    <span class="nav-label">Ingest</span>
+  </button>
+  <button class="nav-item" data-panel="about">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+    <span class="nav-label">About</span>
+  </button>
+  <button class="nav-item" data-panel="settings">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="nav-label">Settings</span>
+  </button>
+</nav>
+
+<!-- SEARCH -->
+<section class="panel active" id="panel-search">
+  <div class="hero">
+    <div class="hero-eyebrow">Error Resolution Explorer</div>
+    <h1 class="hero-title">From stack trace to <em>source line.</em></h1>
+    <p class="hero-desc">Paste an exception, SQL error, or failing assertion. ERplorer locates the file, line, and surrounding code across Java, Node, Python, SQL, configs, and notebooks.</p>
+    <div class="stat-row" id="stat-row">
+      <div class="stat"><span class="num">—</span><span class="lbl">files</span></div>
+      <div class="stat"><span class="num">—</span><span class="lbl">entries</span></div>
+      <div class="stat"><span class="num">—</span><span class="lbl">thrown</span></div>
+      <div class="stat"><span class="num">—</span><span class="lbl">tests</span></div>
     </div>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-      <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
-      <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-    </button>
-  </header>
+  </div>
 
-  <!-- NAV -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-panel="search">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <span class="nav-label">Search</span>
-    </button>
-    <button class="nav-item" data-panel="ask">
-      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      <span class="nav-label">Ask</span>
-    </button>
-    <button class="nav-item" data-panel="lab">
-      <svg viewBox="0 0 24 24"><path d="M9 3h6v6l4 9a1 1 0 0 1-1 1.4H6A1 1 0 0 1 5 18l4-9V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>
-      <span class="nav-label">Lab</span>
-    </button>
-    <button class="nav-item" data-panel="ingest">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-      <span class="nav-label">Ingest</span>
-    </button>
-    <button class="nav-item" data-panel="about">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
-      <span class="nav-label">About</span>
-    </button>
-    <button class="nav-item" data-panel="settings">
-      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span class="nav-label">Settings</span>
-    </button>
-  </nav>
+  <div class="usp-banner">
+    <div class="usp-tile"><span class="ico">🧬</span><div class="t">Error DNA</div><div class="d">Clusters similar errors, counts occurrences</div></div>
+    <div class="usp-tile"><span class="ico">💥</span><div class="t">Blast Radius</div><div class="d">Shows every file that references the same identifier</div></div>
+    <div class="usp-tile"><span class="ico">🔧</span><div class="t">Fix Recipe</div><div class="d">Suggested fix inline for common patterns</div></div>
+    <div class="usp-tile"><span class="ico">📋</span><div class="t">Copy Bug Report</div><div class="d">One-click markdown bug report to clipboard</div></div>
+  </div>
 
-  <!-- SEARCH -->
-  <section class="panel active" id="panel-search">
-    <div class="hero">
-      <div class="hero-eyebrow">Error Resolution Explorer</div>
-      <h1 class="hero-title">From stack trace to <em>source line.</em></h1>
-      <p class="hero-desc">Paste an exception, SQL error, or failing assertion. ERplorer locates the file, line, and surrounding code across Java, Node, Python, SQL, configs, and notebooks.</p>
-      <div class="stat-row" id="stat-row">
-        <div class="stat"><span class="num">—</span><span class="lbl">files</span></div>
-        <div class="stat"><span class="num">—</span><span class="lbl">entries</span></div>
-        <div class="stat"><span class="num">—</span><span class="lbl">thrown</span></div>
-        <div class="stat"><span class="num">—</span><span class="lbl">tests</span></div>
+  <div class="search-box">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input type="text" class="search-input" id="search-input" placeholder="Paste an error, stack trace, SQL..." autofocus>
+  </div>
+
+  <div class="chips" id="filter-chips"></div>
+  <div id="results"></div>
+
+  <div id="history-wrap" style="display:none; margin-top:32px;">
+    <div class="hero-eyebrow" style="display:flex; justify-content:space-between; align-items:center;">
+      <span>Recent</span>
+      <button class="chip" onclick="clearHistory()">Clear</button>
+    </div>
+    <div class="chips" id="history-list"></div>
+  </div>
+</section>
+
+<!-- ASK -->
+<section class="panel" id="panel-ask">
+  <div class="hero" style="margin-bottom:20px;">
+    <div class="hero-eyebrow">Ask</div>
+    <h1 class="hero-title">Question the index.</h1>
+    <p class="hero-desc">Natural language over the local error catalog. Matches stay on-device; only the top hits go to the model for a short briefing.</p>
+  </div>
+
+  <div id="chat-thread" class="chat-thread">
+    <div class="chat-bubble ai">
+      <div class="ai-src">ERplorer</div>
+      Ask me anything about the indexed errors.
+      <div class="chips" style="margin-top:12px; margin-bottom:0;">
+        <button class="chip" onclick="quickAsk('Show Java errors in auth')">Java errors in auth</button>
+        <button class="chip" onclick="quickAsk('Which file has login validation errors?')">Login errors</button>
+        <button class="chip" onclick="quickAsk('List all SQL errors')">All SQL errors</button>
       </div>
     </div>
+  </div>
 
-    <div class="search-box">
-      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" class="search-input" id="search-input" placeholder="Paste an error, stack trace, SQL..." autofocus>
+  <div style="position:sticky; bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom,0)); margin-top:16px; padding:10px; background:var(--glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:var(--radius-pill); border:1px solid var(--border); z-index:20;">
+    <div style="display:flex; gap:8px; align-items:center;">
+      <input type="text" class="search-input" id="nl-input" placeholder="Ask about your index..." style="padding:12px 18px; font-size:14px;">
+      <button class="btn accent" onclick="askNatural()" style="padding:0; border-radius:50%; width:44px; height:44px; flex-shrink:0;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+      </button>
     </div>
+  </div>
+</section>
 
-    <div class="chips" id="filter-chips"></div>
-    <div id="results"></div>
+<!-- LAB -->
+<section class="panel" id="panel-lab">
+  <div class="hero">
+    <div class="hero-eyebrow">Lab</div>
+    <h1 class="hero-title">Test cases to code.</h1>
+    <p class="hero-desc">Describe a flow in English, or drop a spreadsheet. ERplorer emits Playwright specs and PySpark pytest files.</p>
+  </div>
 
-    <div id="history-wrap" style="display:none; margin-top:32px;">
-      <div class="hero-eyebrow" style="display:flex; justify-content:space-between; align-items:center;">
-        <span>Recent</span>
-        <button class="chip" onclick="clearHistory()">Clear</button>
-      </div>
-      <div class="chips" id="history-list"></div>
-    </div>
-  </section>
+  <div class="subtabs">
+    <button class="subtab active" data-lab="scenarios">Scenarios</button>
+    <button class="subtab" data-lab="specs">Specs</button>
+  </div>
 
-  <!-- ASK -->
-  <section class="panel" id="panel-ask">
-    <div class="hero" style="margin-bottom:20px;">
-      <div class="hero-eyebrow">Ask</div>
-      <h1 class="hero-title">Question the index.</h1>
-      <p class="hero-desc">Natural language over the local error catalog. Matches stay on-device; only the top hits go to the model for a short briefing.</p>
-    </div>
-
-    <div id="chat-thread" class="chat-thread">
-      <div class="chat-bubble ai">
-        <div class="ai-src">ERplorer</div>
-        Ask me anything about the indexed errors. For example:
-        <div class="tag-row" style="margin-top:10px;">
-          <button class="tag-btn" onclick="quickAsk('Show Java errors in auth')">Show Java errors in auth</button>
-          <button class="tag-btn" onclick="quickAsk('Which file has login validation errors?')">Login validation errors</button>
-          <button class="tag-btn" onclick="quickAsk('List all SQL errors')">All SQL errors</button>
-          <button class="tag-btn" onclick="quickAsk('Which test expects alice?')">Test expects alice</button>
-        </div>
-      </div>
-    </div>
-
-    <div style="position:sticky; bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom, 0)); margin-top:16px; padding:10px; background:var(--glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:var(--radius-pill); border:1px solid var(--border); z-index:20;">
-      <div style="display:flex; gap:8px; align-items:center;">
-        <input type="text" class="search-input" id="nl-input" placeholder="Ask about your index..." style="padding:12px 18px; font-size:14px;">
-        <button class="btn accent" onclick="askNatural()" style="padding:12px 18px; border-radius:50%; width:44px; height:44px; flex-shrink:0;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
-        </button>
-      </div>
-    </div>
-
-    <details style="margin-top:16px;">
-      <summary>Advanced: enable deep search</summary>
-      <div style="padding:12px 0; font-size:13px; color:var(--muted);">
-        <label style="display:flex; gap:10px; align-items:flex-start; cursor:pointer;">
-          <input type="checkbox" id="rag-deep-toggle" onchange="onDeepToggle(this.checked)" style="margin-top:2px; accent-color:var(--accent);">
-          <span>Add semantic embeddings for paraphrase matching. First use loads a 25 MB model.</span>
-        </label>
-        <div id="rag-model-status" class="status-line" style="display:none; margin-top:10px;"></div>
-      </div>
-    </details>
-  </section>
-
-  <!-- LAB -->
-  <section class="panel" id="panel-lab">
-    <div class="hero">
-      <div class="hero-eyebrow">Lab</div>
-      <h1 class="hero-title">Test cases to code.</h1>
-      <p class="hero-desc">Describe a flow in English, or drop a spreadsheet. ERplorer emits Playwright specs and PySpark pytest files with the columns your suite already uses.</p>
-    </div>
-
-    <div class="subtabs">
-      <button class="subtab active" data-lab="scenarios">Scenarios</button>
-      <button class="subtab" data-lab="specs">Specs</button>
-    </div>
-
-    <div id="lab-scenarios">
-      <textarea class="textarea" id="ai-input" placeholder="Test the login page:
+  <div id="lab-scenarios">
+    <textarea class="textarea" id="ai-input" placeholder="Test the login page:
 1. Go to /login
 2. Enter &quot;admin&quot; in the username field
-3. Enter &quot;secret123&quot; in the password field
-4. Click the submit button
-5. Verify that the dashboard shows &quot;Welcome admin&quot;"></textarea>
+3. Verify that the dashboard shows &quot;Welcome admin&quot;"></textarea>
 
-      <div class="row" style="margin-top:12px;">
-        <button class="btn accent" onclick="runAITransform()">Convert with AI</button>
-        <button class="btn secondary" onclick="runRuleTransform()">Convert with rules</button>
-      </div>
-      <button class="btn ghost" style="margin-top:8px; width:100%;" onclick="loadSampleScenarios()">Load sample</button>
-      <div id="ai-status" style="margin-top:16px;"></div>
-      <div id="ai-preview" style="margin-top:24px;"></div>
+    <div class="row" style="margin-top:12px;">
+      <button class="btn accent" onclick="runAITransform()">Convert with AI</button>
+      <button class="btn secondary" onclick="runRuleTransform()">Convert with rules</button>
     </div>
+    <button class="btn ghost" style="margin-top:8px; width:100%;" onclick="loadSampleScenarios()">Load sample</button>
+    <div id="ai-status" style="margin-top:16px;"></div>
+    <div id="ai-preview" style="margin-top:24px;"></div>
+  </div>
 
-    <div id="lab-specs" style="display:none;">
-      <div class="drop" id="drop-zone">
-        <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-6"/><path d="M3 21V13a2 2 0 0 1 2-2h6"/></svg>
-        <strong>Drop a test case file, or click to browse</strong>
-        <span>One row per step</span>
-        <div class="drop-formats">
-          <span class="format-pill">.xlsx</span>
-          <span class="format-pill">.xls</span>
-          <span class="format-pill">.csv</span>
-          <span class="format-pill">.tsv</span>
-        </div>
-      </div>
-      <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
-
-      <div class="row" style="margin-top:16px;">
-        <button class="btn ghost" onclick="downloadTemplate('csv')">CSV template</button>
-        <button class="btn ghost" onclick="downloadTemplate('tsv')">TSV template</button>
-      </div>
-
-      <div id="gen-output" style="margin-top:24px;"></div>
-    </div>
-  </section>
-
-  <!-- INGEST -->
-  <section class="panel" id="panel-ingest">
-    <div class="hero">
-      <div class="hero-eyebrow">Ingest</div>
-      <h1 class="hero-title">Grow the index.</h1>
-      <p class="hero-desc">Four ways in: fetch a URL, scan a GitHub repo, drop local files, or paste a log. Patterns you define are applied on ingest. Added entries stay in this browser.</p>
-      <div class="stat-row">
-        <div class="stat"><span class="num" id="ingest-count">0</span><span class="lbl">ingested this session</span></div>
+  <div id="lab-specs" style="display:none;">
+    <div class="drop" id="drop-zone">
+      <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-6"/><path d="M3 21V13a2 2 0 0 1 2-2h6"/></svg>
+      <strong>Drop a test case file, or click to browse</strong>
+      <span>One row per step</span>
+      <div class="drop-formats">
+        <span class="format-pill">.xlsx</span>
+        <span class="format-pill">.csv</span>
+        <span class="format-pill">.tsv</span>
       </div>
     </div>
+    <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
 
-    <div class="card">
-      <div class="card-title">Fetch a URL</div>
-      <div class="card-desc" style="margin-bottom:14px;">The RAGina crawler fetches up to 20 pages and extracts errors from each.</div>
-      <input type="text" class="input" id="crawl-url" placeholder="https://docs.example.com/errors" style="margin-bottom:10px;">
-      <button class="btn full" onclick="tryTier1Crawl()">Fetch</button>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn ghost" onclick="downloadTemplate('csv')">CSV template</button>
+      <button class="btn ghost" onclick="downloadTemplate('tsv')">TSV template</button>
     </div>
 
-    <div class="card">
-      <div class="card-title">Scan a GitHub repo</div>
-      <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token. Private repos need a PAT in Settings. First 40 indexable files.</div>
-      <input type="text" class="input" id="repo-scan" placeholder="owner/repo" style="margin-bottom:10px;">
-      <button class="btn full" onclick="tryTier2Repo()">Scan</button>
+    <div id="gen-output" style="margin-top:24px;"></div>
+  </div>
+</section>
+
+<!-- INGEST -->
+<section class="panel" id="panel-ingest">
+  <div class="hero">
+    <div class="hero-eyebrow">Ingest</div>
+    <h1 class="hero-title">Grow the index.</h1>
+    <p class="hero-desc">Four ways in: fetch a URL, scan a GitHub repo, drop local files, or paste a log.</p>
+    <div class="stat-row">
+      <div class="stat"><span class="num" id="ingest-count">0</span><span class="lbl">ingested this session</span></div>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="card-title">Drop files</div>
-      <div class="card-desc" style="margin-bottom:14px;">.js .ts .java .py .sql .yaml .json .ipynb and related.</div>
-      <button class="btn secondary full" onclick="tryTier3File()">Choose files</button>
-      <input type="file" id="tier3-file" multiple style="display:none;">
-    </div>
+  <div class="card">
+    <div class="card-title">Fetch a URL</div>
+    <div class="card-desc" style="margin-bottom:14px;">The RAGina crawler fetches up to 20 pages.</div>
+    <input type="text" class="input" id="crawl-url" placeholder="https://docs.example.com/errors" style="margin-bottom:10px;">
+    <button class="btn full" onclick="tryTier1Crawl()">Fetch</button>
+  </div>
 
-    <div class="card">
-      <div class="card-title">Paste text</div>
-      <textarea class="textarea" id="tier4-text" placeholder="Paste a stack trace, log, or source file..." style="margin:12px 0 10px;"></textarea>
-      <button class="btn secondary full" onclick="tryTier4Paste()">Add to index</button>
-    </div>
+  <div class="card">
+    <div class="card-title">Scan a GitHub repo</div>
+    <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token. Private repos need a PAT in Settings.</div>
+    <input type="text" class="input" id="repo-scan" placeholder="owner/repo" style="margin-bottom:10px;">
+    <button class="btn full" onclick="tryTier2Repo()">Scan</button>
+  </div>
 
-    <div id="add-status" class="status-line" style="display:none;"></div>
-  </section>
+  <div class="card">
+    <div class="card-title">Drop files</div>
+    <div class="card-desc" style="margin-bottom:14px;">.js .ts .java .py .sql .yaml .json .ipynb and related.</div>
+    <button class="btn secondary full" onclick="tryTier3File()">Choose files</button>
+    <input type="file" id="tier3-file" multiple style="display:none;">
+  </div>
 
-  <!-- ABOUT -->
-  <section class="panel" id="panel-about">
-    <div class="hero">
-      <div class="hero-eyebrow">About</div>
-      <h1 class="hero-title">Built by a <em>Techno Agilist.</em></h1>
-      <p class="hero-desc">ERplorer is a hands-on tool from someone who has shipped code, broken builds, chased flaky tests, and sat in enough retrospectives to know what QA actually needs.</p>
-    </div>
+  <div class="card">
+    <div class="card-title">Paste text</div>
+    <textarea class="textarea" id="tier4-text" placeholder="Paste a stack trace, log, or source file..." style="margin:12px 0 10px;"></textarea>
+    <button class="btn secondary full" onclick="tryTier4Paste()">Add to index</button>
+  </div>
 
-    <div class="profile-card">
-      <div class="profile-avatar">VS</div>
-      <div class="profile-info">
-        <div class="profile-name">Varakala Sai (Surya)</div>
-        <div class="profile-role">Techno Agilist · Dev Engineer · Strategic Consultant</div>
-        <div class="profile-meta">
-          6+ years at Tata Consultancy Services<br>
-          SAFe Scrum Master · QA → Full Stack → Java Backend → Agile
-        </div>
+  <div id="add-status" class="status-line" style="display:none;"></div>
+</section>
+
+<!-- ABOUT -->
+<section class="panel" id="panel-about">
+  <div class="hero">
+    <div class="hero-eyebrow">About</div>
+    <h1 class="hero-title">Built by a <em>Techno Agilist.</em></h1>
+    <p class="hero-desc">ERplorer is a hands-on tool from someone who has shipped code, broken builds, chased flaky tests, and sat in enough retrospectives to know what QA actually needs.</p>
+  </div>
+
+  <div class="profile-card">
+    <div class="profile-avatar">VS</div>
+    <div class="profile-info">
+      <div class="profile-name">Varakala Sai (Surya)</div>
+      <div class="profile-role">Techno Agilist · Dev Engineer · Strategic Consultant</div>
+      <div class="profile-meta">
+        6+ years at Tata Consultancy Services<br>
+        SAFe Scrum Master · QA → Full Stack → Java Backend → Agile
       </div>
     </div>
+  </div>
 
-    <div class="card">
-      <div class="card-title">Areas of strength</div>
-      <div class="card-desc">Tap any tag to search the index for related content.</div>
-      <div class="tag-row" id="about-tags"></div>
-    </div>
+  <div class="card">
+    <div class="card-title">What makes ERplorer unique</div>
+    <div class="card-desc" style="margin-bottom:14px;">Five features no other QA tool ships out of the box.</div>
 
-    <div class="card">
-      <div class="card-title">Connect</div>
-      <div class="card-desc" style="margin-bottom:4px;">Open to Scrum Master and AI-Integrated Delivery roles.</div>
-      <div class="social-grid">
-        <a href="https://github.com/suryasticsai" target="_blank" class="social-link">
-          <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
-          <span>GitHub<span class="handle">@suryasticsai</span></span>
-        </a>
-        <a href="https://linkedin.com/in/suryasticsai" target="_blank" class="social-link">
-          <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-          <span>LinkedIn<span class="handle">/in/suryasticsai</span></span>
-        </a>
-        <a href="https://suryasticsai.medium.com" target="_blank" class="social-link">
-          <svg viewBox="0 0 24 24"><path d="M2 6h4l4 10 4-10h4l-6 14h-4z"/><circle cx="20" cy="7" r="2"/></svg>
-          <span>Medium<span class="handle">@suryasticsai</span></span>
-        </a>
-        <a href="https://huggingface.co/suryasticsai" target="_blank" class="social-link">
-          <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M16 12h.01M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg>
-          <span>HuggingFace<span class="handle">@suryasticsai</span></span>
-        </a>
-        <a href="https://instagram.com/suryasticsai" target="_blank" class="social-link">
-          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1" fill="currentColor"/></svg>
-          <span>Instagram<span class="handle">@suryasticsai</span></span>
-        </a>
-        <a href="mailto:sai.varakala13@gmail.com" class="social-link">
-          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
-          <span>Email<span class="handle">sai.varakala13@gmail.com</span></span>
-        </a>
+    <div style="display:flex; flex-direction:column; gap:14px;">
+      <div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:4px;">🧬 Error DNA</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.55;">Normalizes error text (strips UUIDs, numbers, timestamps) and clusters similar errors. See "×47" instead of scrolling 47 near-identical results.</div>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:4px;">💥 Blast Radius</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.55;">For any error, extracts identifier names and shows every other file in the index that references them. Instant impact analysis, zero config.</div>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Fix Recipe</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.55;">Pattern-matched suggested fixes for the most common JavaScript, Java, Python, and SQL errors. Not AI guesswork — curated rules.</div>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:4px;">📋 Copy Bug Report</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.55;">One click turns any result into a formatted Markdown bug report — file:line, context, repro hint. Paste into Jira, Linear, or Slack.</div>
+      </div>
+      <div>
+        <div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔗 Share Link</div>
+        <div style="font-size:13px; color:var(--muted); line-height:1.55;">Every search is URL-encoded. Copy the link, send it to a teammate, and they see the exact same results with one click.</div>
       </div>
     </div>
+  </div>
 
-    <div class="hero-eyebrow" style="margin-top:32px;">How to use ERplorer</div>
-    <p style="font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
-      A quick walkthrough of every tab. Each panel is self-contained — use what you need, ignore the rest.
-    </p>
-
-    <details class="manual-item" open>
-      <summary>
-        <span class="step-num">1</span>
-        Search — find where an error lives
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>The fastest way to locate any error in the codebase.</p>
-        <ul>
-          <li>Paste an <strong>error message</strong>, a <strong>stack trace line</strong>, or a <strong>SQL keyword</strong> into the search box.</li>
-          <li>Results show the file, line number, and the surrounding 5 lines of code.</li>
-          <li>The matched text is highlighted in amber inside the code block.</li>
-          <li>Use the <strong>filter chips</strong> (All / Errors / Java / Python / SQL / Config / Tests) to narrow by type.</li>
-          <li>Press <span class="kbd">Enter</span> to save a query to your recent history.</li>
-        </ul>
-      </div>
-    </details>
-
-    <details class="manual-item">
-      <summary>
-        <span class="step-num">2</span>
-        Ask — natural language over the index
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>Ask questions in plain English instead of guessing keywords.</p>
-        <ul>
-          <li>Type something like <em>"Which file has the login validation errors?"</em></li>
-          <li>ERplorer finds the top matching entries locally, then sends only those to the AI.</li>
-          <li>Answers come with clickable <strong>[1] [2]</strong> citations.</li>
-          <li>If AI is unavailable, matches are shown as a chat-style list — the tool always works.</li>
-        </ul>
-      </div>
-    </details>
-
-    <details class="manual-item">
-      <summary>
-        <span class="step-num">3</span>
-        Lab — turn test cases into code
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>Two ways in: write scenarios in English, or drop a spreadsheet.</p>
-        <ul>
-          <li><strong>Scenarios:</strong> describe test steps. Convert with AI or rules. Edit the table, then generate specs.</li>
-          <li><strong>Specs:</strong> drop an Excel/CSV with test rows. Get Playwright and pytest files.</li>
-        </ul>
-      </div>
-    </details>
-
-    <details class="manual-item">
-      <summary>
-        <span class="step-num">4</span>
-        Ingest — grow the searchable index
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>Four ways: fetch a URL, scan a GitHub repo, drop files, or paste text. Everything stays in your browser.</p>
-      </div>
-    </details>
-
-    <details class="manual-item">
-      <summary>
-        <span class="step-num">5</span>
-        Rules — teach ERplorer your team's errors
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>Add regex patterns for error formats specific to your codebase. Applied automatically on the next crawl, scan, or paste.</p>
-      </div>
-    </details>
-
-    <details class="manual-item">
-      <summary>
-        <span class="step-num">6</span>
-        Settings — theme, token, and local data
-        <span class="chev">▶</span>
-      </summary>
-      <div class="manual-body">
-        <p>Toggle dark mode via the sun/moon icon in the header. Configure GitHub token for private repo scanning. Reset local data to clear all history and patterns.</p>
-      </div>
-    </details>
-
-    <div class="footer-note">
-      ERplorer · Error Resolution Explorer · v1.0<br>
-      Built with vanilla JavaScript. Zero build step. Zero servers. Zero cost.<br>
-      <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
+  <div class="card">
+    <div class="card-title">Connect</div>
+    <div class="card-desc">Open to Scrum Master and AI-Integrated Delivery roles.</div>
+    <div class="social-grid">
+      <a href="https://github.com/suryasticsai" target="_blank" class="social-link">
+        <svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg>
+        <span>GitHub<span class="handle">@suryasticsai</span></span>
+      </a>
+      <a href="https://linkedin.com/in/suryasticsai" target="_blank" class="social-link">
+        <svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        <span>LinkedIn<span class="handle">/in/suryasticsai</span></span>
+      </a>
+      <a href="https://suryasticsai.medium.com" target="_blank" class="social-link">
+        <svg viewBox="0 0 24 24"><path d="M2 6h4l4 10 4-10h4l-6 14h-4z"/><circle cx="20" cy="7" r="2"/></svg>
+        <span>Medium<span class="handle">@suryasticsai</span></span>
+      </a>
+      <a href="https://huggingface.co/suryasticsai" target="_blank" class="social-link">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M16 12h.01M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg>
+        <span>HuggingFace<span class="handle">@suryasticsai</span></span>
+      </a>
+      <a href="https://instagram.com/suryasticsai" target="_blank" class="social-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1" fill="currentColor"/></svg>
+        <span>Instagram<span class="handle">@suryasticsai</span></span>
+      </a>
+      <a href="mailto:sai.varakala13@gmail.com" class="social-link">
+        <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg>
+        <span>Email<span class="handle">sai.varakala13@gmail.com</span></span>
+      </a>
     </div>
-  </section>
+  </div>
 
-  <!-- SETTINGS -->
-  <section class="panel" id="panel-settings">
-    <div class="hero">
-      <div class="hero-eyebrow">Settings</div>
-      <h1 class="hero-title">Configure.</h1>
-      <p class="hero-desc">Everything below stays in your browser. Nothing is sent to any server unless you explicitly request it.</p>
-    </div>
+  <div class="hero-eyebrow" style="margin-top:32px;">How to use ERplorer</div>
+  <p style="font-size:14px; color:var(--muted); margin-bottom:16px; line-height:1.6;">
+    A quick walkthrough of every tab.
+  </p>
 
-    <!-- FIRST TILE: About Me -->
-    <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--bg-alt) 100%); border-color:#F0E2C8;">
-      <div class="card-title" style="font-size:17px;">About me</div>
-      <div class="card-desc" style="color:var(--ink-2); margin-top:8px;">
-        I've been a QA engineer, a full stack developer, a Java backend dev, and a Scrum Master. In every one of those roles, I watched teams lose hours to the same problem: an error message in a CI log that nobody could locate in the codebase.
-        <br><br>
-        ERplorer is my answer. Paste an error, get the file and line. No IDE, no clone, no context switch. Built entirely in vanilla JavaScript so it runs from any browser, on any machine, for any team — no install, no build, no cost.
-      </div>
+  <details class="manual-item" open>
+    <summary><span class="step-num">1</span>Search — find where an error lives<span class="chev">▶</span></summary>
+    <div class="manual-body">
+      <ul>
+        <li>Paste an <strong>error message</strong>, a <strong>stack trace line</strong>, or a <strong>SQL keyword</strong> into the search box.</li>
+        <li>Results show the file, line number, and surrounding 5 lines of code.</li>
+        <li><strong>Error DNA</strong> — the pink "×N" badge clusters similar errors.</li>
+        <li><strong>Blast Radius</strong> — shows other files referencing the same identifier.</li>
+        <li><strong>Fix Recipe</strong> — inline suggested fix for common errors.</li>
+        <li><strong>Copy Bug Report</strong> — one-click markdown to clipboard.</li>
+        <li><strong>Share Link</strong> — copy a URL that reopens this search.</li>
+      </ul>
     </div>
+  </details>
 
-    <div class="card">
-      <div class="card-title">Appearance</div>
-      <div class="card-desc" style="margin-bottom:14px;">Choose light or dark. Your preference is saved to this browser.</div>
-      <div class="subtabs" style="margin-bottom:0;">
-        <button class="subtab" id="theme-light-btn" onclick="setTheme('light')">Light</button>
-        <button class="subtab" id="theme-dark-btn" onclick="setTheme('dark')">Dark</button>
-      </div>
+  <details class="manual-item">
+    <summary><span class="step-num">2</span>Ask — chat with the index<span class="chev">▶</span></summary>
+    <div class="manual-body">
+      <p>Ask questions in plain English. The tool finds matching entries locally, then sends only those to the AI for a briefing. If AI is unavailable, matched entries are shown as chat cards — the tool always works.</p>
     </div>
+  </details>
 
-    <div class="card">
-      <div class="card-title">GitHub token</div>
-      <div class="card-desc" style="margin-bottom:14px;">Optional. Enables live GitHub API queries against private repos. Stored in sessionStorage only — cleared when this tab closes.</div>
-      <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
-      <div class="row">
-        <button class="btn" onclick="saveToken()">Save</button>
-        <button class="btn secondary" onclick="clearToken()">Clear</button>
-      </div>
-      <div id="token-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+  <details class="manual-item">
+    <summary><span class="step-num">3</span>Lab — turn test cases into code<span class="chev">▶</span></summary>
+    <div class="manual-body">
+      <p><strong>Scenarios:</strong> describe steps, convert with AI or rules. <strong>Specs:</strong> drop an Excel/CSV, get Playwright and pytest files.</p>
     </div>
+  </details>
 
-    <div class="card">
-      <div class="card-title">AI endpoints</div>
-      <div class="card-desc">
-        Primary: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">ragina-crawler-ragina.vercel.app/api/ask</code><br>
-        Fallback: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">text.pollinations.ai</code><br>
-        Offline: rule-based parser runs in-browser.
-      </div>
-      <div id="api-status" class="status-line" style="margin-top:14px;">Checking AI endpoint…</div>
+  <details class="manual-item">
+    <summary><span class="step-num">4</span>Ingest — grow the searchable index<span class="chev">▶</span></summary>
+    <div class="manual-body">
+      <p>Four ways: fetch a URL, scan a GitHub repo, drop files, or paste text. Everything stays in your browser.</p>
     </div>
+  </details>
 
-    <div class="card">
-      <div class="card-title">Local data</div>
-      <div class="card-desc" style="margin-bottom:14px;">Search history and custom patterns live in IndexedDB in this browser. Clearing removes everything.</div>
-      <button class="btn danger full" onclick="resetAllLocalData()">Reset all local data</button>
-    </div>
+  <div class="footer-note">
+    ERplorer · Error Resolution Explorer · v1.0<br>
+    Built with vanilla JavaScript. Zero build step. Zero servers. Zero cost.<br>
+    <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
+  </div>
+</section>
 
-    <div class="card" style="background:var(--bg-alt);">
-      <div class="card-title" style="font-size:14px;">Tip</div>
-      <div class="card-desc" style="font-size:13px;">Use <code style="background:var(--card);padding:1px 6px;border-radius:4px;">?repo=owner/name</code> in the URL to point ERplorer at another repo's search-index.json.</div>
+<!-- SETTINGS -->
+<section class="panel" id="panel-settings">
+  <div class="hero">
+    <div class="hero-eyebrow">Settings</div>
+    <h1 class="hero-title">Configure.</h1>
+    <p class="hero-desc">Everything below stays in your browser.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">About me</div>
+    <div class="card-desc" style="color:var(--ink-2); margin-top:8px;">
+      I've been a QA engineer, a full stack developer, a Java backend dev, and a Scrum Master. In every one of those roles, I watched teams lose hours to the same problem: an error message in a CI log that nobody could locate in the codebase.
+      <br><br>
+      ERplorer is my answer. Paste an error, get the file and line. No IDE, no clone, no context switch. Built entirely in vanilla JavaScript so it runs from any browser, on any machine, for any team — no install, no build, no cost.
     </div>
-  </section>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Appearance</div>
+    <div class="card-desc" style="margin-bottom:14px;">Choose light or dark. Saved to this browser.</div>
+    <div class="subtabs" style="margin-bottom:0;">
+      <button class="subtab" id="theme-light-btn" onclick="setTheme('light')">Light</button>
+      <button class="subtab" id="theme-dark-btn" onclick="setTheme('dark')">Dark</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GitHub token</div>
+    <div class="card-desc" style="margin-bottom:14px;">Optional. Enables scanning private repos. Stored in sessionStorage only.</div>
+    <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
+    <div class="row">
+      <button class="btn" onclick="saveToken()">Save</button>
+      <button class="btn secondary" onclick="clearToken()">Clear</button>
+    </div>
+    <div id="token-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">AI endpoints</div>
+    <div class="card-desc">
+      Primary: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">ragina-crawler-ragina.vercel.app/api/ask</code><br>
+      Fallback: <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">text.pollinations.ai</code><br>
+      Offline: rule-based parser runs in-browser.
+    </div>
+    <div id="api-status" class="status-line" style="margin-top:14px;">Checking AI endpoint…</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Local data</div>
+    <div class="card-desc" style="margin-bottom:14px;">Search history and patterns live in IndexedDB.</div>
+    <button class="btn danger full" onclick="resetAllLocalData()">Reset all local data</button>
+  </div>
+</section>
 
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
 <script>
-// ============================================================
 // THEME
-// ============================================================
 function setTheme(t) {
   document.documentElement.setAttribute('data-theme', t);
   localStorage.setItem('erplorer_theme', t);
@@ -1023,9 +828,7 @@ function toggleTheme() {
   setTheme(saved);
 })();
 
-// ============================================================
 // STATE
-// ============================================================
 const DB_NAME = 'erplorer';
 const DB_VERSION = 1;
 let dbPromise = null;
@@ -1034,11 +837,8 @@ let flexIndex = null;
 let activeFilter = 'all';
 let customPatterns = [];
 let OctokitClass = null;
-const chatHistory = [];
 
-// ============================================================
 // INDEXEDDB
-// ============================================================
 function openDB() {
   if (dbPromise) return dbPromise;
   dbPromise = new Promise((resolve, reject) => {
@@ -1092,9 +892,7 @@ async function dbClear(store) {
   });
 }
 
-// ============================================================
 // HELPERS
-// ============================================================
 const escapeHtml = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
@@ -1106,10 +904,183 @@ function downloadFile(name, content, mime = 'text/plain') {
   a.click();
   URL.revokeObjectURL(a.href);
 }
+function toast(msg, dur = 2200) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), dur);
+}
 
-// ============================================================
-// NAV
-// ============================================================
+// ============ USP: ERROR DNA ============
+function fingerprint(msg) {
+  return String(msg)
+    .replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, '<UUID>')
+    .replace(/\d{4}-\d{2}-\d{2}T[\d:.]+Z?/g, '<DATE>')
+    .replace(/'[^']*'/g, "'<STR>'")
+    .replace(/"[^"]*"/g, '"<STR>"')
+    .replace(/\b\d+\b/g, '<N>')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function dnaCluster(hits) {
+  const clusters = new Map();
+  for (const h of hits) {
+    const doc = documents[h.id];
+    if (!doc) continue;
+    const fp = fingerprint(doc.text || '');
+    if (!clusters.has(fp)) clusters.set(fp, []);
+    clusters.get(fp).push(doc);
+  }
+  return clusters;
+}
+
+// ============ USP: FIX RECIPE ============
+const FIX_RECIPES = [
+  {
+    match: /cannot read propert(y|ies)\s+['"]?(\w+)['"]?\s+of\s+(undefined|null)/i,
+    recipe: (m) => `Guard the parent object before accessing .${m[2]}. Likely fix:\n  if (!parent) return;\n  parent.${m[2]}...\nOr use optional chaining: parent?.${m[2]}`
+  },
+  {
+    match: /(\w+) is not a function/i,
+    recipe: (m) => `The value "${m[1]}" is not callable. Check that it's imported correctly, or that a variable shadowed the function name. Common cause: missing default export vs named export.`
+  },
+  {
+    match: /(\w+) is not defined/i,
+    recipe: (m) => `"${m[1]}" was never declared. Check for a typo, a missing import, or that it was defined in a different scope.`
+  },
+  {
+    match: /unexpected token/i,
+    recipe: () => `Syntax error — check for a missing bracket, comma, or quote on the line just before this one. JSON.parse errors usually mean invalid JSON.`
+  },
+  {
+    match: /timeout|timed out/i,
+    recipe: () => `Operation exceeded its timeout. Common causes: slow network, blocking synchronous code, or a selector that never appears. Increase timeout as a last resort, not first.`
+  },
+  {
+    match: /nullpointerexception/i,
+    recipe: () => `A null value was dereferenced. Add a null check or use Optional<> in Java. In tests, the fixture may not have initialized the object.`
+  },
+  {
+    match: /table or view not found|table_?or_?view_?not_?found/i,
+    recipe: () => `The table doesn't exist in this catalog/schema. Check the fully qualified name, verify the migration ran, and confirm you're in the right database context.`
+  },
+  {
+    match: /unresolved column|column not found/i,
+    recipe: () => `Column doesn't exist in the queried table. Verify column name spelling and check if it was added in a later schema version.`
+  },
+  {
+    match: /division by zero|divide by zero/i,
+    recipe: () => `Denominator was 0. Add a guard before the division, or use NULLIF(denominator, 0) in SQL.`
+  },
+  {
+    match: /no such file or directory|filenotfounderror/i,
+    recipe: () => `File path is wrong or file doesn't exist. Check working directory — relative paths resolve against CWD, not the script location.`
+  },
+  {
+    match: /permission denied|eacces/i,
+    recipe: () => `Process lacks read/write/exec permission. Check file mode (chmod), owner, and whether the process user has access.`
+  },
+  {
+    match: /unauthorized|401|invalid.*token/i,
+    recipe: () => `Authentication failed. Token may be expired, malformed, or missing required scopes. Re-issue the token and verify the Authorization header format.`
+  },
+  {
+    match: /forbidden|403/i,
+    recipe: () => `Authenticated but not authorized. The token is valid but lacks the required permission. Check role assignments and resource policies.`
+  },
+  {
+    match: /cannot find module|module not found/i,
+    recipe: () => `Missing dependency. Run your package manager install, check the module name spelling, and verify it's listed in package.json.`
+  },
+  {
+    match: /keyerror/i,
+    recipe: () => `Dict key doesn't exist. Use .get(key, default) instead of direct access, or check the key exists with "in" first.`
+  },
+  {
+    match: /indexerror|list index out of range/i,
+    recipe: () => `Index outside list bounds. Verify length before accessing, or use slicing with safe bounds.`
+  }
+];
+
+function getFixRecipe(text) {
+  if (!text) return null;
+  for (const { match, recipe } of FIX_RECIPES) {
+    const m = text.match(match);
+    if (m) return { matched: m[0], suggestion: typeof recipe === 'function' ? recipe(m) : recipe };
+  }
+  return null;
+}
+
+// ============ USP: BLAST RADIUS ============
+function extractIdentifiers(text) {
+  if (!text) return [];
+  const ids = new Set();
+  // Camel-case function/variable names, min 3 chars
+  const matches = text.match(/\b[A-Za-z_][\w]{2,}\b/g) || [];
+  const STOP = new Set(['the','and','for','with','from','this','that','null','undefined','true','false','value','error','string','number','object','function']);
+  for (const m of matches) {
+    if (STOP.has(m.toLowerCase())) continue;
+    if (/^\d/.test(m)) continue;
+    ids.add(m);
+  }
+  return [...ids];
+}
+
+function findBlastRadius(doc) {
+  const ids = extractIdentifiers(doc.text || '').slice(0, 5);
+  if (!ids.length) return [];
+  const refs = new Map();
+  for (const id of ids) {
+    for (let i = 0; i < documents.length; i++) {
+      const other = documents[i];
+      if (other === doc || other.file === doc.file) continue;
+      if (other.text && other.text.includes(id)) {
+        if (!refs.has(other.file)) refs.set(other.file, new Set());
+        refs.get(other.file).add(id);
+      }
+    }
+  }
+  return [...refs.entries()].slice(0, 5).map(([file, idSet]) => ({ file, ids: [...idSet] }));
+}
+
+// ============ USP: BUG REPORT + SHARE LINK ============
+function buildBugReport(doc, recipe) {
+  const loc = `${doc.file || 'unknown'}${doc.line ? ':' + doc.line : ''}`;
+  const type = (doc.type || 'code').replace('-', ' ');
+  let md = `# Bug Report\n\n**Type:** ${type}\n**Location:** \`${loc}\`\n\n## Error\n\n\`\`\`\n${doc.text || '(no message)'}\n\`\`\`\n\n`;
+  if (doc.context) md += `## Context\n\n\`\`\`\n${doc.context}\n\`\`\`\n\n`;
+  if (recipe) md += `## Suggested fix\n\n${recipe.suggestion}\n\n`;
+  md += `## Repro\n\n1. Reproduce the failing path that leads to \`${loc}\`.\n2. Observe the error above.\n\n`;
+  md += `---\n_Generated by ERplorer_`;
+  return md;
+}
+
+function shareSearchLink() {
+  const q = document.getElementById('search-input').value.trim();
+  const url = `${location.origin}${location.pathname}#q=${encodeURIComponent(q)}&f=${encodeURIComponent(activeFilter)}`;
+  return url;
+}
+
+async function copyToClipboard(text) {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); return true; } catch { return false; }
+    finally { document.body.removeChild(ta); }
+  }
+}
+
+// ============ NAV ============
 document.querySelectorAll('.nav-item').forEach(btn => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
@@ -1129,9 +1100,7 @@ document.querySelectorAll('.subtab').forEach(t => {
   });
 });
 
-// ============================================================
-// LOAD INDEX
-// ============================================================
+// ============ LOAD INDEX ============
 async function loadIndex() {
   try {
     const res = await fetch('search-index.json', { cache: 'no-cache' });
@@ -1144,12 +1113,19 @@ async function loadIndex() {
     documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
     renderStats();
     renderChips();
-    renderAboutTags();
+    // Handle inbound share link
+    const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+    if (hash.get('q')) {
+      document.querySelector('.nav-item[data-panel="search"]').click();
+      searchInput.value = hash.get('q');
+      if (hash.get('f')) activeFilter = hash.get('f');
+      renderChips();
+      runSearch();
+    }
   } catch (err) {
     document.getElementById('stat-row').innerHTML =
       `<div class="status-line warn">No search-index.json yet. Add content via the <strong>Ingest</strong> tab.</div>`;
     documents = [];
-    renderAboutTags();
   }
 }
 
@@ -1184,9 +1160,7 @@ function setFilter(f) {
   if (document.getElementById('search-input').value.trim().length >= 2) runSearch();
 }
 
-// ============================================================
-// SEARCH
-// ============================================================
+// ============ SEARCH ============
 const searchInput = document.getElementById('search-input');
 let debounce;
 searchInput.addEventListener('input', () => {
@@ -1211,12 +1185,26 @@ function runSearch(save = false) {
     if (save) recordSearch(q, 'exact', 0);
     return;
   }
-  const allHits = hits.map(h => documents[h.id]).filter(Boolean).slice(0, 30);
-  el.innerHTML = allHits.map((doc) => renderResult(doc, q)).join('');
-  if (save) recordSearch(q, 'exact', allHits.length);
+
+  // DNA clustering
+  const clusters = dnaCluster(hits);
+  const rendered = [];
+  const seenFiles = new Set();
+  for (const [fp, docs] of clusters) {
+    const rep = docs[0];
+    const fileKey = rep.file + ':' + rep.line;
+    if (seenFiles.has(fileKey)) continue;
+    seenFiles.add(fileKey);
+    rendered.push({ doc: rep, count: docs.length });
+    if (rendered.length >= 25) break;
+  }
+
+  el.innerHTML = rendered.map(({ doc, count }) => renderResult(doc, q, count)).join('');
+
+  if (save) recordSearch(q, 'exact', hits.length);
 }
 
-function renderResult(doc, query) {
+function renderResult(doc, query, dnaCount = 1) {
   const lines = (doc.context || doc.text || '').split('\n');
   const codeLines = lines.map((line, i) => {
     const num = (doc.line || 1) - Math.floor(lines.length / 2) + i;
@@ -1226,22 +1214,79 @@ function renderResult(doc, query) {
       : escapeHtml(line);
     return `<div class="code-line ${isHit ? 'hit' : ''}"><span class="code-num">${num}</span><span class="code-text">${text}</span></div>`;
   }).join('');
+
   const type = doc.type || 'code';
+  const recipe = getFixRecipe(doc.text || '');
+  const blast = findBlastRadius(doc);
+  const docId = slug(doc.file + '_' + (doc.line || 0));
+
+  window._currentResults = window._currentResults || {};
+  window._currentResults[docId] = doc;
+
   return `
     <div class="result">
       <div class="result-head">
         <div class="result-file"><strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}</div>
-        <span class="result-badge ${type}">${type.replace('-error', '').replace('-failure', '')}</span>
+        <div class="result-badges">
+          ${dnaCount > 1 ? `<span class="result-badge dna">🧬 ×${dnaCount}</span>` : ''}
+          <span class="result-badge ${type}">${type.replace('-error', '').replace('-failure', '')}</span>
+        </div>
       </div>
       <div class="result-msg">${escapeHtml(doc.text || '')}</div>
       ${codeLines ? `<div class="code-block">${codeLines}</div>` : ''}
+      ${recipe ? `
+        <div class="fix-recipe">
+          <div class="label">🔧 Fix Recipe</div>
+          <div class="recipe">${escapeHtml(recipe.suggestion).replace(/\n/g, '<br>')}</div>
+        </div>
+      ` : ''}
+      ${blast.length ? `
+        <div class="blast-radius">
+          <span>💥 <strong>Blast radius:</strong> also referenced in ${blast.length} other file${blast.length === 1 ? '' : 's'}</span>
+          <div class="blast-files">
+            ${blast.map(b => `<span class="blast-file">${escapeHtml(b.file)}</span>`).join('')}
+          </div>
+        </div>
+      ` : ''}
+      <div class="result-actions">
+        <button class="result-action" onclick="copyBugReport('${docId}')">
+          <svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>
+          Copy Bug Report
+        </button>
+        <button class="result-action" onclick="copyShareLink()">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Share Link
+        </button>
+        <button class="result-action" onclick="copyFilePath('${escapeHtml(doc.file || '')}', ${doc.line || 0})">
+          <svg viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Copy path:line
+        </button>
+      </div>
     </div>
   `;
 }
 
-// ============================================================
-// HISTORY
-// ============================================================
+window.copyBugReport = async function(docId) {
+  const doc = window._currentResults?.[docId];
+  if (!doc) return;
+  const recipe = getFixRecipe(doc.text || '');
+  const report = buildBugReport(doc, recipe);
+  const ok = await copyToClipboard(report);
+  toast(ok ? '📋 Bug report copied to clipboard' : '⚠️ Copy failed');
+};
+
+window.copyShareLink = async function() {
+  const url = shareSearchLink();
+  const ok = await copyToClipboard(url);
+  toast(ok ? '🔗 Share link copied' : '⚠️ Copy failed');
+};
+
+window.copyFilePath = async function(file, line) {
+  const ok = await copyToClipboard(file + (line ? ':' + line : ''));
+  toast(ok ? '📁 Path copied' : '⚠️ Copy failed');
+};
+
+// ============ HISTORY ============
 async function recordSearch(query, mode, count) {
   if (!query || query.length < 2) return;
   const all = await dbGetAll('searches').catch(() => []);
@@ -1288,9 +1333,7 @@ async function clearHistory() {
   renderHistory();
 }
 
-// ============================================================
-// ASK — chat-style with fallback
-// ============================================================
+// ============ ASK ============
 const AI_PRIMARY = 'https://ragina-crawler-ragina.vercel.app/api/ask';
 const AI_FALLBACK = 'https://text.pollinations.ai/openai';
 
@@ -1298,11 +1341,8 @@ function pushChat(role, html, isHtml = false) {
   const thread = document.getElementById('chat-thread');
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'ai');
-  if (role === 'ai' && isHtml) {
-    bubble.innerHTML = html;
-  } else {
-    bubble.textContent = html;
-  }
+  if (role === 'ai' && isHtml) bubble.innerHTML = html;
+  else bubble.textContent = html;
   thread.appendChild(bubble);
   bubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
   return bubble;
@@ -1312,7 +1352,6 @@ function pushTyping() {
   const thread = document.getElementById('chat-thread');
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble ai';
-  bubble.id = 'typing-bubble';
   bubble.innerHTML = `<div class="ai-src">ERplorer</div><div class="typing-dots"><span></span><span></span><span></span></div>`;
   thread.appendChild(bubble);
   bubble.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -1338,13 +1377,12 @@ async function askNatural() {
     return;
   }
 
-  // Local search
   const raw = flexIndex ? flexIndex.search(q, { enrich: true }) : [];
   const hits = raw.flatMap(r => r.result).slice(0, 8).map(h => documents[h.id]).filter(Boolean);
 
   if (!hits.length) {
     typing.remove();
-    pushChat('ai', '<div class="ai-src">ERplorer</div>I couldn\'t find any matching entries for that. Try different keywords, or check the <strong>Search</strong> tab with a filter chip.', true);
+    pushChat('ai', `<div class="ai-src">ERplorer</div>No matching entries. Try different keywords or use the <strong>Search</strong> tab with a filter chip.`, true);
     return;
   }
 
@@ -1364,7 +1402,6 @@ async function askNatural() {
       if (answer) source = 'Vercel';
     }
   } catch {}
-
   if (!answer) {
     try {
       const res = await fetch(AI_FALLBACK, {
@@ -1387,72 +1424,35 @@ async function askNatural() {
 
   typing.remove();
 
-  // Build the reply
-  let replyHtml = '';
+  let html = '';
   if (answer) {
-    replyHtml += `<div class="ai-src">${source}</div>`;
-    replyHtml += escapeHtml(answer).replace(/\n/g, '<br>');
+    html += `<div class="ai-src">${source}</div>`;
+    html += escapeHtml(answer).replace(/\n/g, '<br>');
   } else {
-    replyHtml += `<div class="ai-src">ERplorer · offline mode</div>`;
-    replyHtml += `AI endpoints are unavailable right now, but I found <strong>${hits.length}</strong> matching entries in the index. Here they are, most relevant first:`;
+    html += `<div class="ai-src">ERplorer · offline mode</div>`;
+    html += `AI endpoints are offline, but I found <strong>${hits.length}</strong> matching entries:`;
   }
+  html += `<div class="matches-head">Top matches</div>`;
+  html += hits.slice(0, 5).map((d, i) => {
+    const recipe = getFixRecipe(d.text || '');
+    return `
+      <div class="chat-match">
+        <div class="f">[${i + 1}] ${escapeHtml(d.file || 'unknown')}${d.line ? ':' + d.line : ''}</div>
+        <div class="t">${escapeHtml((d.text || '').slice(0, 200))}</div>
+        ${recipe ? `<div style="font-size:11px;color:var(--accent);margin-top:6px;font-weight:600;">🔧 ${escapeHtml(recipe.suggestion.split('\n')[0])}</div>` : ''}
+      </div>
+    `;
+  }).join('');
 
-  // Always show matches — they're useful even when AI works
-  replyHtml += `<div class="matches-head">Top matches</div>`;
-  replyHtml += hits.slice(0, 5).map((d, i) => `
-    <div class="chat-match">
-      <div class="f">[${i + 1}] ${escapeHtml(d.file || 'unknown')}${d.line ? ':' + d.line : ''}</div>
-      <div class="t">${escapeHtml((d.text || '').slice(0, 200))}</div>
-    </div>
-  `).join('');
-
-  pushChat('ai', replyHtml, true);
+  pushChat('ai', html, true);
   recordSearch(q, 'ai', hits.length);
-}
-
-async function onDeepToggle(enabled) {
-  const el = document.getElementById('rag-model-status');
-  if (!enabled) { el.style.display = 'none'; return; }
-  el.style.display = 'block';
-  el.innerHTML = '<span class="spinner"></span>Deep search is planned for a future release. Keyword search covers most queries.';
-  setTimeout(() => { el.innerHTML = 'Keyword search is what you have now; embeddings require a build step.'; }, 2500);
 }
 
 document.getElementById('nl-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') askNatural();
 });
 
-// ============================================================
-// ABOUT — clickable tags
-// ============================================================
-const ABOUT_TAGS = [
-  'SAFe ART coordination', 'PI Planning', 'Cross-team dependencies',
-  'AI-assisted Agile tooling', 'Jira automation', 'Confluence',
-  'Data-driven delivery', 'Team coaching', 'Retrospective innovation',
-  'Stakeholder engagement', 'QA engineering', 'Full stack development',
-  'Java backend', 'Scrum Master'
-];
-
-function renderAboutTags() {
-  const el = document.getElementById('about-tags');
-  if (!el) return;
-  el.innerHTML = ABOUT_TAGS.map(tag =>
-    `<button class="tag-btn" onclick="searchTag('${escapeHtml(tag)}')">
-      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-      ${escapeHtml(tag)}
-    </button>`
-  ).join('');
-}
-
-function searchTag(tag) {
-  document.querySelector('.nav-item[data-panel="search"]').click();
-  searchInput.value = tag;
-  runSearch(true);
-}
-
-// ============================================================
-// LAB — scenarios
-// ============================================================
+// ============ LAB ============
 function loadSampleScenarios() {
   document.getElementById('ai-input').value = `Test the login page:
 1. Go to /login
@@ -1463,12 +1463,7 @@ function loadSampleScenarios() {
 
 Test the users API:
 - GET /api/users should return 200
-- The first user's name should be "alice"
-
-Test the users table:
-- Run SELECT COUNT(*) FROM users
-- Expect 1 row back
-- There should be no nulls in the email column`;
+- The first user's name should be "alice"`;
 }
 
 async function runAITransform() {
@@ -1476,7 +1471,6 @@ async function runAITransform() {
   const status = document.getElementById('ai-status');
   const preview = document.getElementById('ai-preview');
   if (!text) { status.innerHTML = '<div class="status-line err">Paste scenarios first.</div>'; return; }
-
   status.innerHTML = '<div class="status-line"><span class="spinner"></span>Asking AI…</div>';
   preview.innerHTML = '';
 
@@ -1490,7 +1484,6 @@ async function runAITransform() {
     });
     if (res.ok) { const d = await res.json(); content = d.answer || d.content || d.response || ''; }
   } catch {}
-
   if (!content) {
     try {
       const res = await fetch(AI_FALLBACK, {
@@ -1513,7 +1506,6 @@ async function runAITransform() {
     setTimeout(() => runRuleTransform(), 600);
     return;
   }
-
   try {
     const clean = content.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
     const parsed = JSON.parse(clean);
@@ -1541,10 +1533,8 @@ function ruleBasedParse(text) {
   for (const raw of text.split('\n')) {
     const cleaned = raw.trim().replace(/^[-*•]\s+/, '').replace(/^\d+[.):\]]\s*/, '').trim();
     if (!cleaned) continue;
-
     const tcMatch = cleaned.match(/TC\d+/i);
     const headMatch = cleaned.match(/^(test|scenario|verify)\s+(?:the\s+)?(.+?)(?::|\.|$)/i);
-
     if (tcMatch && cleaned.length < 80) {
       tcCount++; id = tcMatch[0].toUpperCase();
       scenario = cleaned.replace(tcMatch[0], '').replace(/[:\-]/g, '').trim() || scenario;
@@ -1554,11 +1544,9 @@ function ruleBasedParse(text) {
       tcCount++; id = 'TC' + String(tcCount).padStart(3, '0');
       scenario = headMatch[2].trim(); stepNum = 0; continue;
     }
-
     const quoted = cleaned.match(/["']([^"']+)["']/);
     const sel = cleaned.match(/[#.][\w-]+|\[[\w-]+=[^\]]+\]/);
     let action = '', url = '', selector = '', value = '', expected = '', method = '';
-
     if (/^(go to|navigate to|open|visit)\s/i.test(cleaned)) {
       action = 'goto'; url = cleaned.replace(/^(go to|navigate to|open|visit)\s+/i, '').trim();
       const m = url.match(/https?:\/\/\S+|\/\S+/); if (m) url = m[0];
@@ -1585,7 +1573,6 @@ function ruleBasedParse(text) {
     } else if (/(\d+)\s+rows?/i.test(cleaned)) {
       action = 'expectRowCount'; expected = cleaned.match(/(\d+)\s+rows?/i)[1];
     }
-
     if (action) {
       stepNum++;
       rows.push({ id, scenario, step: String(stepNum), action, method, url, headers: '', body: '', selector, value, expected, jsonpath: '' });
@@ -1598,7 +1585,7 @@ let currentRows = [];
 function renderScenarioTable(rows, source) {
   currentRows = rows;
   const testCaseCount = new Set(rows.map(r => r.id)).size;
-  document.getElementById('ai-status').innerHTML = `<div class="status-line ok">${source} produced ${rows.length} steps across ${testCaseCount} test case${testCaseCount === 1 ? '' : 's'}. Cells are editable.</div>`;
+  document.getElementById('ai-status').innerHTML = `<div class="status-line ok">${source} produced ${rows.length} steps across ${testCaseCount} test case${testCaseCount === 1 ? '' : 's'}.</div>`;
   const cols = ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'];
   document.getElementById('ai-preview').innerHTML = `
     <div style="overflow-x:auto; border-radius:var(--radius);">
@@ -1645,9 +1632,6 @@ function generateFromRows() {
   renderSpecs(currentRows, 'AI-generated');
 }
 
-// ============================================================
-// LAB — specs
-// ============================================================
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
 dropZone.addEventListener('click', () => fileInput.click());
@@ -1697,12 +1681,10 @@ function renderSpecs(rows, filename) {
     if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
     cases[row.id].steps.push(row);
   });
-
   if (errors.length) {
     document.getElementById('gen-output').innerHTML = `<div class="status-line err">${errors.map(escapeHtml).join('<br>')}</div>`;
     return;
   }
-
   const specs = [];
   for (const tc of Object.values(cases)) {
     const pw = tc.steps.filter(s => ['ui','api'].includes(kindOf(s.action)));
@@ -1710,9 +1692,7 @@ function renderSpecs(rows, filename) {
     if (pw.length) specs.push({ name: `${tc.id}.spec.js`, code: buildPlaywright(tc, pw, filename), label: 'Playwright · ' + (pw.every(s => kindOf(s.action) === 'api') ? 'api' : 'ui') });
     if (data.length) specs.push({ name: `${tc.id}_test.py`, code: buildPytest(tc, data, filename), label: 'pytest + PySpark · data' });
   }
-
   if (!specs.length) { document.getElementById('gen-output').innerHTML = '<div class="status-line warn">No test cases found.</div>'; return; }
-
   document.getElementById('gen-output').innerHTML = `
     <div class="hero-eyebrow" style="margin-top:24px;">Generated ${specs.length} file${specs.length === 1 ? '' : 's'}</div>
     ${specs.map((s, i) => `
@@ -1781,9 +1761,6 @@ function buildPytest(tc, steps, source) {
   return `# AUTO-GENERATED from ${source}\nimport pytest\nfrom pyspark.sql import SparkSession\n\n\n@pytest.fixture(scope="session")\ndef spark():\n    return SparkSession.builder.appName("erplorer").getOrCreate()\n\n\ndef test_${slug(tc.id + '_' + tc.scenario)}(spark):\n    """${esc(tc.scenario)}"""\n${setup.map(l => '    ' + l).join('\n')}\n${tests.join('\n') || '    pass'}\n`;
 }
 
-// ============================================================
-// TEMPLATES
-// ============================================================
 const TEMPLATE_ROWS = [
   ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
   ['TC001','Login UI flow','1','goto','','/login','','','','','',''],
@@ -1805,9 +1782,7 @@ function downloadTemplate(format) {
   downloadFile(`TEMPLATE.${isTsv ? 'tsv' : 'csv'}`, body, isTsv ? 'text/tab-separated-values' : 'text/csv');
 }
 
-// ============================================================
-// INGEST
-// ============================================================
+// ============ INGEST ============
 const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
 const BUILTIN_PATTERNS = [
   { type: 'error',        re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
@@ -1922,14 +1897,12 @@ async function tryTier2Repo() {
   const parts = input.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
   if (parts.length < 2) { showAddStatus('err', 'Format must be owner/repo'); return; }
   const [owner, repo] = parts;
-
   if (!OctokitClass) {
     try { const m = await import('https://esm.sh/@octokit/rest'); OctokitClass = m.Octokit; }
     catch { showAddStatus('err', 'Octokit failed to load.'); return; }
   }
   const token = sessionStorage.getItem('gh_token');
   const octokit = new OctokitClass(token ? { auth: token } : {});
-
   setAddLoading(`Fetching ${owner}/${repo}…`);
   try {
     const { data: tree } = await octokit.rest.git.getTree({ owner, repo, tree_sha: 'main', recursive: 'true' });
@@ -1937,10 +1910,8 @@ async function tryTier2Repo() {
       f.type === 'blob' && (!f.size || f.size < 500000) &&
       /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path)
     ).slice(0, 40);
-
     if (!files.length) { showAddStatus('warn', 'No indexable files found.'); return; }
     setAddLoading(`Parsing ${files.length} files…`);
-
     const entries = [];
     for (const f of files) {
       try {
@@ -1982,9 +1953,7 @@ function tryTier4Paste() {
   document.getElementById('tier4-text').value = '';
 }
 
-// ============================================================
-// PATTERNS
-// ============================================================
+// ============ PATTERNS ============
 async function loadCustomPatterns() {
   try { customPatterns = await dbGetAll('patterns'); renderPatterns(); } catch {}
 }
@@ -2000,7 +1969,6 @@ function renderPatterns() {
         <div style="flex:1; min-width:0;">
           <div class="card-title" style="font-size:15px;">${escapeHtml(p.name)}</div>
           <div style="font-family:ui-monospace,monospace; font-size:12px; color:var(--muted); background:var(--bg-alt); padding:6px 10px; border-radius:6px; margin:8px 0; overflow-x:auto; white-space:nowrap;">${escapeHtml(p.pattern)}</div>
-          <div style="font-size:12px; color:var(--muted-2);">Type: ${escapeHtml(p.type)}${p.exts ? ' · Files: ' + escapeHtml(p.exts) : ' · All files'}</div>
         </div>
         <button class="btn danger" style="padding:8px 14px; font-size:12px;" onclick="deletePattern(${p.id})">Delete</button>
       </div>
@@ -2040,9 +2008,7 @@ function testPattern() {
   }
 }
 
-// ============================================================
-// SETTINGS
-// ============================================================
+// ============ SETTINGS ============
 function saveToken() {
   const t = document.getElementById('token-input').value.trim();
   if (t) { sessionStorage.setItem('gh_token', t); document.getElementById('token-status').textContent = 'Token saved to session.'; }
@@ -2061,11 +2027,8 @@ async function resetAllLocalData() {
   renderHistory();
 }
 
-// ============================================================
-// BOOT
-// ============================================================
+// ============ BOOT ============
 (async function boot() {
-  // Sync theme buttons
   const theme = document.documentElement.getAttribute('data-theme') || 'light';
   document.getElementById('theme-light-btn')?.classList.toggle('active', theme === 'light');
   document.getElementById('theme-dark-btn')?.classList.toggle('active', theme === 'dark');

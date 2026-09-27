@@ -76,6 +76,32 @@
   const escapeRegex = s => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const slug = s => String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
 
+  /**
+   * Accepts either a raw.githubusercontent.com URL or a normal
+   * github.com "blob" URL (what you get from copying a file's
+   * address bar on GitHub) and returns { rawUrl, owner, repo,
+   * branch, filePath }, or null if the URL doesn't match either
+   * shape. Example inputs:
+   *   https://raw.githubusercontent.com/owner/repo/main/path/to/file.js
+   *   https://github.com/owner/repo/blob/main/path/to/file.js
+   */
+  function parseGithubUrlToRaw(url) {
+    url = String(url || '').trim();
+    let m = url.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/);
+    if (m) {
+      return { rawUrl: url, owner: m[1], repo: m[2], branch: m[3], filePath: m[4] };
+    }
+    m = url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/);
+    if (m) {
+      const [, owner, repo, branch, filePath] = m;
+      return {
+        rawUrl: `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`,
+        owner, repo, branch, filePath
+      };
+    }
+    return null;
+  }
+
   function downloadFile(name, content, mime) {
     mime = mime || 'text/plain';
     const blob = new Blob([content], { type: mime + ';charset=utf-8' });
@@ -1325,8 +1351,10 @@ Test the users API:
       const entries = [];
       for (const f of files) {
         try {
-          const { data } = await octokit.rest.repos.getContent({ owner, repo, path: f.path });
-          const content = atob(data.content.replace(/\n/g, ''));
+          const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/main/${f.path}`;
+          const res = await fetch(rawUrl);
+          if (!res.ok) continue;
+          const content = await res.text();
           entries.push(...parseText(content, f.path));
         } catch (err) { /* skip file */ }
       }
@@ -1334,6 +1362,41 @@ Test the users API:
       appendToIndex(entries, `${owner}/${repo} (${files.length} files)`);
     } catch (err) {
       showAddStatus('err', `Scan failed: ${escapeHtml(err.message)}. Private repos need a token in Settings.`);
+    }
+  }
+
+  async function tryQuickFileUrl() {
+    const input = document.getElementById('quick-file-url');
+    if (!input) return;
+    const url = input.value.trim();
+    if (!url) { showAddStatus('err', 'Paste a file URL first.'); return; }
+
+    const parsed = parseGithubUrlToRaw(url);
+    if (!parsed) {
+      showAddStatus('err', 'Not a recognized GitHub file URL. Use a raw.githubusercontent.com link or a github.com/…/blob/… link.');
+      return;
+    }
+
+    setAddLoading(`Fetching ${parsed.filePath}…`);
+    try {
+      const res = await fetchWithTimeout(parsed.rawUrl, {}, 15000);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const content = await res.text();
+      const entries = parseText(content, parsed.filePath);
+      if (!entries.length) {
+        appendToIndex([{
+          type: 'code',
+          text: content.slice(0, 120),
+          file: parsed.filePath,
+          line: 1,
+          context: content.slice(0, 800)
+        }], parsed.filePath);
+      } else {
+        appendToIndex(entries, parsed.filePath);
+      }
+      input.value = '';
+    } catch (err) {
+      showAddStatus('err', `Fetch failed: ${escapeHtml(err.message)}. Check the URL and that the file/branch exists.`);
     }
   }
 
@@ -1705,7 +1768,7 @@ Test the users API:
     downloadRows, generateFromRows,
     previewSpec, downloadSpec, downloadTemplate,
     // Ingest
-    tryTier1Crawl, tryTier2Repo, tryTier4Paste,
+    tryTier1Crawl, tryTier2Repo, tryTier4Paste, tryQuickFileUrl,
     // OCR
     indexOCRText, copyOCRText,
     // Result actions

@@ -10,6 +10,7 @@
  *   POST /session/start        { title, userStory }               -> { sessionId }
  *   POST /session/:id/ui-run   { steps: [...], headless? }         -> { ok, sessionId }
  *   POST /session/:id/api-run  { collection: {...}, vars: {...} }  -> { ok, results }
+ *   POST /session/:id/api-run-saved/:collectionName  { vars? }     -> { ok, results }
  *   POST /session/:id/finish   { status? }                         -> { ok }
  *   POST /session/:id/promote  {}                                  -> { ok }  (keep beyond TTL)
  *   POST /session/:id/ask      { question }                        -> { answer }
@@ -17,6 +18,11 @@
  *   GET  /session/:id/flow.md  ->  human-readable flow doc
  *   GET  /session/:id/video    ->  the WebM recording
  *   GET  /sessions             ->  list of session metadata
+ *
+ *   POST   /collections/:name  { collection: {...}, vars: {...} }  -> { ok, saved }
+ *   GET    /collections        ->  list of saved collections
+ *   GET    /collections/:name  ->  one saved collection
+ *   DELETE /collections/:name  ->  { ok }
  *
  * AI calls for the /ask endpoint reuse the same two-tier pattern as
  * ERplorer's own erplorer.config.js (primary + fallback), configured
@@ -32,6 +38,7 @@ const { Session, janitor } = require('./lib/session');
 const { runUiSteps } = require('./lib/browser');
 const { runCollection } = require('./lib/api');
 const { askSession } = require('./lib/rag');
+const collections = require('./lib/collections');
 
 const PORT = process.env.PORT || 8787;
 
@@ -153,6 +160,50 @@ app.post('/session/:id/api-run', async (req, res) => {
   }
 });
 
+// Run a saved collection directly against a session, without the
+// caller resending the collection body each time.
+app.post('/session/:id/api-run-saved/:collectionName', async (req, res) => {
+  const session = Session.load(req.params.id);
+  if (!session) return res.status(404).json({ error: 'session not found' });
+  const saved = collections.load(req.params.collectionName);
+  if (!saved) return res.status(404).json({ error: 'collection not found' });
+  try {
+    const overrideVars = (req.body || {}).vars || {};
+    const result = await runCollection(session, saved.collection, Object.assign({}, saved.vars, overrideVars));
+    res.json(result);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// ---- saved Postman-style collections ----
+
+app.post('/collections/:name', (req, res) => {
+  try {
+    const { collection, vars } = req.body || {};
+    const saved = collections.save(req.params.name, collection, vars);
+    res.json({ ok: true, saved });
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
+app.get('/collections', (req, res) => {
+  res.json(collections.list());
+});
+
+app.get('/collections/:name', (req, res) => {
+  const data = collections.load(req.params.name);
+  if (!data) return res.status(404).json({ error: 'not found' });
+  res.json(data);
+});
+
+app.delete('/collections/:name', (req, res) => {
+  const ok = collections.remove(req.params.name);
+  if (!ok) return res.status(404).json({ error: 'not found' });
+  res.json({ ok: true });
+});
+
 // ---- Ask this session (scoped RAG) ----
 
 app.post('/session/:id/ask', async (req, res) => {
@@ -168,7 +219,7 @@ app.post('/session/:id/ask', async (req, res) => {
   }
 });
 
-app.get('/health', (req, res) => res.json({ ok: true, version: '0.1.0' }));
+app.get('/health', (req, res) => res.json({ ok: true, version: '0.2.0' }));
 
 // Expire old temporary sessions periodically
 janitor();

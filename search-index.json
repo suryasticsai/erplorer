@@ -15,6 +15,13 @@
   },
   {
     "type": "error",
+    "text": "collection name required",
+    "file": "erplorer-runner/lib/collections.js",
+    "line": 35,
+    "context": "function save(name, collection, vars) {\n  ensureDir();\n  if (!name) throw new Error('collection name required');\n  const data = {\n    name,"
+  },
+  {
+    "type": "error",
     "text": "HTTP",
     "file": "erplorer.js",
     "line": 393,

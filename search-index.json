@@ -1,6 +1,20 @@
 [
   {
     "type": "error",
+    "text": "expected text \"${expected || value}\" not found, got \"${txt}\"",
+    "file": "erplorer-runner/lib/browser.js",
+    "line": 58,
+    "context": "          case 'expectText': {\n            const txt = await page.locator(selector).innerText({ timeout: 10000 });\n            if (!txt.includes(expected || value)) throw new Error(`expected text \"${expected || value}\" not found, got \"${txt}\"`);\n            break;\n          }"
+  },
+  {
+    "type": "error",
+    "text": "expected URL matching /${url || value}/, got ${cur}",
+    "file": "erplorer-runner/lib/browser.js",
+    "line": 67,
+    "context": "            const cur = page.url();\n            const re = new RegExp(url || value);\n            if (!re.test(cur)) throw new Error(`expected URL matching /${url || value}/, got ${cur}`);\n            break;\n          }"
+  },
+  {
+    "type": "error",
     "text": "HTTP",
     "file": "erplorer.js",
     "line": 393,

@@ -168,34 +168,46 @@
     <div class="hero">
       <div class="hero-eyebrow">Ingest</div>
       <h1 class="hero-title">Grow the index.</h1>
-      <p class="hero-desc">Five ways in: URL, GitHub repo, files, pasted text, or an error screenshot.</p>
+      <p class="hero-desc">Six ways in: URL, GitHub repo, single file URL, files, pasted text, or an error screenshot.</p>
       <div class="stat-row">
         <div class="stat"><span class="num" id="ingest-count">0</span><span class="lbl">ingested this session</span></div>
       </div>
     </div>
+
     <div class="card">
       <div class="card-title">Fetch a URL</div>
       <div class="card-desc" style="margin-bottom:14px;">The RAGina crawler fetches up to 20 pages.</div>
       <input type="text" class="input" id="crawl-url" placeholder="https://docs.example.com/errors" style="margin-bottom:10px;">
       <button class="btn full" onclick="ERplorer.tryTier1Crawl()">Fetch</button>
     </div>
+
     <div class="card">
       <div class="card-title">Scan a GitHub repo</div>
-      <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token.</div>
+      <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token. First 40 indexable files.</div>
       <input type="text" class="input" id="repo-scan" placeholder="owner/repo" style="margin-bottom:10px;">
       <button class="btn full" onclick="ERplorer.tryTier2Repo()">Scan</button>
     </div>
+
+    <div class="card">
+      <div class="card-title">Quick file from URL</div>
+      <div class="card-desc" style="margin-bottom:14px;">Paste a <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">raw.githubusercontent.com</code> link or a <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">github.com/…/blob/…</code> link. Fetches that one file and indexes it.</div>
+      <input type="text" class="input" id="quick-file-url" placeholder="https://github.com/owner/repo/blob/main/src/app.js" style="margin-bottom:10px;">
+      <button class="btn full" onclick="ERplorer.tryQuickFileUrl()">Fetch &amp; index</button>
+    </div>
+
     <div class="card">
       <div class="card-title">Drop files</div>
       <div class="card-desc" style="margin-bottom:14px;">.js .ts .java .py .sql .yaml .json .ipynb and related.</div>
       <button class="btn secondary full" onclick="document.getElementById('tier3-file').click()">Choose files</button>
       <input type="file" id="tier3-file" multiple style="display:none;">
     </div>
+
     <div class="card">
       <div class="card-title">Paste text</div>
       <textarea class="textarea" id="tier4-text" placeholder="Paste a stack trace, log, or source file..." style="margin:12px 0 10px;"></textarea>
       <button class="btn secondary full" onclick="ERplorer.tryTier4Paste()">Add to index</button>
     </div>
+
     <div class="card">
       <div class="card-title">📷 From screenshot (OCR)</div>
       <div class="card-desc" style="margin-bottom:14px;">Drop or paste an error screenshot. Tesseract.js extracts the text locally and indexes it.</div>
@@ -207,6 +219,7 @@
       <div id="ocr-status" class="status-line" style="display:none; margin-top:12px;"></div>
       <div id="ocr-preview" style="margin-top:12px;"></div>
     </div>
+
     <div id="add-status" class="status-line" style="display:none;"></div>
   </section>
 

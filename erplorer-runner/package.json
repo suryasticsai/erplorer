@@ -1,0 +1,17 @@
+{
+  "name": "erplorer-runner",
+  "version": "0.1.0",
+  "description": "Companion runner for ERplorer: Playwright execution + video, Postman-style API requests, session RAG logging.",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5",
+    "playwright": "^1.47.0",
+    "uuid": "^9.0.1"
+  }
+}

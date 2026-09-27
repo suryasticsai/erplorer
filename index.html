@@ -232,6 +232,7 @@
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Fix Recipe</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">16 curated rules for common errors. Deterministic, not AI guesswork.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📄 PDF Reports</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Export search results to a styled PDF for tickets, standup, or management.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📷 OCR + Screenshots</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Paste an error screenshot — Tesseract.js extracts text locally. Screenshot any result with html2canvas.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">▶ Real browser runs</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Optional local runner drives Playwright + real HTTP, records WebM video, and produces a queryable session log.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔗 Share Link</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Every search is URL-encoded. Copy, send, reopen — same results.</div></div>
       </div>
     </div>
@@ -247,7 +248,7 @@
       </div>
     </div>
     <div class="footer-note">
-      ERplorer · Error Resolution Explorer · v1.1<br>
+      ERplorer · Error Resolution Explorer · v1.2<br>
       Built with vanilla JavaScript. Zero build step. Zero servers. Zero cost.<br>
       <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
     </div>
@@ -275,6 +276,11 @@
       </div>
     </div>
     <div class="card">
+      <div class="card-title">Runner</div>
+      <div class="card-desc">Optional local Node service that drives real Playwright browsers and fires real HTTP requests. Start it with <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">cd erplorer-runner &amp;&amp; npm start</code>.</div>
+      <div id="runner-status" class="status-line" style="margin-top:14px;">Checking runner…</div>
+    </div>
+    <div class="card">
       <div class="card-title">GitHub token</div>
       <div class="card-desc" style="margin-bottom:14px;">Optional. Enables scanning private repos. Stored in sessionStorage only.</div>
       <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
@@ -286,7 +292,7 @@
     </div>
     <div class="card">
       <div class="card-title">Config</div>
-      <div class="card-desc">Loaded from <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">erplorer.config.js</code>. Edit that file to change endpoints, webhooks, or MCP.</div>
+      <div class="card-desc">Loaded from <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">erplorer.config.js</code>. Edit that file to change endpoints, webhooks, runner URL, or MCP.</div>
       <div id="config-display" class="status-line" style="margin-top:14px; font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap;"></div>
     </div>
     <div class="card">
@@ -303,9 +309,13 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Core libraries -->
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<!-- App + config + runner client -->
 <script src="erplorer.config.js"></script>
 <script src="erplorer.js" defer></script>
+<script src="erplorer-runner-client.js" defer></script>
 </body>
 </html>

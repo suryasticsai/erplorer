@@ -1,10 +1,12 @@
 /**
  * ERplorer configuration.
- * Edit this file to point at your own endpoints, enable webhooks, or wire MCP.
- * Everything here is optional — the app falls back to defaults when a value is missing.
+ *
+ * Edit this file to point at your own endpoints, enable webhooks,
+ * wire the local runner, or configure MCP. Everything here is optional —
+ * the app falls back to sensible defaults when a value is missing.
  */
 window.ERPLORER_CONFIG = {
-  version: '1.1.0',
+  version: '1.2.0',
   appName: 'ERplorer',
   tagline: 'Error Resolution Explorer',
 
@@ -15,17 +17,26 @@ window.ERPLORER_CONFIG = {
     crawl:      'https://ragina-crawler-ragina.vercel.app/api/crawl'
   },
 
+  // ---- Local runner (erplorer-runner) ----
+  // The Node companion service that drives Playwright + real HTTP.
+  // Start it with: cd erplorer-runner && npm start
+  // If it's not running, the app silently degrades to spec-generation-only mode.
+  runner: {
+    baseUrl: 'http://localhost:8787'
+  },
+
   // ---- Feature flags ----
   features: {
-    errorDNA:   true,   // cluster similar errors with ×N badge
-    fixRecipe:  true,   // inline fix suggestions
-    blastRadius:true,   // cross-file identifier references
-    screenshot: true,   // html2canvas capture on results
-    pdfReport:  true,   // jsPDF session report
-    ocr:        true,   // Tesseract.js image-to-text
-    chat:       true,   // chat-style Ask tab
-    shareLink:  true,
-    bugReport:  true
+    errorDNA:    true,   // cluster similar errors with ×N badge
+    fixRecipe:   true,   // inline fix suggestions
+    blastRadius: true,   // cross-file identifier references
+    screenshot:  true,   // html2canvas capture on results
+    pdfReport:   true,   // jsPDF session report
+    ocr:         true,   // Tesseract.js image-to-text
+    chat:        true,   // chat-style Ask tab
+    shareLink:   true,
+    bugReport:   true,
+    runner:      true    // enable the local Node runner integration
   },
 
   // ---- Webhook dispatch ----
@@ -63,7 +74,6 @@ window.ERPLORER_CONFIG = {
     enabled: false,
     serverUrl: '',
     name: 'erplorer',
-    // Tools ERplorer will advertise when MCP is enabled
     tools: ['search', 'get_result', 'list_patterns', 'run_session']
   },
 

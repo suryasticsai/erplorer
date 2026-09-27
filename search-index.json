@@ -1,6 +1,41 @@
 [
   {
     "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 393,
+    "context": "    try {\n      const res = await fetch('search-index.json', { cache: 'no-cache' });\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      documents = await res.json();\n      flexIndex = new FlexSearch.Document({"
+  },
+  {
+    "type": "error",
+    "text": "No steps",
+    "file": "erplorer.js",
+    "line": 875,
+    "context": "      const parsed = JSON.parse(clean);\n      const steps = parsed.steps || parsed;\n      if (!Array.isArray(steps) || !steps.length) throw new Error('No steps');\n      renderScenarioTable(steps, 'AI');\n    } catch (err) {"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 1283,
+    "context": "        body: JSON.stringify({ url, maxPages: 20 })\n      }, 30000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);"
+  },
+  {
+    "type": "error",
+    "text": "Crawl returned 0 pages",
+    "file": "erplorer.js",
+    "line": 1286,
+    "context": "      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);\n      if (!pages.length) throw new Error('Crawl returned 0 pages');\n      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));"
+  },
+  {
+    "type": "error",
+    "text": "No errors found in crawled pages",
+    "file": "erplorer.js",
+    "line": 1289,
+    "context": "      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));\n      if (!entries.length) throw new Error('No errors found in crawled pages');\n      appendToIndex(entries, `${pages.length} crawled pages`);\n    } catch (err) {"
+  },
+  {
+    "type": "error",
     "text": "Username is required",
     "file": "src/sample.js",
     "line": 4,

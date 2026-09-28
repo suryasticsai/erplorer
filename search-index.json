@@ -43,6 +43,27 @@
   },
   {
     "type": "error",
+    "text": "HTTP",
+    "file": "erplorer-debugger.js",
+    "line": 602,
+    "context": "        body: JSON.stringify(body)\n      }, AI_TIMEOUT_MS);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      return await res.json();\n    };"
+  },
+  {
+    "type": "error",
+    "text": "no AI content",
+    "file": "erplorer-debugger.js",
+    "line": 623,
+    "context": "      || (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content);\n\n    if (!raw) throw new Error('no AI content');\n\n    let content = String(raw).trim().replace(/^```(?:json)?\\s*/i, '').replace(/```\\s*$/i, '').trim();"
+  },
+  {
+    "type": "error",
+    "text": "AI returned unparseable JSON",
+    "file": "erplorer-debugger.js",
+    "line": 632,
+    "context": "      const match = content.match(/\\{[\\s\\S]*\\}/);\n      if (match) parsed = JSON.parse(match[0]);\n      else throw new Error('AI returned unparseable JSON');\n    }\n"
+  },
+  {
+    "type": "error",
     "text": "both AI endpoints failed",
     "file": "erplorer-insights.js",
     "line": 426,

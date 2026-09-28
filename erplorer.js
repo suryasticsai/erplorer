@@ -20,6 +20,7 @@
  *   - Populates window._erplorerFileContents (Map<path, content>) during scan
  *   - Triggers window.ERplorerInsights.refresh() after index changes
  *   - Delegates runner calls to window.ERplorerRunner
+ *   - Injects a Debugger Kit button into every result card for erplorer-debugger.js
  */
 (function () {
   'use strict';
@@ -28,7 +29,7 @@
   // CONFIG + DEFAULTS
   // ============================================================
   const DEFAULT_CONFIG = {
-    version: '1.2.0',
+    version: '1.3.0',
     endpoints: {
       aiPrimary: 'https://ragina-crawler-ragina.vercel.app/api/ask',
       aiFallback: 'https://text.pollinations.ai/openai',
@@ -37,7 +38,8 @@
     features: {
       errorDNA: true, fixRecipe: true, blastRadius: true,
       screenshot: true, pdfReport: true, ocr: true,
-      chat: true, shareLink: true, bugReport: true, runner: true
+      chat: true, shareLink: true, bugReport: true, runner: true,
+      debuggerKit: true
     },
     webhooks: {},
     mcp: { enabled: false, serverUrl: '', name: 'erplorer', tools: [] },
@@ -714,7 +716,7 @@
     currentResults[docId] = doc;
 
     return '' +
-      '<div class="result">' +
+      '<div class="result" data-doc-id="' + docId + '">' +
         '<div class="result-head">' +
           '<div class="result-file"><strong>' + escapeHtml(doc.file || 'unknown') + '</strong>' + (doc.line ? ':' + doc.line : '') + '</div>' +
           '<div class="result-badges">' +
@@ -727,6 +729,12 @@
         (recipe ? '<div class="fix-recipe"><div class="label">🔧 Fix Recipe</div><div class="recipe">' + escapeHtml(recipe.suggestion).replace(/\n/g, '<br>') + '</div></div>' : '') +
         (blast.length ? '<div class="blast-radius"><span>💥 <strong>Blast radius:</strong> also referenced in ' + blast.length + ' other file' + (blast.length === 1 ? '' : 's') + '</span><div class="blast-files">' + blast.map(b => '<span class="blast-file">' + escapeHtml(b.file) + '</span>').join('') + '</div></div>' : '') +
         '<div class="result-actions">' +
+          // Debugger Kit — first button so it's the primary action
+          (CONFIG.features.debuggerKit
+            ? '<button class="result-action dk-trigger" onclick="ERplorerDebugger.generateFor(\'' + docId + '\')">' +
+                '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/></svg> Debugger Kit' +
+              '</button>'
+            : '') +
           '<button class="result-action" onclick="ERplorer.copyBugReport(\'' + docId + '\')">' +
             '<svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg> Copy Bug Report' +
           '</button>' +
@@ -2224,6 +2232,9 @@
     copyFilePath: copyFilePath,
     copyAllResults: copyAllResults,
 
+    // Debugger Kit bridge — lets erplorer-debugger.js fetch docs by id
+    getResultById: function (id) { return currentResults[id] || null; },
+
     // Reports
     generatePDFReport: generatePDFReport,
     captureSearchScreenshot: captureSearchScreenshot,
@@ -2241,7 +2252,8 @@
         customPatterns: customPatterns.length,
         activeFilter: activeFilter,
         currentRows: currentRows.length,
-        fileContents: window._erplorerFileContents.size
+        fileContents: window._erplorerFileContents.size,
+        currentResults: Object.keys(currentResults).length
       };
     },
     version: CONFIG.version

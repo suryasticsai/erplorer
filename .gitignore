@@ -1,3 +1,21 @@
 node_modules/
 sessions/*
 !sessions/.gitkeep
+collections/
+!collections/.gitkeep
+
+# Logs
+*.log
+npm-debug.log*
+
+# Env
+.env
+.env.local
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/

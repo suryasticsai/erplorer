@@ -85,45 +85,80 @@
   },
   {
     "type": "error",
+    "text": "404",
+    "file": "erplorer.js",
+    "line": 141,
+    "context": "    if (token) headers['Authorization'] = 'Bearer ' + token;\n    const res = await fetch('https://api.github.com' + path, { headers: headers, signal: signal });\n    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);"
+  },
+  {
+    "type": "error",
+    "text": "rate-limited",
+    "file": "erplorer.js",
+    "line": 142,
+    "context": "    const res = await fetch('https://api.github.com' + path, { headers: headers, signal: signal });\n    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);\n    return res.json();"
+  },
+  {
+    "type": "error",
     "text": "HTTP",
     "file": "erplorer.js",
-    "line": 419,
+    "line": 143,
+    "context": "    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);\n    return res.json();\n  }"
+  },
+  {
+    "type": "error",
+    "text": "could not detect a default branch (tried main, master, develop, trunk)",
+    "file": "erplorer.js",
+    "line": 191,
+    "context": "      } catch (e) { /* try next */ }\n    }\n    throw new Error('could not detect a default branch (tried main, master, develop, trunk)');\n  }\n"
+  },
+  {
+    "type": "error",
+    "text": "could not list files: both GitHub API and jsDelivr failed",
+    "file": "erplorer.js",
+    "line": 209,
+    "context": "\n    const res = await fetch('https://data.jsdelivr.com/v1/packages/gh/' + owner + '/' + repo + '@' + branch, { signal: signal });\n    if (!res.ok) throw new Error('could not list files: both GitHub API and jsDelivr failed');\n    const data = await res.json();\n    const out = [];"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 570,
     "context": "    try {\n      const res = await fetch('search-index.json', { cache: 'no-cache' });\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      documents = await res.json();\n      flexIndex = new FlexSearch.Document({"
   },
   {
     "type": "error",
     "text": "No steps",
     "file": "erplorer.js",
-    "line": 901,
+    "line": 1053,
     "context": "      const parsed = JSON.parse(clean);\n      const steps = parsed.steps || parsed;\n      if (!Array.isArray(steps) || !steps.length) throw new Error('No steps');\n      renderScenarioTable(steps, 'AI');\n    } catch (err) {"
   },
   {
     "type": "error",
     "text": "HTTP",
     "file": "erplorer.js",
-    "line": 1309,
-    "context": "        body: JSON.stringify({ url, maxPages: 20 })\n      }, 30000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);"
+    "line": 1692,
+    "context": "        body: JSON.stringify({ url: url, maxPages: 20 })\n      }, 30000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);"
   },
   {
     "type": "error",
     "text": "Crawl returned 0 pages",
     "file": "erplorer.js",
-    "line": 1312,
+    "line": 1695,
     "context": "      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);\n      if (!pages.length) throw new Error('Crawl returned 0 pages');\n      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));"
   },
   {
     "type": "error",
     "text": "No errors found in crawled pages",
     "file": "erplorer.js",
-    "line": 1315,
-    "context": "      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));\n      if (!entries.length) throw new Error('No errors found in crawled pages');\n      appendToIndex(entries, `${pages.length} crawled pages`);\n    } catch (err) {"
+    "line": 1698,
+    "context": "      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));\n      if (!entries.length) throw new Error('No errors found in crawled pages');\n      appendToIndex(entries, pages.length + ' crawled pages');\n    } catch (err) {"
   },
   {
     "type": "error",
     "text": "HTTP",
     "file": "erplorer.js",
-    "line": 1383,
-    "context": "    try {\n      const res = await fetchWithTimeout(parsed.rawUrl, {}, 15000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const content = await res.text();\n      const entries = parseText(content, parsed.filePath);"
+    "line": 1805,
+    "context": "    try {\n      const res = await fetchWithTimeout(parsed.rawUrl, {}, 15000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const content = await res.text();\n      window._erplorerFileContents.set(parsed.filePath, content);"
   },
   {
     "type": "error",

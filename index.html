@@ -575,12 +575,12 @@
       const hh = String(now.getHours()).padStart(2, '0');
       const mm = String(now.getMinutes()).padStart(2, '0');
       const ss = String(now.getSeconds()).padStart(2, '0');
-      timeEl.textContent = `${hh}:${mm}:${ss}`;
+      timeEl.textContent = hh + ':' + mm + ':' + ss;
     }
     if (dateEl) {
       const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
       const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      dateEl.textContent = `${days[now.getDay()]} · ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+      dateEl.textContent = days[now.getDay()] + ' · ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
     }
   }
   updateClock();
@@ -595,7 +595,7 @@
     const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
     const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
     const ss = String(elapsed % 60).padStart(2, '0');
-    el.textContent = `${hh}:${mm}:${ss}`;
+    el.textContent = hh + ':' + mm + ':' + ss;
   }
   updateSessionTimer();
   setInterval(updateSessionTimer, 1000);
@@ -611,50 +611,69 @@
     const remaining = Math.max(0, Math.floor((countdownEnd - Date.now()) / 1000));
     const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
     const ss = String(remaining % 60).padStart(2, '0');
-    el.textContent = `${mm}:${ss}`;
+    el.textContent = mm + ':' + ss;
 
     if (remaining === 0) {
       clearInterval(countdownTick);
       countdownTick = null;
       countdownEnd = 0;
       el.classList.add('countdown-done');
+
       try {
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification('ERplorer · Timer done', { body: 'Your countdown has finished.' });
         }
       } catch (e) { /* ignore */ }
-      const toast = document.getElementById('toast');
-      if (toast) {
-        toast.textContent = '⏰ Countdown finished';
-        toast.classList.add('show');
-        setTimeout(() => toast.classList.remove('show'), 3000);
+
+      const t = document.getElementById('toast');
+      if (t) {
+        t.textContent = '⏰ Countdown finished';
+        t.classList.add('show');
+        setTimeout(function () { t.classList.remove('show'); }, 3000);
       }
     }
   }
 
-  window.ERplorer = window.ERplorer || {};
-  window.ERplorer.startCountdown = function () {
+  function startCountdown() {
     const input = document.getElementById('countdown-minutes');
+    if (!input) return;
     const mins = Math.max(1, Math.min(120, parseInt(input.value, 10) || 5));
     countdownEnd = Date.now() + mins * 60 * 1000;
-    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    const disp = document.getElementById('footer-countdown');
+    if (disp) disp.classList.remove('countdown-done');
     if (countdownTick) clearInterval(countdownTick);
     countdownTick = setInterval(updateCountdownDisplay, 1000);
     updateCountdownDisplay();
+
     try {
       if ('Notification' in window && Notification.permission === 'default') {
         Notification.requestPermission();
       }
     } catch (e) { /* ignore */ }
-  };
+  }
 
-  window.ERplorer.resetCountdown = function () {
+  function resetCountdown() {
     if (countdownTick) clearInterval(countdownTick);
     countdownTick = null;
     countdownEnd = 0;
-    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    const disp = document.getElementById('footer-countdown');
+    if (disp) disp.classList.remove('countdown-done');
     updateCountdownDisplay();
-  };
+  }
+
+  // ---------- Attach to window.ERplorer safely ----------
+  // erplorer.js replaces window.ERplorer when it loads, so we attach
+  // AFTER it has finished by hooking into the `load` event (fires after
+  // all deferred scripts). Belt-and-braces: also try on DOMContentLoaded.
+  function attachToERplorer() {
+    if (!window.ERplorer) window.ERplorer = {};
+    window.ERplorer.startCountdown = startCountdown;
+    window.ERplorer.resetCountdown = resetCountdown;
+  }
+
+  attachToERplorer();
+  document.addEventListener('DOMContentLoaded', attachToERplorer);
+  window.addEventListener('load', attachToERplorer);
 })();
 </script>
 </body>

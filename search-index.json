@@ -1,6 +1,20 @@
 [
   {
     "type": "error",
+    "text": "unknown template:",
+    "file": "erplorer-bench.js",
+    "line": 257,
+    "context": "  async function generateRows(templateKey, count, seed) {\n    const tpl = TEMPLATES[templateKey];\n    if (!tpl) throw new Error('unknown template: ' + templateKey);\n    const faker = await loadFaker();\n    if (seed) faker.seed(seed);"
+  },
+  {
+    "type": "error",
+    "text": "runner returned HTTP",
+    "file": "erplorer-bench.js",
+    "line": 489,
+    "context": "      body: JSON.stringify(opts)\n    });\n    if (!res.ok) throw new Error('runner returned HTTP ' + res.status);\n    return await res.json();\n  }"
+  },
+  {
+    "type": "error",
     "text": "both AI endpoints failed",
     "file": "erplorer-insights.js",
     "line": 426,

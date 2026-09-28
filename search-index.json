@@ -1,6 +1,34 @@
 [
   {
     "type": "error",
+    "text": "both AI endpoints failed",
+    "file": "erplorer-bench-ai.js",
+    "line": 119,
+    "context": "    }\n\n    throw new Error('both AI endpoints failed');\n  }\n"
+  },
+  {
+    "type": "error",
+    "text": "AI returned unparseable JSON",
+    "file": "erplorer-bench-ai.js",
+    "line": 134,
+    "context": "        try { return JSON.parse(m[0]); } catch (e2) { /* fall through */ }\n      }\n      throw new Error('AI returned unparseable JSON');\n    }\n  }"
+  },
+  {
+    "type": "error",
+    "text": "AI response missing columns or rows",
+    "file": "erplorer-bench-ai.js",
+    "line": 174,
+    "context": "\n      if (!parsed.columns || !Array.isArray(parsed.rows)) {\n        throw new Error('AI response missing columns or rows');\n      }\n"
+  },
+  {
+    "type": "error",
+    "text": "AI returned no scenarios",
+    "file": "erplorer-bench-ai.js",
+    "line": 280,
+    "context": "      const parsed = parseJSON(raw);\n      const scenarios = parsed.scenarios || [];\n      if (!scenarios.length) throw new Error('AI returned no scenarios');\n\n      A.scenarios = scenarios;"
+  },
+  {
+    "type": "error",
     "text": "unknown template:",
     "file": "erplorer-bench.js",
     "line": 257,

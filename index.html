@@ -1,1056 +1,660 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>ERplorer — Error Resolution Explorer</title>
 <link rel="icon" type="image/png" href="erplorer-logo.png">
 <link rel="apple-touch-icon" href="erplorer-logo.png">
-<style>
-  :root {
-    --ink:#0F172A; --slate:#1E293B; --paper:#F8FAFC; --signal:#F59E0B;
-    --error:#EF4444; --code:#3B82F6; --test:#8B5CF6; --api:#10B981;
-    --data:#06B6D4; --border:#E2E8F0; --muted:#64748B; --ai:#8B5CF6;
-  }
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body {
-    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
-    max-width:1100px; margin:0 auto; padding:1.5rem;
-    color:var(--ink); line-height:1.55; background:var(--paper);
-  }
-  .header { display:flex; align-items:center; gap:0.85rem; margin-bottom:0.4rem; }
-  .header img { width:48px; height:48px; object-fit:contain; border-radius:10px; }
-  .header h1 { font-size:1.55rem; font-weight:700; letter-spacing:-0.02em; }
-  .header h1 .er { color:var(--signal); }
-  .subtitle { color:var(--muted); font-size:0.95rem; margin-bottom:1.75rem; margin-left:60px; }
-
-  .tabs { display:flex; gap:0.25rem; border-bottom:2px solid var(--border); margin-bottom:1.75rem; }
-  .tab {
-    padding:0.75rem 1.25rem; cursor:pointer; border:none; background:none;
-    font-size:0.95rem; font-family:inherit; color:var(--muted);
-    border-bottom:3px solid transparent; margin-bottom:-2px; transition:0.15s;
-  }
-  .tab:hover { color:var(--signal); }
-  .tab.active { color:var(--signal); border-bottom-color:var(--signal); font-weight:600; }
-
-  .panel { display:none; }
-  .panel.active { display:block; animation:fade 0.2s ease; }
-  @keyframes fade { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
-
-  .mode-toggle {
-    display:inline-flex; background:#F1F5F9; border-radius:10px; padding:4px;
-    margin-bottom:1rem; gap:2px;
-  }
-  .mode-btn {
-    padding:0.5rem 1rem; border:none; background:transparent; cursor:pointer;
-    border-radius:7px; font-size:0.85rem; font-family:inherit; font-weight:500;
-    color:var(--muted); transition:0.15s;
-  }
-  .mode-btn.active { background:white; color:var(--signal); box-shadow:0 1px 3px rgba(0,0,0,0.08); }
-  .mode-btn:disabled { opacity:0.4; cursor:not-allowed; }
-
-  input[type=text] {
-    width:100%; padding:1rem 1.15rem; font-size:1.05rem; font-family:inherit;
-    border:2px solid var(--border); border-radius:12px; outline:none;
-    background:white; transition:0.15s;
-  }
-  input[type=text]:focus { border-color:var(--signal); box-shadow:0 0 0 4px rgba(245,158,11,0.12); }
-  input[type=password] {
-    width:100%; padding:0.9rem 1rem; font-size:1rem; font-family:inherit;
-    border:2px solid var(--border); border-radius:10px; outline:none;
-  }
-  input[type=password]:focus { border-color:var(--signal); }
-
-  .search-row { display:flex; gap:0.5rem; align-items:stretch; }
-  .search-row input { flex:1; }
-  .search-row button { padding:0 1.5rem; }
-
-  textarea {
-    width:100%; min-height:120px; padding:0.85rem;
-    border:2px solid var(--border); border-radius:8px;
-    font-family:ui-monospace,monospace; font-size:0.82rem;
-    outline:none; resize:vertical;
-  }
-  textarea:focus { border-color:var(--signal); }
-
-  .ai-answer {
-    margin-top:1rem; padding:1.25rem 1.4rem; background:white;
-    border:1px solid var(--border); border-left:4px solid var(--ai);
-    border-radius:10px; font-size:0.95rem; line-height:1.7;
-    white-space:pre-wrap; word-break:break-word;
-  }
-  .ai-answer.loading { color:var(--muted); font-style:italic; }
-  .ai-answer code {
-    background:#F1F5F9; padding:1px 6px; border-radius:4px;
-    font-family:ui-monospace,monospace; font-size:0.85rem;
-  }
-  .ai-hint {
-    font-size:0.82rem; color:var(--muted); margin-top:0.75rem;
-    padding:0.6rem 0.85rem; background:#FAFAFA; border-radius:6px;
-    border:1px dashed var(--border);
-  }
-
-  .result {
-    border:1px solid var(--border); background:white; padding:1rem 1.15rem;
-    margin-top:0.85rem; border-radius:10px; transition:0.15s;
-  }
-  .result:hover { box-shadow:0 4px 14px rgba(15,23,42,0.06); }
-  .result.error         { border-left:4px solid var(--error); }
-  .result.code          { border-left:4px solid var(--code); }
-  .result.test-failure  { border-left:4px solid var(--test); }
-  .result.api-error     { border-left:4px solid var(--api); }
-  .result.data-error    { border-left:4px solid var(--data); }
-  .result.config-error  { border-left:4px solid #F97316; }
-  .result.java-error    { border-left:4px solid #B91C1C; }
-  .result.python-error  { border-left:4px solid #0891B2; }
-  .result.sql-error     { border-left:4px solid #7C3AED; }
-  .result.notebook-error{ border-left:4px solid #DB2777; }
-  .result.crawled       { border-left:4px solid #EC4899; }
-
-  .meta { font-size:0.85rem; color:var(--slate); margin-bottom:0.55rem;
-          display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; }
-  .meta strong { font-family:ui-monospace,"SF Mono",monospace; font-weight:600; }
-  .badge {
-    background:#F1F5F9; padding:2px 9px; border-radius:5px;
-    font-size:0.68rem; text-transform:uppercase; letter-spacing:0.6px;
-    font-weight:600; color:var(--slate);
-  }
-  .snippet {
-    background:var(--paper); padding:0.85rem 1rem; border-radius:8px;
-    overflow-x:auto; font-family:ui-monospace,"SF Mono",monospace;
-    font-size:0.83rem; white-space:pre-wrap; word-break:break-word;
-    line-height:1.65; color:var(--slate);
-  }
-  .highlight { background:#FEF3C7; padding:0 2px; border-radius:2px; }
-
-  .status { font-size:0.85rem; color:var(--muted); margin-top:0.75rem;
-            padding:0.6rem 0.85rem; background:#F1F5F9; border-radius:8px; }
-  .status code { background:#E2E8F0; padding:1px 5px; border-radius:3px; font-size:0.82rem; }
-  .spinner {
-    display:inline-block; width:12px; height:12px;
-    border:2px solid var(--border); border-top-color:var(--signal);
-    border-radius:50%; animation:spin 0.6s linear infinite;
-    margin-right:6px; vertical-align:middle;
-  }
-  @keyframes spin { to { transform:rotate(360deg); } }
-
-  .drop {
-    border:2px dashed #CBD5E1; border-radius:12px; padding:3rem 2rem;
-    text-align:center; color:var(--muted); cursor:pointer; transition:0.2s; background:white;
-  }
-  .drop:hover, .drop.over { border-color:var(--signal); background:#FFFBEB; color:var(--slate); }
-  .drop strong { display:block; font-size:1.1rem; margin-bottom:0.4rem; color:var(--ink); }
-  .drop span { font-size:0.9rem; }
-  .drop .formats { display:inline-flex; gap:0.5rem; margin-top:0.85rem; flex-wrap:wrap; justify-content:center; }
-  .format-pill {
-    background:var(--paper); color:var(--slate); padding:3px 10px;
-    border-radius:6px; font-size:0.75rem; font-weight:600;
-    font-family:ui-monospace,monospace; letter-spacing:0.3px;
-  }
-
-  button {
-    padding:0.65rem 1.25rem; border:none; border-radius:8px;
-    background:var(--signal); color:white; font-size:0.9rem;
-    font-family:inherit; font-weight:500; cursor:pointer; transition:0.15s;
-  }
-  button:hover { background:#D97706; }
-  button.secondary { background:#F1F5F9; color:var(--slate); }
-  button.secondary:hover { background:#E2E8F0; }
-  button.ghost { background:transparent; color:var(--signal); border:1px solid var(--signal); padding:0.55rem 1rem; }
-  button.ghost:hover { background:#FFFBEB; }
-  button.ai { background:var(--ai); }
-  button.ai:hover { background:#7C3AED; }
-
-  .preview {
-    background:var(--ink); color:#CBD5E1; padding:1.25rem 1.4rem;
-    border-radius:10px; font-family:ui-monospace,"SF Mono",monospace;
-    font-size:0.8rem; overflow-x:auto; white-space:pre;
-    margin-top:1rem; max-height:420px; line-height:1.65;
-  }
-
-  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr)); gap:1rem; margin-top:1rem; }
-  .spec-card { border:1px solid var(--border); border-radius:10px; padding:1rem; background:white; }
-  .spec-card strong { font-size:0.9rem; display:block; }
-  .spec-card .steps { font-size:0.8rem; color:var(--muted); margin-top:0.25rem; }
-  .spec-card button { margin-top:0.75rem; width:100%; }
-  .spec-card .kind { display:inline-block; font-size:0.68rem; font-weight:600; text-transform:uppercase;
-                     padding:2px 8px; border-radius:5px; margin-top:0.4rem; letter-spacing:0.4px; }
-  .kind.ui   { background:#EDE9FE; color:#6D28D9; }
-  .kind.api  { background:#D1FAE5; color:#047857; }
-  .kind.data { background:#CFFAFE; color:#0E7490; }
-
-  .error-list { color:#B91C1C; background:#FEF2F2; padding:1rem 1.25rem;
-                border-radius:10px; margin-top:1rem; border-left:4px solid var(--error); }
-  .error-list ul { margin-left:1.25rem; margin-top:0.5rem; }
-  .error-list li { font-size:0.9rem; }
-
-  .schema-hint { font-size:0.82rem; color:var(--muted); margin-top:1.25rem;
-                 padding:0.85rem 1rem; background:white; border-radius:8px; border:1px solid var(--border); }
-  .schema-hint code {
-    background:#F1F5F9; padding:1px 6px; border-radius:4px;
-    font-size:0.8rem; font-family:ui-monospace,monospace; color:var(--slate);
-  }
-  .schema-hint .row { margin-bottom:0.6rem; }
-  .schema-hint .row:last-child { margin-bottom:0; }
-
-  .template-bar {
-    display:flex; justify-content:space-between; align-items:center; gap:1rem;
-    flex-wrap:wrap; margin-top:1rem; padding:0.85rem 1rem;
-    background:#FFFBEB; border:1px solid #FDE68A; border-radius:8px;
-  }
-  .template-bar span { font-size:0.85rem; color:var(--slate); }
-
-  details summary { cursor:pointer; font-size:0.85rem; color:var(--muted); padding:0.5rem 0; list-style:none; }
-  details summary::-webkit-details-marker { display:none; }
-  details summary::before { content:'▸ '; display:inline-block; transition:transform 0.15s; }
-  details[open] summary::before { transform:rotate(90deg); }
-
-  .footer {
-    margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--border);
-    font-size:0.8rem; color:var(--muted);
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;
-  }
-  .footer a { color:var(--signal); text-decoration:none; }
-  .footer a:hover { text-decoration:underline; }
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="header">
-  <img src="erplorer-logo.png" alt="ERplorer logo">
-  <h1><span class="er">ER</span>plorer</h1>
-</div>
-<p class="subtitle">Error Resolution Explorer — Java, Node.js, Databricks, configs.</p>
+<div class="shell">
+  <header class="app-header">
+    <img src="erplorer-logo.png" alt="ERplorer" class="app-logo-img">
+    <div class="app-title-wrap">
+      <div class="app-title"><span class="er">ER</span>plorer</div>
+      <div class="app-tagline">Error Resolution Explorer</div>
+    </div>
+    <button class="theme-toggle" onclick="ERplorer.toggleTheme()" aria-label="Toggle theme">
+      <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+      <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </header>
 
-<div class="tabs">
-  <button class="tab active" data-tab="explorer">Error Explorer</button>
-  <button class="tab" data-tab="generator">Test Cases → Code</button>
-  <button class="tab" data-tab="settings">⚙️ Settings</button>
-</div>
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-panel="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <span class="nav-label">Search</span>
+    </button>
+    <button class="nav-item" data-panel="ask">
+      <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <span class="nav-label">Ask</span>
+    </button>
+    <button class="nav-item" data-panel="lab">
+      <svg viewBox="0 0 24 24"><path d="M9 3h6v6l4 9a1 1 0 0 1-1 1.4H6A1 1 0 0 1 5 18l4-9V3z"/><line x1="9" y1="3" x2="15" y2="3"/></svg>
+      <span class="nav-label">Lab</span>
+    </button>
+    <button class="nav-item" data-panel="ingest">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      <span class="nav-label">Ingest</span>
+    </button>
+    <button class="nav-item" data-panel="insights">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+      <span class="nav-label">Insights</span>
+    </button>
+    <button class="nav-item" data-panel="bench">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 12l3-3 4 4 5-5"/><circle cx="7" cy="19" r="1.5" fill="currentColor"/><circle cx="17" cy="19" r="1.5" fill="currentColor"/></svg>
+      <span class="nav-label">Bench</span>
+    </button>
+    <button class="nav-item" data-panel="about">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
+      <span class="nav-label">About</span>
+    </button>
+    <button class="nav-item" data-panel="settings">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span class="nav-label">Settings</span>
+    </button>
+  </nav>
 
-<!-- ============ EXPLORER ============ -->
-<div class="panel active" id="panel-explorer">
-  <div id="index-status" class="status"><span class="spinner"></span>Loading search index...</div>
+  <!-- ============ SEARCH ============ -->
+  <section class="panel active" id="panel-search">
+    <div class="hero">
+      <div class="hero-eyebrow">Error Resolution Explorer</div>
+      <h1 class="hero-title">From stack trace to <em>source line.</em></h1>
+      <p class="hero-desc">Paste an exception, SQL error, or failing assertion. ERplorer locates the file, line, and surrounding code across Java, Node, Python, SQL, configs, and notebooks.</p>
+      <div class="stat-row" id="stat-row">
+        <div class="stat"><span class="num">—</span><span class="lbl">files</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">entries</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">thrown</span></div>
+        <div class="stat"><span class="num">—</span><span class="lbl">tests</span></div>
+      </div>
+    </div>
 
-  <div class="mode-toggle" style="margin-top:1rem;">
-    <button class="mode-btn active" data-mode="exact" onclick="setMode('exact')">🔍 Exact search</button>
-    <button class="mode-btn" data-mode="ai" id="ai-mode-btn" onclick="setMode('ai')" disabled>💬 Ask AI</button>
-  </div>
+    <div class="usp-banner" id="usp-banner">
+      <div class="usp-tile"><span class="ico">🧬</span><div class="t">Error DNA</div><div class="d">Clusters similar errors, counts occurrences</div></div>
+      <div class="usp-tile"><span class="ico">💥</span><div class="t">Blast Radius</div><div class="d">Every file that references the same identifier</div></div>
+      <div class="usp-tile"><span class="ico">🔧</span><div class="t">Fix Recipe</div><div class="d">Suggested fix inline for common patterns</div></div>
+      <div class="usp-tile"><span class="ico">📋</span><div class="t">Copy Bug Report</div><div class="d">One-click markdown report to clipboard</div></div>
+    </div>
 
-  <!-- Exact search mode -->
-  <div id="mode-exact">
-    <input type="text" id="search-input" placeholder="Paste an error, stack trace, SQL error, or config key..." autofocus>
+    <div class="search-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="search-input" placeholder="Paste an error, stack trace, SQL..." autofocus>
+    </div>
+
+    <div class="chips" id="filter-chips"></div>
+
+    <div id="results-actions" style="display:none; margin-bottom:14px;">
+      <div class="row" style="gap:6px;">
+        <button class="btn secondary" onclick="ERplorer.generatePDFReport()" style="font-size:12px; padding:8px 14px;">📄 PDF report</button>
+        <button class="btn secondary" onclick="ERplorer.copyAllResults()" style="font-size:12px; padding:8px 14px;">📋 Copy all</button>
+        <button class="btn secondary" onclick="ERplorer.captureSearchScreenshot()" style="font-size:12px; padding:8px 14px;">📷 Screenshot</button>
+      </div>
+    </div>
+
     <div id="results"></div>
-  </div>
 
-  <!-- AI mode -->
-  <div id="mode-ai" style="display:none;">
-    <div class="search-row">
-      <input type="text" id="nl-input" placeholder="Ask in plain English: 'Show Java errors in auth module'">
-      <button class="ai" onclick="askNatural()">Ask</button>
+    <div id="history-wrap" style="display:none; margin-top:32px;">
+      <div class="hero-eyebrow" style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Recent</span>
+        <button class="chip" onclick="ERplorer.clearHistory()">Clear</button>
+      </div>
+      <div class="chips" id="history-list"></div>
     </div>
-    <div class="ai-hint">
-      Examples: <em>"List all SQL errors"</em> · <em>"Which file has the most errors?"</em> · <em>"Show config errors"</em>
+  </section>
+
+  <!-- ============ ASK ============ -->
+  <section class="panel" id="panel-ask">
+    <div class="hero" style="margin-bottom:20px;">
+      <div class="hero-eyebrow">Ask</div>
+      <h1 class="hero-title">Question the index.</h1>
+      <p class="hero-desc">Natural language over the local error catalog. Matches stay on-device; only the top hits go to the model for a short briefing.</p>
     </div>
-    <div id="nl-answer"></div>
-  </div>
+    <div id="chat-thread" class="chat-thread">
+      <div class="chat-bubble ai">
+        <div class="ai-src">ERplorer</div>
+        Ask me anything about the indexed errors.
+        <div class="chips" style="margin-top:12px; margin-bottom:0;">
+          <button class="chip" onclick="ERplorer.quickAsk('Show Java errors in auth')">Java errors in auth</button>
+          <button class="chip" onclick="ERplorer.quickAsk('Which file has login validation errors?')">Login errors</button>
+          <button class="chip" onclick="ERplorer.quickAsk('List all SQL errors')">All SQL errors</button>
+        </div>
+      </div>
+    </div>
+    <div style="position:sticky; bottom:calc(var(--nav-h) + 12px + env(safe-area-inset-bottom,0)); margin-top:16px; padding:10px; background:var(--glass); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-radius:var(--radius-pill); border:1px solid var(--border); z-index:20;">
+      <div style="display:flex; gap:8px; align-items:center;">
+        <input type="text" class="search-input" id="nl-input" placeholder="Ask about your index..." style="padding:12px 18px; font-size:14px;">
+        <button class="btn accent" onclick="ERplorer.askNatural()" style="padding:0; border-radius:50%; width:44px; height:44px; flex-shrink:0;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
 
-  <!-- ===== Add Content Section ===== -->
-  <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border);">
-    <h3 style="font-size:1rem; margin-bottom:0.75rem;">➕ Add more content to search</h3>
+  <!-- ============ LAB ============ -->
+  <section class="panel" id="panel-lab">
+    <div class="hero">
+      <div class="hero-eyebrow">Lab</div>
+      <h1 class="hero-title">Test cases to code.</h1>
+      <p class="hero-desc">Describe a flow in English, or drop a spreadsheet. ERplorer emits Playwright specs and PySpark pytest files.</p>
+    </div>
+    <div class="subtabs">
+      <button class="subtab active" data-lab="scenarios">Scenarios</button>
+      <button class="subtab" data-lab="specs">Specs</button>
+    </div>
+    <div id="lab-scenarios">
+      <textarea class="textarea" id="ai-input" placeholder="Test the login page:
+1. Go to /login
+2. Enter &quot;admin&quot; in the username field
+3. Verify the dashboard shows &quot;Welcome admin&quot;"></textarea>
+      <div class="row" style="margin-top:12px;">
+        <button class="btn accent" onclick="ERplorer.runAITransform()">Convert with AI</button>
+        <button class="btn secondary" onclick="ERplorer.runRuleTransform()">Convert with rules</button>
+      </div>
+      <button class="btn ghost" style="margin-top:8px; width:100%;" onclick="ERplorer.loadSampleScenarios()">Load sample</button>
+      <div id="ai-status" style="margin-top:16px;"></div>
+      <div id="ai-preview" style="margin-top:24px;"></div>
+    </div>
+    <div id="lab-specs" style="display:none;">
+      <div class="drop" id="drop-zone">
+        <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke-width="1.5"><path d="M12 3v12"/><path d="M7 8l5-5 5 5"/><path d="M5 21h14a2 2 0 0 0 2-2v-6"/><path d="M3 21V13a2 2 0 0 1 2-2h6"/></svg>
+        <strong>Drop a test case file, or click to browse</strong>
+        <span>One row per step</span>
+        <div class="drop-formats">
+          <span class="format-pill">.xlsx</span><span class="format-pill">.csv</span><span class="format-pill">.tsv</span>
+        </div>
+      </div>
+      <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
+      <div class="row" style="margin-top:16px;">
+        <button class="btn ghost" onclick="ERplorer.downloadTemplate('csv')">CSV template</button>
+        <button class="btn ghost" onclick="ERplorer.downloadTemplate('tsv')">TSV template</button>
+      </div>
+      <div id="gen-output" style="margin-top:24px;"></div>
+    </div>
+  </section>
 
-    <div class="search-row" style="margin-bottom:0.5rem;">
-      <input type="text" id="crawl-url" placeholder="Tier 1 · Crawl a URL (https://docs.example.com)">
-      <button class="ghost" onclick="tryTier1Crawl()">🕷️ Crawl</button>
+  <!-- ============ INGEST ============ -->
+  <section class="panel" id="panel-ingest">
+    <div class="hero">
+      <div class="hero-eyebrow">Ingest</div>
+      <h1 class="hero-title">Grow the index.</h1>
+      <p class="hero-desc">Six ways in: URL, GitHub repo, single file URL, files, pasted text, or an error screenshot.</p>
+      <div class="stat-row">
+        <div class="stat"><span class="num" id="ingest-count">0</span><span class="lbl">ingested this session</span></div>
+      </div>
     </div>
 
-    <div class="search-row" style="margin-bottom:0.5rem;">
-      <input type="text" id="repo-scan" placeholder="Tier 2 · Scan a GitHub repo (owner/repo)">
-      <button class="ghost" onclick="tryTier2Repo()">🐙 Scan repo</button>
+    <div class="card">
+      <div class="card-title">Fetch a URL</div>
+      <div class="card-desc" style="margin-bottom:14px;">The RAGina crawler fetches up to 20 pages.</div>
+      <input type="text" class="input" id="crawl-url" placeholder="https://docs.example.com/errors" style="margin-bottom:10px;">
+      <button class="btn full" onclick="ERplorer.tryTier1Crawl()">Fetch</button>
     </div>
 
-    <div style="display:flex; gap:0.5rem; margin-bottom:0.5rem;">
-      <button class="ghost" onclick="tryTier3Folder()" style="flex:1;">📁 Tier 3 · Open folder</button>
-      <button class="ghost" onclick="tryTier3File()" style="flex:1;">📄 Or drop files</button>
+    <div class="card">
+      <div class="card-title">Scan a GitHub repo</div>
+      <div class="card-desc" style="margin-bottom:14px;">
+        Type <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">owner/repo</code> and ERplorer auto-detects the default branch, lists files, and fetches them in parallel via CDN. Public repos need no token. First 300 indexable files.
+      </div>
+      <input type="text" class="input" id="repo-scan" placeholder="owner/repo  ·  owner/repo#branch" style="margin-bottom:10px;">
+      <div class="row" style="gap:8px;">
+        <button class="btn" onclick="ERplorer.tryTier2Repo()" style="flex:1;">Scan</button>
+        <button class="btn secondary" onclick="ERplorer.cancelRepoScan()" style="flex:0 0 auto; padding-left:20px; padding-right:20px;">Stop</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Quick file from URL</div>
+      <div class="card-desc" style="margin-bottom:14px;">Paste a <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">raw.githubusercontent.com</code> link or a <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">github.com/…/blob/…</code> link. Fetches that one file and indexes it.</div>
+      <input type="text" class="input" id="quick-file-url" placeholder="https://github.com/owner/repo/blob/main/src/app.js" style="margin-bottom:10px;">
+      <button class="btn full" onclick="ERplorer.tryQuickFileUrl()">Fetch &amp; index</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Drop files</div>
+      <div class="card-desc" style="margin-bottom:14px;">.js .ts .java .py .sql .yaml .json .ipynb and related.</div>
+      <button class="btn secondary full" onclick="document.getElementById('tier3-file').click()">Choose files</button>
       <input type="file" id="tier3-file" multiple style="display:none;">
     </div>
 
-    <details style="margin-bottom:0.5rem;">
-      <summary>📋 Tier 4 · Paste text manually (always works)</summary>
-      <textarea id="tier4-text" placeholder="Paste any text, stack trace, error log, or file content..."></textarea>
-      <button class="secondary" onclick="tryTier4Paste()" style="margin-top:0.5rem;">Add to index</button>
-    </details>
-
-    <div id="add-status" class="status" style="margin-top:0.75rem; display:none;"></div>
-  </div>
-</div>
-
-<!-- ============ GENERATOR ============ -->
-<div class="panel" id="panel-generator">
-  <div class="drop" id="drop-zone">
-    <strong>📂 Drop a test case file here</strong>
-    <span>or click to browse</span>
-    <div class="formats">
-      <span class="format-pill">.XLSX</span>
-      <span class="format-pill">.XLS</span>
-      <span class="format-pill">.CSV</span>
-      <span class="format-pill">.TSV</span>
+    <div class="card">
+      <div class="card-title">Paste text</div>
+      <textarea class="textarea" id="tier4-text" placeholder="Paste a stack trace, log, or source file..." style="margin:12px 0 10px;"></textarea>
+      <button class="btn secondary full" onclick="ERplorer.tryTier4Paste()">Add to index</button>
     </div>
-  </div>
-  <input type="file" id="file-input" accept=".xlsx,.xls,.csv,.tsv,.txt" style="display:none;">
 
-  <div class="template-bar">
-    <span>💡 Download a starter template showing UI, API, and Data test types.</span>
-    <div style="display:flex; gap:0.5rem;">
-      <button class="ghost" onclick="downloadTemplate('csv')">⬇️ CSV template</button>
-      <button class="ghost" onclick="downloadTemplate('tsv')">⬇️ TSV template</button>
+    <div class="card">
+      <div class="card-title">📷 From screenshot (OCR)</div>
+      <div class="card-desc" style="margin-bottom:14px;">Drop or paste an error screenshot. Tesseract.js extracts the text locally and indexes it.</div>
+      <div class="drop" id="ocr-drop">
+        <strong>Drop an image here</strong>
+        <span>PNG · JPG · WEBP · or paste from clipboard</span>
+      </div>
+      <input type="file" id="ocr-file" accept="image/*" style="display:none;">
+      <div id="ocr-status" class="status-line" style="display:none; margin-top:12px;"></div>
+      <div id="ocr-preview" style="margin-top:12px;"></div>
     </div>
-  </div>
 
-  <div id="gen-output"></div>
+    <div id="add-status" class="status-line" style="display:none;"></div>
+  </section>
 
-  <div class="schema-hint">
-    <div class="row"><strong>Accepted formats:</strong> <code>.xlsx</code> <code>.xls</code> <code>.csv</code> <code>.tsv</code></div>
-    <div class="row"><strong>Columns:</strong> <code>id</code> <code>scenario</code> <code>step</code> <code>action</code> <code>method</code> <code>url</code> <code>headers</code> <code>body</code> <code>selector</code> <code>value</code> <code>expected</code> <code>jsonpath</code></div>
-    <div class="row"><strong>🧪 UI actions:</strong> <code>goto</code> <code>fill</code> <code>click</code> <code>expectText</code> <code>expectVisible</code> <code>expectUrl</code> <code>wait</code></div>
-    <div class="row"><strong>🔌 API actions:</strong> <code>apiRequest</code> <code>expectStatus</code> <code>expectJson</code> <code>expectHeader</code></div>
-    <div class="row"><strong>📊 Data actions:</strong> <code>runSql</code> <code>expectRowCount</code> <code>expectNoNulls</code> <code>expectUnique</code> <code>expectValue</code></div>
-    <div class="row"><strong>CSV tip:</strong> Wrap values with commas or quotes in double quotes — e.g. <code>"Welcome, admin"</code></div>
-  </div>
+  <!-- ============ INSIGHTS ============ -->
+  <section class="panel" id="panel-insights">
+    <div id="insights-root">
+      <div class="hero">
+        <div class="hero-eyebrow">Insights</div>
+        <h1 class="hero-title">Static analysis.</h1>
+        <p class="hero-desc">Scan a repo and this page fills in automatically with architecture, critical files, service flows, and code smells — interpreted by AI.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BENCH ============ -->
+  <section class="panel" id="panel-bench">
+    <div class="hero">
+      <div class="hero-eyebrow">Bench</div>
+      <h1 class="hero-title">Generate data. <em>Measure performance.</em></h1>
+      <p class="hero-desc">Create realistic dummy data, run load tests against any endpoint, and export everything as PDF, JSON, or CSV.</p>
+    </div>
+
+    <div class="subtabs">
+      <button class="subtab active" data-bench="data">Dummy Data</button>
+      <button class="subtab" data-bench="load">Load Test</button>
+      <button class="subtab" data-bench="reports">Reports</button>
+    </div>
+
+    <!-- DUMMY DATA -->
+    <div id="bench-data">
+      <div class="card">
+        <div class="card-title">Generate dummy data</div>
+        <div class="card-desc">Pick a schema, set a row count, and ERplorer builds a realistic dataset.</div>
+
+        <div class="field" style="margin-top:14px;">
+          <label class="field-label">Template</label>
+          <select class="select" id="bench-template"></select>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Rows</label>
+            <input type="number" class="input" id="bench-count" value="100" min="1" max="50000">
+          </div>
+          <div class="field">
+            <label class="field-label">Seed (optional)</label>
+            <input type="number" class="input" id="bench-seed" value="42">
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="bench-generate" style="flex:1;">Generate</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button class="btn secondary" data-bench-export="csv" style="flex:1;">⬇ CSV</button>
+          <button class="btn secondary" data-bench-export="json" style="flex:1;">⬇ JSON</button>
+          <button class="btn secondary" data-bench-export="sql" style="flex:1;">⬇ SQL</button>
+          <button class="btn secondary" data-bench-export="xlsx" style="flex:1;">⬇ XLSX</button>
+        </div>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%);">
+        <div class="card-title">🤖 Describe it in English</div>
+        <div class="card-desc">Tell AI what data you need. It designs the schema and generates realistic rows — domain-aware (healthcare, fintech, ecommerce, etc.).</div>
+
+        <div class="field" style="margin-top:14px;">
+          <textarea class="textarea" id="bench-ai-data-prompt" style="min-height:70px;" placeholder="Example: 50 users for a healthcare SaaS in India — patients with name, age, condition, city, insurance provider, last visit date"></textarea>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Rows</label>
+            <input type="number" class="input" id="bench-ai-data-count" value="25" min="1" max="200">
+          </div>
+        </div>
+
+        <button class="btn accent full" id="bench-ai-data-generate">🤖 Generate with AI</button>
+        <div id="bench-ai-data-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-data-preview" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="insights-card">
+        <div class="card-title">Preview</div>
+        <div id="bench-data-preview" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- LOAD TEST -->
+    <div id="bench-load" style="display:none;">
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%);">
+        <div class="card-title">🤖 Let AI suggest scenarios</div>
+        <div class="card-desc">Reads your Insights digest and proposes load tests worth running.</div>
+        <button class="btn accent full" id="bench-ai-suggest" style="margin-top:14px;">🤖 Suggest load scenarios</button>
+        <div id="bench-ai-suggest-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-suggest-list" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Load test</div>
+        <div class="card-desc">Fire N concurrent requests and measure latency + throughput.</div>
+
+        <div class="field" style="margin-top:14px;">
+          <label class="field-label">URL</label>
+          <input type="text" class="input" id="bench-load-url" placeholder="https://api.example.com/health">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Method</label>
+            <select class="select" id="bench-load-method">
+              <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Concurrency</label>
+            <input type="number" class="input" id="bench-load-concurrency" value="5" min="1" max="500">
+          </div>
+          <div class="field">
+            <label class="field-label">Duration (s)</label>
+            <input type="number" class="input" id="bench-load-duration" value="10" min="1" max="120">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Headers (JSON)</label>
+          <textarea class="textarea" id="bench-load-headers" style="min-height:60px;" placeholder='{"Authorization": "Bearer token"}'></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Body (for POST/PUT/PATCH)</label>
+          <textarea class="textarea" id="bench-load-body" style="min-height:60px;" placeholder='{"key": "value"}'></textarea>
+        </div>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; background:var(--bg-alt); border-radius:8px; font-size:13px; margin-bottom:14px; cursor:pointer;">
+          <input type="checkbox" id="bench-use-runner" style="margin-top:2px; accent-color:var(--accent);" disabled>
+          <span>Use runner for real concurrency (unlimited). <span id="bench-runner-note" style="display:block; font-size:11px; color:var(--muted); margin-top:4px;">Checking runner…</span></span>
+        </label>
+
+        <div class="row" style="gap:8px;">
+          <button class="btn" id="bench-load-run" style="flex:1;">▶ Run load test</button>
+          <button class="btn secondary" id="bench-load-stop" style="flex:0 0 auto; padding:0 20px;" disabled>Stop</button>
+        </div>
+
+        <div id="bench-load-status" class="status-line" style="margin-top:14px; display:none;"></div>
+        <div id="bench-load-live" style="margin-top:14px;"></div>
+      </div>
+
+      <div id="bench-load-results"></div>
+
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%); margin-top:14px;">
+        <div class="card-title">🤖 Interpret these results</div>
+        <div class="card-desc">After running a load test, let AI turn the numbers into a plain-English diagnosis.</div>
+        <button class="btn accent full" id="bench-ai-interpret-btn" style="margin-top:14px;">🤖 Interpret results</button>
+        <div id="bench-ai-interpret-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-interpret" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="bench-reports" style="display:none;">
+      <div class="card">
+        <div class="card-title">Saved reports</div>
+        <div class="card-desc">Every load test you run is saved here. Export the whole set or clear the list.</div>
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" onclick="ERplorerBench.exportAllReports()" style="flex:1;">⬇ Export all as JSON</button>
+        </div>
+      </div>
+      <div id="bench-reports-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
+  <section class="panel" id="panel-about">
+    <div class="hero">
+      <div class="hero-eyebrow">About</div>
+      <h1 class="hero-title">Built by a <em>Techno Agilist.</em></h1>
+      <p class="hero-desc">A hands-on tool from someone who has shipped code, broken builds, chased flaky tests, and sat in enough retrospectives to know what QA actually needs.</p>
+    </div>
+    <div class="profile-card">
+      <div class="profile-avatar">VS</div>
+      <div class="profile-info">
+        <div class="profile-name">Varakala Sai (Surya)</div>
+        <div class="profile-role">Techno Agilist · Dev Engineer · Strategic Consultant</div>
+        <div class="profile-meta">6+ years at Tata Consultancy Services<br>SAFe Scrum Master · QA → Full Stack → Java Backend → Agile</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">What makes ERplorer unique</div>
+      <div style="margin-top:14px; display:flex; flex-direction:column; gap:14px;">
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🧬 Error DNA</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Clusters similar errors with a "×N" badge. See one card instead of 47 near-duplicates.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">💥 Blast Radius</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Shows every other file that references the same identifier. Instant impact analysis.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Fix Recipe</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">16 curated rules for common errors. Deterministic, not AI guesswork.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📄 PDF Reports</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Export search results to a styled PDF for tickets, standup, or management.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📷 OCR + Screenshots</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Paste an error screenshot — Tesseract.js extracts text locally. Screenshot any result with html2canvas.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔍 AI Insights</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Static analysis with AI interpretation: architecture, critical files, service flow, code smells, and next steps.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">⚡ Bench</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Generate dummy data, run load tests, and export PDF/JSON/CSV reports — all in-browser.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">▶ Real browser runs</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Optional local runner drives Playwright + real HTTP, records WebM video, and produces a queryable session log.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔗 Share Link</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Every search is URL-encoded. Copy, send, reopen — same results.</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Connect</div>
+      <div class="social-grid">
+        <a href="https://github.com/suryasticsai" target="_blank" class="social-link"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg><span>GitHub<span class="handle">@suryasticsai</span></span></a>
+        <a href="https://linkedin.com/in/suryasticsai" target="_blank" class="social-link"><svg viewBox="0 0 24 24"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg><span>LinkedIn<span class="handle">/in/suryasticsai</span></span></a>
+        <a href="https://suryasticsai.medium.com" target="_blank" class="social-link"><svg viewBox="0 0 24 24"><path d="M2 6h4l4 10 4-10h4l-6 14h-4z"/><circle cx="20" cy="7" r="2"/></svg><span>Medium<span class="handle">@suryasticsai</span></span></a>
+        <a href="https://huggingface.co/suryasticsai" target="_blank" class="social-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h.01M16 12h.01M9 16c1 1 2 1.5 3 1.5s2-.5 3-1.5"/></svg><span>HuggingFace<span class="handle">@suryasticsai</span></span></a>
+        <a href="https://instagram.com/suryasticsai" target="_blank" class="social-link"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17" cy="7" r="1" fill="currentColor"/></svg><span>Instagram<span class="handle">@suryasticsai</span></span></a>
+        <a href="mailto:sai.varakala13@gmail.com" class="social-link"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Email<span class="handle">sai.varakala13@gmail.com</span></span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section class="panel" id="panel-settings">
+    <div class="hero">
+      <div class="hero-eyebrow">Settings</div>
+      <h1 class="hero-title">Configure.</h1>
+      <p class="hero-desc">Everything below stays in your browser.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">About me</div>
+      <div class="card-desc" style="color:var(--ink-2); margin-top:8px;">
+        I've been a QA engineer, a full stack developer, a Java backend dev, and a Scrum Master. In every one of those roles, I watched teams lose hours to the same problem: an error message in a CI log that nobody could locate in the codebase.<br><br>
+        ERplorer is my answer. Paste an error, get the file and line. No IDE, no clone, no context switch. Built entirely in vanilla JavaScript so it runs from any browser, on any machine, for any team — no install, no build, no cost.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Appearance</div>
+      <div class="card-desc" style="margin-bottom:14px;">Choose light or dark. Saved to this browser.</div>
+      <div class="subtabs" style="margin-bottom:0;">
+        <button class="subtab" id="theme-light-btn" onclick="ERplorer.setTheme('light')">Light</button>
+        <button class="subtab" id="theme-dark-btn" onclick="ERplorer.setTheme('dark')">Dark</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Runner</div>
+      <div class="card-desc">Optional local Node service that drives real Playwright browsers and fires real HTTP requests. Start it with <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">cd erplorer-runner &amp;&amp; npm start</code>.</div>
+      <div id="runner-status" class="status-line" style="margin-top:14px;">Checking runner…</div>
+    </div>
+    <div class="card">
+      <div class="card-title">GitHub token</div>
+      <div class="card-desc" style="margin-bottom:14px;">Optional. Enables scanning private repos. Stored in sessionStorage only.</div>
+      <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
+      <div class="row">
+        <button class="btn" onclick="ERplorer.saveToken()">Save</button>
+        <button class="btn secondary" onclick="ERplorer.clearToken()">Clear</button>
+      </div>
+      <div id="token-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Config</div>
+      <div class="card-desc">Loaded from <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">erplorer.config.js</code>. Edit that file to change endpoints, webhooks, runner URL, or MCP.</div>
+      <div id="config-display" class="status-line" style="margin-top:14px; font-family:ui-monospace,monospace; font-size:11px; white-space:pre-wrap;"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">AI endpoints</div>
+      <div id="api-status" class="status-line">Checking AI endpoint…</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Local data</div>
+      <div class="card-desc" style="margin-bottom:14px;">Search history and patterns live in IndexedDB.</div>
+      <button class="btn danger full" onclick="ERplorer.resetAllLocalData()">Reset all local data</button>
+    </div>
+  </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="app-footer">
+    <div class="footer-brand">
+      <img src="erplorer-logo.png" alt="ERplorer" class="footer-logo">
+      <div class="footer-brand-text">
+        <div class="footer-title"><span class="er">ER</span>plorer</div>
+        <div class="footer-tagline">Error Resolution Explorer · v1.2</div>
+      </div>
+    </div>
+
+    <div class="footer-widgets">
+      <div class="footer-widget clock-widget">
+        <div class="widget-label">Local time</div>
+        <div class="widget-value" id="footer-clock">--:--:--</div>
+        <div class="widget-sub" id="footer-date">—</div>
+      </div>
+
+      <div class="footer-widget timer-widget">
+        <div class="widget-label">Session timer</div>
+        <div class="widget-value" id="footer-session-timer">00:00:00</div>
+        <div class="widget-sub">since you opened ERplorer</div>
+      </div>
+
+      <div class="footer-widget countdown-widget">
+        <div class="widget-label">Countdown</div>
+        <div class="widget-row">
+          <input type="number" id="countdown-minutes" value="5" min="1" max="120" class="countdown-input">
+          <span class="countdown-unit">min</span>
+          <button class="countdown-btn" id="countdown-start" onclick="ERplorer.startCountdown()">▶</button>
+          <button class="countdown-btn secondary" id="countdown-reset" onclick="ERplorer.resetCountdown()">↺</button>
+        </div>
+        <div class="widget-value" id="footer-countdown">00:00</div>
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <span>Built with vanilla JavaScript · Zero build step · Zero servers</span>
+      <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
+    </div>
+  </footer>
+
 </div>
 
-<!-- ============ SETTINGS ============ -->
-<div class="panel" id="panel-settings">
-  <h3 style="margin-bottom:0.75rem;">GitHub Token (optional)</h3>
-  <p style="color:var(--muted); font-size:0.9rem; margin-bottom:1rem;">
-    Paste a Personal Access Token to enable live GitHub API queries. Stored in
-    <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;">sessionStorage</code> only.
-  </p>
-  <input type="password" id="token-input" placeholder="ghp_xxxxxxxxxxxx">
-  <div style="margin-top:1rem; display:flex; gap:0.5rem;">
-    <button onclick="saveToken()">Save Token</button>
-    <button class="secondary" onclick="clearToken()">Clear Token</button>
-  </div>
-  <div id="token-status" class="status" style="margin-top:1rem;"></div>
+<div class="toast" id="toast"></div>
 
-  <h3 style="margin-top:2rem; margin-bottom:0.75rem;">AI Assistant</h3>
-  <p style="color:var(--muted); font-size:0.9rem;">
-    The "Ask AI" tab uses <a href="https://github.com/suryasticsai/Consoleena" target="_blank" style="color:var(--signal)">Consoleena</a>
-    for natural language queries. It runs entirely in your browser — no data leaves your machine except the query text sent to the
-    configured LLM endpoint.
-  </p>
-  <div id="consoleena-status" class="status" style="margin-top:1rem;">⏳ Checking Consoleena...</div>
-</div>
-
-<div class="footer">
-  <span>ERplorer — Error Resolution Explorer</span>
-  <span>Built with vanilla JS · <a href="https://github.com/suryasticsai/erplorer" target="_blank">View on GitHub</a></span>
-</div>
-
+<!-- Core libraries -->
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/suryasticsai/Consoleena@main/consoleena.min.js" onerror="window.__consoleenaFailed=true"></script>
 
+<!-- App + config + modules -->
+<script src="erplorer.config.js"></script>
+<script src="erplorer.js" defer></script>
+<script src="erplorer-insights.js" defer></script>
+<script src="erplorer-bench.js" defer></script>
+<script src="erplorer-bench-ai.js" defer></script>
+<script src="erplorer-runner-client.js" defer></script>
+
+<!-- Footer widgets (clock, session timer, countdown) -->
 <script>
-// ============================================================
-// 1. OCTOKIT
-// ============================================================
-let OctokitClass = null;
-(async () => {
-  try { const m = await import("https://esm.sh/@octokit/rest"); OctokitClass = m.Octokit; }
-  catch (e) { console.warn("⚠️ Octokit unavailable:", e.message); }
-})();
-function getOctokit() {
-  if (!OctokitClass) return null;
-  const token = sessionStorage.getItem('gh_token');
-  return new OctokitClass(token ? { auth: token } : {});
-}
-
-// ============================================================
-// 2. SEARCH INDEX
-// ============================================================
-let flexIndex = null, documents = [];
-
-async function loadIndex() {
-  const status = document.getElementById('index-status');
-  try {
-    const res = await fetch('search-index.json', { cache: 'no-cache' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    documents = await res.json();
-
-    flexIndex = new FlexSearch.Document({
-      document: { id: 'id', index: ['text'], store: true },
-      tokenize: 'forward', resolution: 9, cache: true
-    });
-    documents.forEach((doc, i) => flexIndex.add({ ...doc, id: i }));
-
-    const counts = documents.reduce((a, d) => { const t = d.type || 'code'; a[t] = (a[t]||0)+1; return a; }, {});
-    const summary = Object.entries(counts).map(([k,v]) => `${v} ${k}`).join(' · ');
-    status.innerHTML = `✅ Loaded <strong>${documents.length}</strong> entries <span style="color:#94A3B8">(${summary})</span>`;
-
-    window.erplorerIndex = documents;
-    tryConsoleenaInit();
-  } catch (err) {
-    status.innerHTML = `⚠️ No <code>search-index.json</code> found. Generator and Add Content still work.<br><small style="color:#94A3B8">${err.message}</small>`;
-    documents = [];
-    flexIndex = new FlexSearch.Document({
-      document: { id: 'id', index: ['text'], store: true },
-      tokenize: 'forward', resolution: 9, cache: true
-    });
-    tryConsoleenaInit();
-  }
-}
-loadIndex();
-
-// ============================================================
-// 3. EXACT SEARCH
-// ============================================================
-const searchInput = document.getElementById('search-input');
-const resultsEl = document.getElementById('results');
-let debounce;
-searchInput.addEventListener('input', () => { clearTimeout(debounce); debounce = setTimeout(runSearch, 180); });
-
-function runSearch() {
-  const q = searchInput.value.trim();
-  resultsEl.innerHTML = '';
-  if (q.length < 2 || !flexIndex) return;
-
-  const raw = flexIndex.search(q, { enrich: true });
-  const hits = raw.flatMap(r => r.result).slice(0, 20);
-  if (!hits.length) { resultsEl.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No matches found.</p>'; return; }
-
-  hits.forEach(({ id }) => {
-    const doc = documents[id];
-    if (!doc) return;
-    const el = document.createElement('div');
-    el.className = `result ${doc.type || 'code'}`;
-
-    let snippet = doc.context || doc.text || '';
-    const re = new RegExp(`(${escapeRegex(q)})`, 'gi');
-    snippet = escapeHtml(snippet).replace(re, '<span class="highlight">$1</span>');
-
-    el.innerHTML = `
-      <div class="meta">
-        <strong>${escapeHtml(doc.file || 'unknown')}</strong>${doc.line ? ':' + doc.line : ''}
-        <span class="badge">${doc.type || 'code'}</span>
-        ${doc.testTitle ? `<em>— ${escapeHtml(doc.testTitle)}</em>` : ''}
-      </div>
-      <div class="snippet">${snippet}</div>`;
-    resultsEl.appendChild(el);
-  });
-}
-function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function escapeHtml(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-
-// ============================================================
-// 4. MODE TOGGLE
-// ============================================================
-function setMode(mode) {
-  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector(`.mode-btn[data-mode="${mode}"]`).classList.add('active');
-  document.getElementById('mode-exact').style.display = mode === 'exact' ? 'block' : 'none';
-  document.getElementById('mode-ai').style.display = mode === 'ai' ? 'block' : 'none';
-  if (mode === 'ai') setTimeout(() => document.getElementById('nl-input').focus(), 50);
-  if (mode === 'exact') setTimeout(() => document.getElementById('search-input').focus(), 50);
-}
-
-// ============================================================
-// 5. CONSOLEENA (natural language)
-// ============================================================
-let consoleenaReady = false;
-
-function tryConsoleenaInit() {
-  const aiBtn = document.getElementById('ai-mode-btn');
-  const csStatus = document.getElementById('consoleena-status');
-
-  if (window.__consoleenaFailed || typeof window.Consoleena === 'undefined') {
-    csStatus.innerHTML = '⚠️ Consoleena not available. Exact search still works.';
-    aiBtn.disabled = true;
-    aiBtn.title = 'Consoleena failed to load';
-    return;
-  }
-  try {
-    if (typeof Consoleena.set === 'function') {
-      Consoleena.set('erplorerIndex', documents);
-      Consoleena.set('entryCount', documents.length);
-    }
-    consoleenaReady = true;
-    aiBtn.disabled = false;
-    aiBtn.title = 'Ask questions in plain English';
-    csStatus.innerHTML = `✅ Consoleena loaded — ${documents.length} entries available for AI queries.`;
-  } catch (err) {
-    csStatus.innerHTML = `⚠️ Consoleena init error: ${escapeHtml(err.message)}`;
-    aiBtn.disabled = true;
-  }
-}
-
-async function askNatural() {
-  const input = document.getElementById('nl-input');
-  const answerEl = document.getElementById('nl-answer');
-  const q = input.value.trim();
-  if (!q) return;
-
-  answerEl.innerHTML = '<div class="ai-answer loading">Thinking…</div>';
-  if (!consoleenaReady) {
-    answerEl.innerHTML = '<div class="ai-answer">⚠️ Consoleena isn\'t available. Switch to <strong>Exact search</strong> to search by literal text.</div>';
-    return;
-  }
-  try {
-    let answer = await Consoleena.ask(q);
-    const formatted = typeof answer === 'string'
-      ? escapeHtml(answer).replace(/\n/g, '<br>')
-      : escapeHtml(JSON.stringify(answer, null, 2));
-    answerEl.innerHTML = `<div class="ai-answer">${formatted}</div>`;
-    if (typeof Consoleena.highlight === 'function') { try { Consoleena.highlight('.result'); } catch {} }
-  } catch (err) {
-    answerEl.innerHTML = `<div class="ai-answer">❌ ${escapeHtml(err.message)}</div>`;
-  }
-}
-document.getElementById('nl-input').addEventListener('keydown', e => { if (e.key === 'Enter') askNatural(); });
-
-// ============================================================
-// 6. TABS
-// ============================================================
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById(`panel-${tab.dataset.tab}`).classList.add('active');
-  });
-});
-
-// ============================================================
-// 7. FILE → PLAYWRIGHT / PYTEST
-// ============================================================
-const dropZone = document.getElementById('drop-zone');
-const fileInput = document.getElementById('file-input');
-const genOut = document.getElementById('gen-output');
-const ACCEPTED = ['xlsx','xls','csv','tsv','txt'];
-
-dropZone.addEventListener('click', () => fileInput.click());
-dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('over'); });
-dropZone.addEventListener('dragleave', () => dropZone.classList.remove('over'));
-dropZone.addEventListener('drop', e => {
-  e.preventDefault(); dropZone.classList.remove('over');
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
-});
-fileInput.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-
-function getExt(name) { return name.split('.').pop().toLowerCase(); }
-
-function handleFile(file) {
-  const ext = getExt(file.name);
-  if (!ACCEPTED.includes(ext)) {
-    genOut.innerHTML = `<div class="error-list">❌ Unsupported file ".${escapeHtml(ext)}". Use: ${ACCEPTED.map(e => '.'+e).join(', ')}</div>`;
-    return;
-  }
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      let wb;
-      if (['csv','tsv','txt'].includes(ext)) {
-        wb = XLSX.read(e.target.result, { type: 'string', raw: false });
-      } else {
-        wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-      }
-      const sheet = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' });
-      if (!rows.length) { genOut.innerHTML = '<div class="error-list">❌ No rows found.</div>'; return; }
-      renderGenerated(rows, file.name);
-    } catch (err) {
-      genOut.innerHTML = `<div class="error-list">❌ Failed to parse <strong>${escapeHtml(file.name)}</strong>: ${escapeHtml(err.message)}</div>`;
-    }
-  };
-  if (['csv','tsv','txt'].includes(ext)) reader.readAsText(file, 'utf-8');
-  else reader.readAsArrayBuffer(file);
-}
-
-const ACTIONS = {
-  UI:   ['goto','fill','click','expectText','expectVisible','expectUrl','wait'],
-  API:  ['apiRequest','expectStatus','expectJson','expectHeader'],
-  DATA: ['runSql','expectRowCount','expectNoNulls','expectUnique','expectValue']
-};
-const ALL_ACTIONS = [...ACTIONS.UI, ...ACTIONS.API, ...ACTIONS.DATA];
-const kindOf = a => ACTIONS.UI.includes(a) ? 'ui'
-                  : ACTIONS.API.includes(a) ? 'api'
-                  : ACTIONS.DATA.includes(a) ? 'data' : 'ui';
-
-function renderGenerated(rows, filename) {
-  const cases = {}; const errors = [];
-
-  rows.forEach((row, i) => {
-    if (!row.id) return;
-    Object.keys(row).forEach(k => { row[k] = String(row[k] ?? '').trim(); });
-    if (!row.action) { errors.push(`Row ${i+2}: missing action`); return; }
-    if (!ALL_ACTIONS.includes(row.action)) {
-      errors.push(`Row ${i+2}: unknown action "${row.action}". Valid: ${ALL_ACTIONS.join(', ')}`);
-      return;
-    }
-    if (!cases[row.id]) cases[row.id] = { id: row.id, scenario: row.scenario || row.id, steps: [] };
-    cases[row.id].steps.push(row);
-  });
-
-  if (errors.length) {
-    genOut.innerHTML = `<div class="error-list"><strong>❌ Schema errors:</strong><ul>${errors.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul></div>`;
-    return;
-  }
-
-  const specs = [];
-  Object.values(cases).forEach(tc => {
-    const pw = tc.steps.filter(s => ['ui','api'].includes(kindOf(s.action)));
-    const data = tc.steps.filter(s => kindOf(s.action) === 'data');
-    if (pw.length)   specs.push({ name: `${tc.id}.spec.js`, code: buildPlaywright(tc, pw, filename),
-                                  kind: 'playwright', kindLabel: pw.every(s=>kindOf(s.action)==='api') ? 'api' : 'ui' });
-    if (data.length) specs.push({ name: `${tc.id}_test.py`, code: buildPytest(tc, data, filename),
-                                  kind: 'pytest', kindLabel: 'data' });
-  });
-
-  if (!specs.length) { genOut.innerHTML = '<p style="color:var(--muted);padding:1rem 0;">No test cases found.</p>'; return; }
-
-  genOut.innerHTML = `
-    <h3 style="margin-top:1.75rem;">✅ Generated ${specs.length} file(s) from ${escapeHtml(filename)}</h3>
-    <div class="grid">
-      ${specs.map((s, i) => `
-        <div class="spec-card">
-          <strong>${escapeHtml(s.name)}</strong>
-          <div class="steps">${s.kind === 'playwright' ? 'Playwright' : 'pytest + PySpark'}</div>
-          <span class="kind ${s.kindLabel}">${s.kindLabel}</span>
-          <button class="secondary" data-spec="${i}">⬇️ Download</button>
-        </div>`).join('')}
-    </div>
-    <h4 style="margin-top:1.75rem;">Preview: ${escapeHtml(specs[0].name)}</h4>
-    <div class="preview">${escapeHtml(specs[0].code)}</div>
-  `;
-
-  genOut.querySelectorAll('button[data-spec]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const s = specs[parseInt(btn.dataset.spec)];
-      downloadFile(s.name, s.code, s.kind === 'playwright' ? 'text/javascript' : 'text/x-python');
-    });
-  });
-}
-
-function buildPlaywright(tc, steps, sourceFile) {
-  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-  const lines = steps.map(s => {
-    const { action, method='', url='', headers='', body='', selector='', value='', expected='', jsonpath='' } = s;
-    switch (action) {
-      case 'goto':          return `  await page.goto('${esc(url || value)}');`;
-      case 'fill':          return `  await page.fill('${esc(selector)}', '${esc(value)}');`;
-      case 'click':         return `  await page.click('${esc(selector)}');`;
-      case 'expectText':    return `  await expect(page.locator('${esc(selector)}')).toContainText('${esc(expected || value)}');`;
-      case 'expectVisible': return `  await expect(page.locator('${esc(selector)}')).toBeVisible();`;
-      case 'expectUrl':     return `  await expect(page).toHaveURL(/${esc(url || value)}/);`;
-      case 'wait':          return `  await page.waitForTimeout(${Number(value) || 1000});`;
-      case 'apiRequest': {
-        const m = (method || 'GET').toUpperCase();
-        const opts = [];
-        if (headers) opts.push(`headers: ${headers}`);
-        if (body)    opts.push(`data: ${body}`);
-        const optsStr = opts.length ? `, { ${opts.join(', ')} }` : '';
-        return `  const response = await request.${m.toLowerCase()}('${esc(url)}'${optsStr});`;
-      }
-      case 'expectStatus':  return `  expect(response.status()).toBe(${Number(expected) || 200});`;
-      case 'expectJson':    return `  expect((await response.json())${jsonPathToJs(jsonpath)}).toBe('${esc(expected)}');`;
-      case 'expectHeader':  return `  expect(response.headers()['${esc(selector.toLowerCase())}']).toBe('${esc(expected)}');`;
-      default:              return `  // TODO: unsupported "${esc(action)}"`;
-    }
-  }).join('\n');
-
-  return `// AUTO-GENERATED from ${sourceFile} — do not edit manually
-const { test, expect } = require('@playwright/test');
-
-test('${esc(tc.id)}: ${esc(tc.scenario)}', async ({ page, request }) => {
-${lines}
-});
-`;
-}
-function jsonPathToJs(path) {
-  if (!path) return '';
-  return path.replace(/^[A-Za-z_$][\w$]*/, '').replace(/\[(\d+)\]/g, '[$1]');
-}
-
-function buildPytest(tc, steps, sourceFile) {
-  const esc = s => String(s).replace(/\\/g,'\\\\').replace(/"""/g,'\\"\\"\\"');
-  const setup = []; const tests = [];
-  let queryVar = null, queryCounter = 0;
-
-  steps.forEach(s => {
-    const { action, selector='', value='', expected='', jsonpath='' } = s;
-    switch (action) {
-      case 'runSql':
-        queryCounter++; queryVar = `result_${queryCounter}`;
-        setup.push(`${queryVar} = spark.sql("""${esc(value)}""").collect()`);
-        break;
-      case 'expectRowCount':
-        tests.push(`    assert len(${queryVar}) == ${Number(expected) || 0}, f"Expected ${esc(expected)} rows, got {len(${queryVar})}"`);
-        break;
-      case 'expectNoNulls':
-        tests.push(`    nulls = spark.sql("SELECT COUNT(*) AS c FROM ${esc(selector)} WHERE ${esc(selector)} IS NULL").collect()[0]['c']\n    assert nulls == 0, f"Found {nulls} NULLs in ${esc(selector)}"`);
-        break;
-      case 'expectUnique':
-        tests.push(`    dupes = spark.sql("SELECT ${esc(selector)}, COUNT(*) AS c FROM ${esc(selector)} GROUP BY ${esc(selector)} HAVING c > 1").collect()\n    assert len(dupes) == 0, f"Found {len(dupes)} duplicate values in ${esc(selector)}"`);
-        break;
-      case 'expectValue':
-        tests.push(`    assert str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip() == '${esc(expected)}', f"Expected '${esc(expected)}', got '{str(${queryVar}[0]${jsonPathToPy(jsonpath)}).strip()}'"`);
-        break;
-    }
-  });
-
-  return `# AUTO-GENERATED from ${sourceFile} — do not edit manually
-# Test type: Data validation (Databricks / PySpark)
-import pytest
-from pyspark.sql import SparkSession
-
-
-@pytest.fixture(scope="session")
-def spark():
-    return SparkSession.builder.appName("erplorer-tests").getOrCreate()
-
-
-def test_${tc.id.toLowerCase()}_${slug(tc.scenario)}(spark):
-    """${esc(tc.scenario)}"""
-${setup.map(l => '    ' + l).join('\n')}
-
-${tests.join('\n') || '    pass  # no assertions generated'}
-`;
-}
-function jsonPathToPy(path) {
-  if (!path) return '';
-  return path.replace(/\[(\d+)\]/g, '[$1]').replace(/\.([A-Za-z_$][\w$]*)/g, "['$1']");
-}
-function slug(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,''); }
-
-function downloadFile(name, content, mime = 'text/plain') {
-  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = name;
-  a.click();
-  URL.revokeObjectURL(a.href);
-}
-
-// ============================================================
-// 8. TEMPLATE DOWNLOAD
-// ============================================================
-const TEMPLATE_ROWS = [
-  ['id','scenario','step','action','method','url','headers','body','selector','value','expected','jsonpath'],
-  ['TC001','Login UI flow','1','goto','','/login','','','','','',''],
-  ['TC001','Login UI flow','2','fill','','','','','#username','admin','',''],
-  ['TC001','Login UI flow','3','fill','','','','','#password','secret123','',''],
-  ['TC001','Login UI flow','4','click','','','','','button[type=submit]','','',''],
-  ['TC001','Login UI flow','5','expectText','','','','','.dashboard','','Welcome admin',''],
-  ['TC002','Users API returns alice','1','apiRequest','GET','/api/users','{"Accept":"application/json"}','','','','',''],
-  ['TC002','Users API returns alice','2','expectStatus','','','','','','','200',''],
-  ['TC002','Users API returns alice','3','expectJson','','','','','','','alice','data[0].name'],
-  ['TC002','Users API returns alice','4','expectHeader','','','','','content-type','','application/json',''],
-  ['TC003','Users table has no nulls in email','1','runSql','','','','','','SELECT COUNT(*) AS c FROM users','',''],
-  ['TC003','Users table has no nulls in email','2','expectRowCount','','','','','','','1',''],
-  ['TC003','Users table has no nulls in email','3','expectNoNulls','','','','','users','','',''],
-  ['TC004','Migration added expected rows','1','runSql','','','','','','SELECT COUNT(*) FROM orders','',''],
-  ['TC004','Migration added expected rows','2','expectRowCount','','','','','','','10000','']
-];
-
-function csvEscape(v) {
-  const s = String(v ?? '');
-  return (s.includes(',') || s.includes('"') || s.includes('\n') || s.includes('\r'))
-    ? '"' + s.replace(/"/g,'""') + '"'
-    : s;
-}
-function downloadTemplate(format) {
-  const isTsv = format === 'tsv';
-  const body = TEMPLATE_ROWS.map(row => isTsv ? row.join('\t') : row.map(csvEscape).join(',')).join('\n');
-  downloadFile(`TEMPLATE.${isTsv ? 'tsv' : 'csv'}`, body, isTsv ? 'text/tab-separated-values' : 'text/csv');
-}
-
-// ============================================================
-// 9. SETTINGS
-// ============================================================
-function saveToken() {
-  const t = document.getElementById('token-input').value.trim();
-  if (t) { sessionStorage.setItem('gh_token', t); document.getElementById('token-status').innerHTML = '✅ Token saved.'; }
-}
-function clearToken() {
-  sessionStorage.removeItem('gh_token');
-  document.getElementById('token-input').value = '';
-  document.getElementById('token-status').innerHTML = '🗑️ Token cleared.';
-}
 (function () {
-  const e = sessionStorage.getItem('gh_token');
-  if (e) { document.getElementById('token-input').value = e; document.getElementById('token-status').innerHTML = '✅ Token loaded.'; }
-})();
+  'use strict';
 
-// ============================================================
-// 10. DYNAMIC INDEX — Crawl + Manual Fallbacks
-// ============================================================
-const RAGINA_CRAWL_API = 'https://ragina-crawler-ragina.vercel.app/api/crawl';
-const RAGINA_TIMEOUT_MS = 30000;
-
-const PARSE_PATTERNS = [
-  { type: 'error',         re: /(?:throw new Error|Error\(|console\.error)\s*\(\s*(?:'([^']+)'|"([^"]+)"|`([^`]+)`)/g },
-  { type: 'java-error',    re: /throw new \w*(?:Exception|Error)\s*\(\s*"([^"]+)"/g },
-  { type: 'java-error',    re: /LOG(?:GER)?\.(?:error|warn|severe)\s*\(\s*(?:[^,)]+,\s*)?"([^"]+)"/gi },
-  { type: 'python-error',  re: /raise \w+(?:Error|Exception)\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
-  { type: 'python-error',  re: /dbutils\.notebook\.exit\s*\(\s*(?:f?'([^']+)'|f?"([^"]+)")/g },
-  { type: 'sql-error',     re: /RAISE\s+EXCEPTION\s+'([^']+)'/gi },
-  { type: 'sql-error',     re: /\b(INVALID_FORMAT|PATH_NULL|MALFORMED_FILE_REF|TABLE_OR_VIEW_NOT_FOUND|PARSE_SYNTAX_ERROR|UNRESOLVED_COLUMN)\b/g },
-  { type: 'config-error',  re: /^\s*(?:error|failure|reason|message)\s*:\s*["']?([^"'\n#]+)/gim }
-];
-
-function detectType(filename) {
-  const ext = (filename.split('.').pop() || '').toLowerCase();
-  if (['java','kt','groovy','scala'].includes(ext)) return 'java-error';
-  if (['py'].includes(ext)) return 'python-error';
-  if (['sql'].includes(ext)) return 'sql-error';
-  if (['yaml','yml','properties','env','json'].includes(ext)) return 'config-error';
-  return 'code';
-}
-
-function parseText(text, sourceName) {
-  const entries = [];
-  const lines = text.split('\n');
-  const defaultType = detectType(sourceName);
-
-  for (const { type, re } of PARSE_PATTERNS) {
-    re.lastIndex = 0;
-    let m;
-    while ((m = re.exec(text)) !== null) {
-      let message = null;
-      for (let i = 1; i < m.length; i++) if (m[i]) { message = m[i]; break; }
-      if (!message || message.trim().length < 3) continue;
-
-      const lineNum = text.substring(0, m.index).split('\n').length;
-      const start = Math.max(0, lineNum - 3);
-      const end = Math.min(lines.length, lineNum + 2);
-
-      entries.push({
-        type: type || defaultType,
-        text: message.trim(),
-        file: sourceName,
-        line: lineNum,
-        context: lines.slice(start, end).join('\n')
-      });
+  // ---------- Live clock ----------
+  function updateClock() {
+    const now = new Date();
+    const timeEl = document.getElementById('footer-clock');
+    const dateEl = document.getElementById('footer-date');
+    if (timeEl) {
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      timeEl.textContent = `${hh}:${mm}:${ss}`;
+    }
+    if (dateEl) {
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      dateEl.textContent = `${days[now.getDay()]} · ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
     }
   }
-  return entries;
-}
+  updateClock();
+  setInterval(updateClock, 1000);
 
-function appendToIndex(newEntries, sourceLabel) {
-  if (!newEntries.length) { showAddStatus('warn', `No errors found in ${sourceLabel}.`); return 0; }
-  const baseId = documents.length;
-  newEntries.forEach((doc, i) => {
-    documents.push(doc);
-    if (flexIndex) flexIndex.add({ ...doc, id: baseId + i });
-  });
-  showAddStatus('ok', `✅ Added ${newEntries.length} entries from ${sourceLabel}. Total: ${documents.length}.`);
-  return newEntries.length;
-}
-
-function showAddStatus(kind, html) {
-  const el = document.getElementById('add-status');
-  el.style.display = 'block';
-  el.innerHTML = html;
-  el.style.background = kind === 'ok' ? '#DCFCE7' : kind === 'warn' ? '#FEF3C7' : '#FEE2E2';
-  el.style.color = kind === 'ok' ? '#166534' : kind === 'warn' ? '#92400E' : '#991B1B';
-}
-
-function setAddLoading(html) {
-  const el = document.getElementById('add-status');
-  el.style.display = 'block';
-  el.innerHTML = `<span class="spinner"></span>${html}`;
-  el.style.background = '#F1F5F9';
-  el.style.color = '#64748B';
-}
-
-// ============================================================
-// TIER 1 — RAGina Crawl API
-// ============================================================
-async function tryTier1Crawl() {
-  const url = document.getElementById('crawl-url').value.trim();
-  if (!url) return;
-  if (!/^https?:\/\//.test(url)) { showAddStatus('error', '❌ URL must start with http:// or https://'); return; }
-
-  setAddLoading(`Crawling ${url}...`);
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), RAGINA_TIMEOUT_MS);
-
-  try {
-    const res = await fetch(RAGINA_CRAWL_API, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, maxPages: 20 }),
-      signal: controller.signal
-    });
-    clearTimeout(timer);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-    const data = await res.json();
-    const pages = data.pages || data.results || (Array.isArray(data) ? data : []);
-    if (!pages.length) throw new Error('Crawl returned 0 pages');
-
-    const allEntries = [];
-    for (const p of pages) {
-      const text = p.text || p.content || p.markdown || '';
-      const src = p.url || p.title || url;
-      allEntries.push(...parseText(text, src));
-    }
-
-    if (!allEntries.length) throw new Error('No errors found in crawled pages');
-    appendToIndex(allEntries, `${pages.length} crawled pages`);
-  } catch (err) {
-    clearTimeout(timer);
-    showAddStatus('error',
-      `❌ Tier 1 (crawl) failed: ${escapeHtml(err.message)}.<br>
-       <strong>Try Tier 2</strong> (GitHub repo scan) or <strong>Tier 4</strong> (paste text) below.`);
+  // ---------- Session timer ----------
+  const sessionStart = Date.now();
+  function updateSessionTimer() {
+    const el = document.getElementById('footer-session-timer');
+    if (!el) return;
+    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+    const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    el.textContent = `${hh}:${mm}:${ss}`;
   }
-}
+  updateSessionTimer();
+  setInterval(updateSessionTimer, 1000);
 
-// ============================================================
-// TIER 2 — GitHub Repo Scan via Octokit
-// ============================================================
-async function tryTier2Repo() {
-  const repoInput = document.getElementById('repo-scan').value.trim();
-  if (!repoInput) return;
-  const parts = repoInput.replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').split('/');
-  if (parts.length < 2) { showAddStatus('error', '❌ Format must be owner/repo'); return; }
+  // ---------- Countdown ----------
+  let countdownEnd = 0;
+  let countdownTick = null;
 
-  const [owner, repo] = parts;
-  setAddLoading(`Fetching ${owner}/${repo}...`);
+  function updateCountdownDisplay() {
+    const el = document.getElementById('footer-countdown');
+    if (!el) return;
+    if (!countdownEnd) { el.textContent = '00:00'; return; }
+    const remaining = Math.max(0, Math.floor((countdownEnd - Date.now()) / 1000));
+    const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const ss = String(remaining % 60).padStart(2, '0');
+    el.textContent = `${mm}:${ss}`;
 
-  const octokit = getOctokit();
-  if (!octokit) {
-    showAddStatus('error', '❌ Octokit not loaded. Try Tier 3 (folder) or Tier 4 (paste).');
-    return;
-  }
-
-  try {
-    const { data: tree } = await octokit.rest.git.getTree({
-      owner, repo, tree_sha: 'main', recursive: 'true'
-    });
-
-    const files = (tree.tree || []).filter(f => {
-      if (f.type !== 'blob') return false;
-      if (f.size && f.size > 500000) return false;
-      return /\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(f.path);
-    }).slice(0, 200);
-
-    if (!files.length) { showAddStatus('warn', 'No indexable files found.'); return; }
-
-    setAddLoading(`Parsing ${files.length} files from ${owner}/${repo}...`);
-    const allEntries = [];
-
-    for (const f of files) {
+    if (remaining === 0) {
+      clearInterval(countdownTick);
+      countdownTick = null;
+      countdownEnd = 0;
+      el.classList.add('countdown-done');
       try {
-        const { data } = await octokit.rest.repos.getContent({ owner, repo, path: f.path });
-        const content = atob(data.content.replace(/\n/g, ''));
-        allEntries.push(...parseText(content, f.path));
-      } catch {}
-    }
-
-    if (!allEntries.length) { showAddStatus('warn', 'No errors extracted from repo.'); return; }
-    appendToIndex(allEntries, `${owner}/${repo} (${files.length} files)`);
-  } catch (err) {
-    showAddStatus('error',
-      `❌ Tier 2 (repo scan) failed: ${escapeHtml(err.message)}.<br>
-       <strong>If the repo is private</strong>, add a token in Settings. Or try Tier 3/4 below.`);
-  }
-}
-
-// ============================================================
-// TIER 3 — Local Folder / Files
-// ============================================================
-async function tryTier3Folder() {
-  if (!window.showDirectoryPicker) {
-    showAddStatus('warn', '⚠️ Folder picker not supported in this browser. Use "Or drop files" instead.');
-    return;
-  }
-  try {
-    const dir = await window.showDirectoryPicker();
-    setAddLoading(`Reading folder "${dir.name}"...`);
-    const allEntries = [];
-
-    async function walk(handle, prefix = '') {
-      for await (const entry of handle.values()) {
-        const path = prefix ? `${prefix}/${entry.name}` : entry.name;
-        if (entry.kind === 'directory') {
-          if (['node_modules', '.git', 'dist', 'build', 'target'].includes(entry.name)) continue;
-          await walk(entry, path);
-        } else if (entry.kind === 'file') {
-          if (!/\.(js|ts|jsx|tsx|java|kt|groovy|scala|py|sql|yaml|yml|json|properties|env|ipynb)$/i.test(entry.name)) continue;
-          try {
-            const file = await entry.getFile();
-            if (file.size > 500000) continue;
-            const text = await file.text();
-            allEntries.push(...parseText(text, path));
-          } catch {}
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('ERplorer · Timer done', { body: 'Your countdown has finished.' });
         }
+      } catch (e) { /* ignore */ }
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = '⏰ Countdown finished';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
       }
     }
-
-    await walk(dir);
-    if (!allEntries.length) { showAddStatus('warn', 'No errors found in folder.'); return; }
-    appendToIndex(allEntries, `folder "${dir.name}"`);
-  } catch (err) {
-    if (err.name === 'AbortError') return;
-    showAddStatus('error', `❌ Folder read failed: ${escapeHtml(err.message)}.`);
   }
-}
 
-function tryTier3File() {
-  document.getElementById('tier3-file').click();
-}
-
-document.getElementById('tier3-file').addEventListener('change', async e => {
-  const files = Array.from(e.target.files);
-  if (!files.length) return;
-  setAddLoading(`Reading ${files.length} files...`);
-
-  const allEntries = [];
-  for (const file of files) {
+  window.ERplorer = window.ERplorer || {};
+  window.ERplorer.startCountdown = function () {
+    const input = document.getElementById('countdown-minutes');
+    const mins = Math.max(1, Math.min(120, parseInt(input.value, 10) || 5));
+    countdownEnd = Date.now() + mins * 60 * 1000;
+    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    if (countdownTick) clearInterval(countdownTick);
+    countdownTick = setInterval(updateCountdownDisplay, 1000);
+    updateCountdownDisplay();
     try {
-      const text = await file.text();
-      allEntries.push(...parseText(text, file.name));
-    } catch {}
-  }
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (e) { /* ignore */ }
+  };
 
-  if (!allEntries.length) { showAddStatus('warn', 'No errors found in dropped files.'); return; }
-  appendToIndex(allEntries, `${files.length} files`);
-  e.target.value = '';
-});
-
-// ============================================================
-// TIER 4 — Paste Text
-// ============================================================
-function tryTier4Paste() {
-  const text = document.getElementById('tier4-text').value;
-  if (!text.trim()) { showAddStatus('warn', 'Nothing to add.'); return; }
-
-  const entries = parseText(text, 'pasted-content');
-  if (!entries.length) {
-    appendToIndex([{
-      type: 'code',
-      text: text.slice(0, 120),
-      file: 'pasted-content',
-      line: 1,
-      context: text.slice(0, 800)
-    }], 'pasted text');
-  } else {
-    appendToIndex(entries, 'pasted text');
-  }
-  document.getElementById('tier4-text').value = '';
-}
-
-// ============================================================
-// CRAWL API REACHABILITY CHECK
-// ============================================================
-(async () => {
-  try {
-    const r = await fetch(RAGINA_CRAWL_API, { method: 'OPTIONS' });
-    console.log(r.ok ? '✅ Crawl API reachable' : `⚠️ Crawl API responded ${r.status}`);
-  } catch {
-    console.warn('⚠️ Crawl API unreachable — Tier 1 will fall back to Tier 2/3/4.');
-  }
+  window.ERplorer.resetCountdown = function () {
+    if (countdownTick) clearInterval(countdownTick);
+    countdownTick = null;
+    countdownEnd = 0;
+    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    updateCountdownDisplay();
+  };
 })();
 </script>
 </body>

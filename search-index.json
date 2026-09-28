@@ -1,6 +1,223 @@
 [
   {
     "type": "error",
+    "text": "both AI endpoints failed",
+    "file": "erplorer-bench-ai.js",
+    "line": 119,
+    "context": "    }\n\n    throw new Error('both AI endpoints failed');\n  }\n"
+  },
+  {
+    "type": "error",
+    "text": "AI returned unparseable JSON",
+    "file": "erplorer-bench-ai.js",
+    "line": 134,
+    "context": "        try { return JSON.parse(m[0]); } catch (e2) { /* fall through */ }\n      }\n      throw new Error('AI returned unparseable JSON');\n    }\n  }"
+  },
+  {
+    "type": "error",
+    "text": "AI response missing columns or rows",
+    "file": "erplorer-bench-ai.js",
+    "line": 174,
+    "context": "\n      if (!parsed.columns || !Array.isArray(parsed.rows)) {\n        throw new Error('AI response missing columns or rows');\n      }\n"
+  },
+  {
+    "type": "error",
+    "text": "AI returned no scenarios",
+    "file": "erplorer-bench-ai.js",
+    "line": 280,
+    "context": "      const parsed = parseJSON(raw);\n      const scenarios = parsed.scenarios || [];\n      if (!scenarios.length) throw new Error('AI returned no scenarios');\n\n      A.scenarios = scenarios;"
+  },
+  {
+    "type": "error",
+    "text": "unknown template:",
+    "file": "erplorer-bench.js",
+    "line": 257,
+    "context": "  async function generateRows(templateKey, count, seed) {\n    const tpl = TEMPLATES[templateKey];\n    if (!tpl) throw new Error('unknown template: ' + templateKey);\n    const faker = await loadFaker();\n    if (seed) faker.seed(seed);"
+  },
+  {
+    "type": "error",
+    "text": "runner returned HTTP",
+    "file": "erplorer-bench.js",
+    "line": 489,
+    "context": "      body: JSON.stringify(opts)\n    });\n    if (!res.ok) throw new Error('runner returned HTTP ' + res.status);\n    return await res.json();\n  }"
+  },
+  {
+    "type": "error",
+    "text": "both AI endpoints failed",
+    "file": "erplorer-insights.js",
+    "line": 426,
+    "context": "    }\n\n    if (!raw) throw new Error('both AI endpoints failed');\n\n    let content = String(raw).trim()"
+  },
+  {
+    "type": "error",
+    "text": "AI returned unparseable JSON",
+    "file": "erplorer-insights.js",
+    "line": 440,
+    "context": "        try { return JSON.parse(match[0]); } catch (e) { /* fall through */ }\n      }\n      throw new Error('AI returned unparseable JSON');\n    }\n  }"
+  },
+  {
+    "type": "error",
+    "text": "expected text \"${expected || value}\" not found, got \"${txt}\"",
+    "file": "erplorer-runner/lib/browser.js",
+    "line": 58,
+    "context": "          case 'expectText': {\n            const txt = await page.locator(selector).innerText({ timeout: 10000 });\n            if (!txt.includes(expected || value)) throw new Error(`expected text \"${expected || value}\" not found, got \"${txt}\"`);\n            break;\n          }"
+  },
+  {
+    "type": "error",
+    "text": "expected URL matching /${url || value}/, got ${cur}",
+    "file": "erplorer-runner/lib/browser.js",
+    "line": 67,
+    "context": "            const cur = page.url();\n            const re = new RegExp(url || value);\n            if (!re.test(cur)) throw new Error(`expected URL matching /${url || value}/, got ${cur}`);\n            break;\n          }"
+  },
+  {
+    "type": "error",
+    "text": "collection name required",
+    "file": "erplorer-runner/lib/collections.js",
+    "line": 35,
+    "context": "function save(name, collection, vars) {\n  ensureDir();\n  if (!name) throw new Error('collection name required');\n  const data = {\n    name,"
+  },
+  {
+    "type": "error",
+    "text": "[ui-run]",
+    "file": "erplorer-runner/server.js",
+    "line": 218,
+    "context": "    res.json(Object.assign({ sessionId: session.id }, result));\n  } catch (e) {\n    console.error('[ui-run]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[api-run]",
+    "file": "erplorer-runner/server.js",
+    "line": 235,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[api-run]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[api-run-saved]",
+    "file": "erplorer-runner/server.js",
+    "line": 254,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[api-run-saved]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[ask]",
+    "file": "erplorer-runner/server.js",
+    "line": 273,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[ask]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[bench/load]",
+    "file": "erplorer-runner/server.js",
+    "line": 341,
+    "context": "    res.json(result);\n  } catch (err) {\n    console.error('[bench/load]', err);\n    res.status(500).json({ error: err.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer-runner-client.js",
+    "line": 72,
+    "context": "        let detail = '';\n        try { detail = (await res.text()).slice(0, 200); } catch (e) { /* ignore */ }\n        throw new Error('HTTP ' + res.status + (detail ? ': ' + detail : ''));\n      }\n      return await res.json();"
+  },
+  {
+    "type": "error",
+    "text": "404",
+    "file": "erplorer.js",
+    "line": 141,
+    "context": "    if (token) headers['Authorization'] = 'Bearer ' + token;\n    const res = await fetch('https://api.github.com' + path, { headers: headers, signal: signal });\n    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);"
+  },
+  {
+    "type": "error",
+    "text": "rate-limited",
+    "file": "erplorer.js",
+    "line": 142,
+    "context": "    const res = await fetch('https://api.github.com' + path, { headers: headers, signal: signal });\n    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);\n    return res.json();"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 143,
+    "context": "    if (res.status === 404) throw new Error('404');\n    if (res.status === 403 || res.status === 429) throw new Error('rate-limited');\n    if (!res.ok) throw new Error('HTTP ' + res.status);\n    return res.json();\n  }"
+  },
+  {
+    "type": "error",
+    "text": "could not detect a default branch (tried main, master, develop, trunk)",
+    "file": "erplorer.js",
+    "line": 191,
+    "context": "      } catch (e) { /* try next */ }\n    }\n    throw new Error('could not detect a default branch (tried main, master, develop, trunk)');\n  }\n"
+  },
+  {
+    "type": "error",
+    "text": "could not list files: both GitHub API and jsDelivr failed",
+    "file": "erplorer.js",
+    "line": 209,
+    "context": "\n    const res = await fetch('https://data.jsdelivr.com/v1/packages/gh/' + owner + '/' + repo + '@' + branch, { signal: signal });\n    if (!res.ok) throw new Error('could not list files: both GitHub API and jsDelivr failed');\n    const data = await res.json();\n    const out = [];"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 570,
+    "context": "    try {\n      const res = await fetch('search-index.json', { cache: 'no-cache' });\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      documents = await res.json();\n      flexIndex = new FlexSearch.Document({"
+  },
+  {
+    "type": "error",
+    "text": "No steps",
+    "file": "erplorer.js",
+    "line": 1053,
+    "context": "      const parsed = JSON.parse(clean);\n      const steps = parsed.steps || parsed;\n      if (!Array.isArray(steps) || !steps.length) throw new Error('No steps');\n      renderScenarioTable(steps, 'AI');\n    } catch (err) {"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 1692,
+    "context": "        body: JSON.stringify({ url: url, maxPages: 20 })\n      }, 30000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);"
+  },
+  {
+    "type": "error",
+    "text": "Crawl returned 0 pages",
+    "file": "erplorer.js",
+    "line": 1695,
+    "context": "      const data = await res.json();\n      const pages = data.pages || data.results || (Array.isArray(data) ? data : []);\n      if (!pages.length) throw new Error('Crawl returned 0 pages');\n      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));"
+  },
+  {
+    "type": "error",
+    "text": "No errors found in crawled pages",
+    "file": "erplorer.js",
+    "line": 1698,
+    "context": "      const entries = [];\n      for (const p of pages) entries.push(...parseText(p.text || p.content || '', p.url || p.title || url));\n      if (!entries.length) throw new Error('No errors found in crawled pages');\n      appendToIndex(entries, pages.length + ' crawled pages');\n    } catch (err) {"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
+    "file": "erplorer.js",
+    "line": 1805,
+    "context": "    try {\n      const res = await fetchWithTimeout(parsed.rawUrl, {}, 15000);\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      const content = await res.text();\n      window._erplorerFileContents.set(parsed.filePath, content);"
+  },
+  {
+    "type": "error",
+    "text": "msg",
+    "file": "scripts/build-index.js",
+    "line": 102,
+    "context": "const PATTERNS = {\n  js: [\n    // throw new Error('msg')  |  Error(\"msg\")  |  console.error(`msg`)\n    /(?:throw new Error|Error\\(|console\\.error)\\s*\\(\\s*(?:'([^']+)'|\"([^\"]+)\"|`([^`]+)`)/g\n  ],"
+  },
+  {
+    "type": "error",
+    "text": "msg",
+    "file": "scripts/build-index.js",
+    "line": 102,
+    "context": "const PATTERNS = {\n  js: [\n    // throw new Error('msg')  |  Error(\"msg\")  |  console.error(`msg`)\n    /(?:throw new Error|Error\\(|console\\.error)\\s*\\(\\s*(?:'([^']+)'|\"([^\"]+)\"|`([^`]+)`)/g\n  ],"
+  },
+  {
+    "type": "error",
+    "text": "❌ Failed to write",
+    "file": "scripts/build-index.js",
+    "line": 400,
+    "context": "    fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2));\n  } catch (e) {\n    console.error('❌ Failed to write ' + OUTPUT + ': ' + e.message);\n    process.exit(1);\n  }"
+  },
+  {
+    "type": "error",
     "text": "Username is required",
     "file": "src/sample.js",
     "line": 4,

@@ -197,6 +197,27 @@
   },
   {
     "type": "error",
+    "text": "msg",
+    "file": "scripts/build-index.js",
+    "line": 102,
+    "context": "const PATTERNS = {\n  js: [\n    // throw new Error('msg')  |  Error(\"msg\")  |  console.error(`msg`)\n    /(?:throw new Error|Error\\(|console\\.error)\\s*\\(\\s*(?:'([^']+)'|\"([^\"]+)\"|`([^`]+)`)/g\n  ],"
+  },
+  {
+    "type": "error",
+    "text": "msg",
+    "file": "scripts/build-index.js",
+    "line": 102,
+    "context": "const PATTERNS = {\n  js: [\n    // throw new Error('msg')  |  Error(\"msg\")  |  console.error(`msg`)\n    /(?:throw new Error|Error\\(|console\\.error)\\s*\\(\\s*(?:'([^']+)'|\"([^\"]+)\"|`([^`]+)`)/g\n  ],"
+  },
+  {
+    "type": "error",
+    "text": "❌ Failed to write",
+    "file": "scripts/build-index.js",
+    "line": 400,
+    "context": "    fs.writeFileSync(OUTPUT, JSON.stringify(index, null, 2));\n  } catch (e) {\n    console.error('❌ Failed to write ' + OUTPUT + ': ' + e.message);\n    process.exit(1);\n  }"
+  },
+  {
+    "type": "error",
     "text": "Username is required",
     "file": "src/sample.js",
     "line": 4,

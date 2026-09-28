@@ -1,6 +1,20 @@
 [
   {
     "type": "error",
+    "text": "both AI endpoints failed",
+    "file": "erplorer-insights.js",
+    "line": 426,
+    "context": "    }\n\n    if (!raw) throw new Error('both AI endpoints failed');\n\n    let content = String(raw).trim()"
+  },
+  {
+    "type": "error",
+    "text": "AI returned unparseable JSON",
+    "file": "erplorer-insights.js",
+    "line": 440,
+    "context": "        try { return JSON.parse(match[0]); } catch (e) { /* fall through */ }\n      }\n      throw new Error('AI returned unparseable JSON');\n    }\n  }"
+  },
+  {
+    "type": "error",
     "text": "expected text \"${expected || value}\" not found, got \"${txt}\"",
     "file": "erplorer-runner/lib/browser.js",
     "line": 58,

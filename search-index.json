@@ -78,6 +78,41 @@
   },
   {
     "type": "error",
+    "text": "[ui-run]",
+    "file": "erplorer-runner/server.js",
+    "line": 218,
+    "context": "    res.json(Object.assign({ sessionId: session.id }, result));\n  } catch (e) {\n    console.error('[ui-run]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[api-run]",
+    "file": "erplorer-runner/server.js",
+    "line": 235,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[api-run]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[api-run-saved]",
+    "file": "erplorer-runner/server.js",
+    "line": 254,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[api-run-saved]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[ask]",
+    "file": "erplorer-runner/server.js",
+    "line": 273,
+    "context": "    res.json(result);\n  } catch (e) {\n    console.error('[ask]', e);\n    res.status(500).json({ error: e.message });\n  }"
+  },
+  {
+    "type": "error",
+    "text": "[bench/load]",
+    "file": "erplorer-runner/server.js",
+    "line": 341,
+    "context": "    res.json(result);\n  } catch (err) {\n    console.error('[bench/load]', err);\n    res.status(500).json({ error: err.message });\n  }"
+  },
+  {
+    "type": "error",
     "text": "HTTP",
     "file": "erplorer-runner-client.js",
     "line": 72,

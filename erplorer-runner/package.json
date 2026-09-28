@@ -1,20 +1,32 @@
 {
   "name": "erplorer-runner",
-  "version": "0.1.0",
-  "description": "Companion runner for ERplorer: Playwright execution + video, Postman-style API requests, session RAG logging.",
+  "version": "1.0.0",
+  "description": "Companion Node service for ERplorer — drives a real Chromium via Playwright and fires real HTTP requests.",
+  "private": true,
   "main": "server.js",
-  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "install-browsers": "playwright install chromium",
+    "install-browsers-deps": "playwright install --with-deps chromium",
+    "clean-sessions": "node -e \"require('fs').rmSync('./sessions',{recursive:true,force:true});console.log('sessions cleared')\"",
+    "health": "curl -s http://localhost:8787/health"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "playwright": "^1.47.0",
+    "uuid": "^10.0.0"
+  },
   "engines": {
     "node": ">=18"
   },
-  "scripts": {
-    "start": "node server.js",
-    "install-browsers": "npx playwright install chromium"
-  },
-  "dependencies": {
-    "express": "^4.19.2",
-    "cors": "^2.8.5",
-    "playwright": "^1.47.0",
-    "uuid": "^9.0.1"
-  }
+  "keywords": [
+    "qa",
+    "testing",
+    "playwright",
+    "automation",
+    "rpa"
+  ],
+  "license": "Apache-2.0"
 }

@@ -79,6 +79,13 @@
   {
     "type": "error",
     "text": "HTTP",
+    "file": "erplorer-runner-client.js",
+    "line": 72,
+    "context": "        let detail = '';\n        try { detail = (await res.text()).slice(0, 200); } catch (e) { /* ignore */ }\n        throw new Error('HTTP ' + res.status + (detail ? ': ' + detail : ''));\n      }\n      return await res.json();"
+  },
+  {
+    "type": "error",
+    "text": "HTTP",
     "file": "erplorer.js",
     "line": 419,
     "context": "    try {\n      const res = await fetch('search-index.json', { cache: 'no-cache' });\n      if (!res.ok) throw new Error('HTTP ' + res.status);\n      documents = await res.json();\n      flexIndex = new FlexSearch.Document({"

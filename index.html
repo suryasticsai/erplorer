@@ -40,6 +40,14 @@
       <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
       <span class="nav-label">Ingest</span>
     </button>
+    <button class="nav-item" data-panel="insights">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+      <span class="nav-label">Insights</span>
+    </button>
+    <button class="nav-item" data-panel="bench">
+      <svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M7 12l3-3 4 4 5-5"/><circle cx="7" cy="19" r="1.5" fill="currentColor"/><circle cx="17" cy="19" r="1.5" fill="currentColor"/></svg>
+      <span class="nav-label">Bench</span>
+    </button>
     <button class="nav-item" data-panel="about">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="8" r="0.5" fill="currentColor"/></svg>
       <span class="nav-label">About</span>
@@ -50,6 +58,7 @@
     </button>
   </nav>
 
+  <!-- ============ SEARCH ============ -->
   <section class="panel active" id="panel-search">
     <div class="hero">
       <div class="hero-eyebrow">Error Resolution Explorer</div>
@@ -96,6 +105,7 @@
     </div>
   </section>
 
+  <!-- ============ ASK ============ -->
   <section class="panel" id="panel-ask">
     <div class="hero" style="margin-bottom:20px;">
       <div class="hero-eyebrow">Ask</div>
@@ -123,6 +133,7 @@
     </div>
   </section>
 
+  <!-- ============ LAB ============ -->
   <section class="panel" id="panel-lab">
     <div class="hero">
       <div class="hero-eyebrow">Lab</div>
@@ -164,6 +175,7 @@
     </div>
   </section>
 
+  <!-- ============ INGEST ============ -->
   <section class="panel" id="panel-ingest">
     <div class="hero">
       <div class="hero-eyebrow">Ingest</div>
@@ -183,9 +195,14 @@
 
     <div class="card">
       <div class="card-title">Scan a GitHub repo</div>
-      <div class="card-desc" style="margin-bottom:14px;">Public repos work without a token. First 40 indexable files.</div>
-      <input type="text" class="input" id="repo-scan" placeholder="owner/repo" style="margin-bottom:10px;">
-      <button class="btn full" onclick="ERplorer.tryTier2Repo()">Scan</button>
+      <div class="card-desc" style="margin-bottom:14px;">
+        Type <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">owner/repo</code> and ERplorer auto-detects the default branch, lists files, and fetches them in parallel via CDN. Public repos need no token. First 300 indexable files.
+      </div>
+      <input type="text" class="input" id="repo-scan" placeholder="owner/repo  ·  owner/repo#branch" style="margin-bottom:10px;">
+      <div class="row" style="gap:8px;">
+        <button class="btn" onclick="ERplorer.tryTier2Repo()" style="flex:1;">Scan</button>
+        <button class="btn secondary" onclick="ERplorer.cancelRepoScan()" style="flex:0 0 auto; padding-left:20px; padding-right:20px;">Stop</button>
+      </div>
     </div>
 
     <div class="card">
@@ -223,6 +240,176 @@
     <div id="add-status" class="status-line" style="display:none;"></div>
   </section>
 
+  <!-- ============ INSIGHTS ============ -->
+  <section class="panel" id="panel-insights">
+    <div id="insights-root">
+      <div class="hero">
+        <div class="hero-eyebrow">Insights</div>
+        <h1 class="hero-title">Static analysis.</h1>
+        <p class="hero-desc">Scan a repo and this page fills in automatically with architecture, critical files, service flows, and code smells — interpreted by AI.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BENCH ============ -->
+  <section class="panel" id="panel-bench">
+    <div class="hero">
+      <div class="hero-eyebrow">Bench</div>
+      <h1 class="hero-title">Generate data. <em>Measure performance.</em></h1>
+      <p class="hero-desc">Create realistic dummy data, run load tests against any endpoint, and export everything as PDF, JSON, or CSV.</p>
+    </div>
+
+    <div class="subtabs">
+      <button class="subtab active" data-bench="data">Dummy Data</button>
+      <button class="subtab" data-bench="load">Load Test</button>
+      <button class="subtab" data-bench="reports">Reports</button>
+    </div>
+
+    <!-- DUMMY DATA -->
+    <div id="bench-data">
+      <div class="card">
+        <div class="card-title">Generate dummy data</div>
+        <div class="card-desc">Pick a schema, set a row count, and ERplorer builds a realistic dataset.</div>
+
+        <div class="field" style="margin-top:14px;">
+          <label class="field-label">Template</label>
+          <select class="select" id="bench-template"></select>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Rows</label>
+            <input type="number" class="input" id="bench-count" value="100" min="1" max="50000">
+          </div>
+          <div class="field">
+            <label class="field-label">Seed (optional)</label>
+            <input type="number" class="input" id="bench-seed" value="42">
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" id="bench-generate" style="flex:1;">Generate</button>
+        </div>
+
+        <div class="row" style="margin-top:10px;">
+          <button class="btn secondary" data-bench-export="csv" style="flex:1;">⬇ CSV</button>
+          <button class="btn secondary" data-bench-export="json" style="flex:1;">⬇ JSON</button>
+          <button class="btn secondary" data-bench-export="sql" style="flex:1;">⬇ SQL</button>
+          <button class="btn secondary" data-bench-export="xlsx" style="flex:1;">⬇ XLSX</button>
+        </div>
+      </div>
+
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%);">
+        <div class="card-title">🤖 Describe it in English</div>
+        <div class="card-desc">Tell AI what data you need. It designs the schema and generates realistic rows — domain-aware (healthcare, fintech, ecommerce, etc.).</div>
+
+        <div class="field" style="margin-top:14px;">
+          <textarea class="textarea" id="bench-ai-data-prompt" style="min-height:70px;" placeholder="Example: 50 users for a healthcare SaaS in India — patients with name, age, condition, city, insurance provider, last visit date"></textarea>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Rows</label>
+            <input type="number" class="input" id="bench-ai-data-count" value="25" min="1" max="200">
+          </div>
+        </div>
+
+        <button class="btn accent full" id="bench-ai-data-generate">🤖 Generate with AI</button>
+        <div id="bench-ai-data-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-data-preview" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="insights-card">
+        <div class="card-title">Preview</div>
+        <div id="bench-data-preview" style="margin-top:12px;"></div>
+      </div>
+    </div>
+
+    <!-- LOAD TEST -->
+    <div id="bench-load" style="display:none;">
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%);">
+        <div class="card-title">🤖 Let AI suggest scenarios</div>
+        <div class="card-desc">Reads your Insights digest and proposes load tests worth running.</div>
+        <button class="btn accent full" id="bench-ai-suggest" style="margin-top:14px;">🤖 Suggest load scenarios</button>
+        <div id="bench-ai-suggest-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-suggest-list" style="margin-top:14px;"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Load test</div>
+        <div class="card-desc">Fire N concurrent requests and measure latency + throughput.</div>
+
+        <div class="field" style="margin-top:14px;">
+          <label class="field-label">URL</label>
+          <input type="text" class="input" id="bench-load-url" placeholder="https://api.example.com/health">
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label class="field-label">Method</label>
+            <select class="select" id="bench-load-method">
+              <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="field-label">Concurrency</label>
+            <input type="number" class="input" id="bench-load-concurrency" value="5" min="1" max="500">
+          </div>
+          <div class="field">
+            <label class="field-label">Duration (s)</label>
+            <input type="number" class="input" id="bench-load-duration" value="10" min="1" max="120">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Headers (JSON)</label>
+          <textarea class="textarea" id="bench-load-headers" style="min-height:60px;" placeholder='{"Authorization": "Bearer token"}'></textarea>
+        </div>
+
+        <div class="field">
+          <label class="field-label">Body (for POST/PUT/PATCH)</label>
+          <textarea class="textarea" id="bench-load-body" style="min-height:60px;" placeholder='{"key": "value"}'></textarea>
+        </div>
+
+        <label style="display:flex; align-items:flex-start; gap:10px; padding:12px; background:var(--bg-alt); border-radius:8px; font-size:13px; margin-bottom:14px; cursor:pointer;">
+          <input type="checkbox" id="bench-use-runner" style="margin-top:2px; accent-color:var(--accent);" disabled>
+          <span>Use runner for real concurrency (unlimited). <span id="bench-runner-note" style="display:block; font-size:11px; color:var(--muted); margin-top:4px;">Checking runner…</span></span>
+        </label>
+
+        <div class="row" style="gap:8px;">
+          <button class="btn" id="bench-load-run" style="flex:1;">▶ Run load test</button>
+          <button class="btn secondary" id="bench-load-stop" style="flex:0 0 auto; padding:0 20px;" disabled>Stop</button>
+        </div>
+
+        <div id="bench-load-status" class="status-line" style="margin-top:14px; display:none;"></div>
+        <div id="bench-load-live" style="margin-top:14px;"></div>
+      </div>
+
+      <div id="bench-load-results"></div>
+
+      <div class="card" style="background:linear-gradient(135deg, var(--accent-soft) 0%, var(--card) 100%); margin-top:14px;">
+        <div class="card-title">🤖 Interpret these results</div>
+        <div class="card-desc">After running a load test, let AI turn the numbers into a plain-English diagnosis.</div>
+        <button class="btn accent full" id="bench-ai-interpret-btn" style="margin-top:14px;">🤖 Interpret results</button>
+        <div id="bench-ai-interpret-status" class="status-line" style="display:none; margin-top:12px;"></div>
+        <div id="bench-ai-interpret" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="bench-reports" style="display:none;">
+      <div class="card">
+        <div class="card-title">Saved reports</div>
+        <div class="card-desc">Every load test you run is saved here. Export the whole set or clear the list.</div>
+        <div class="row" style="margin-top:14px;">
+          <button class="btn" onclick="ERplorerBench.exportAllReports()" style="flex:1;">⬇ Export all as JSON</button>
+        </div>
+      </div>
+      <div id="bench-reports-list"></div>
+    </div>
+  </section>
+
+  <!-- ============ ABOUT ============ -->
   <section class="panel" id="panel-about">
     <div class="hero">
       <div class="hero-eyebrow">About</div>
@@ -245,6 +432,8 @@
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Fix Recipe</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">16 curated rules for common errors. Deterministic, not AI guesswork.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📄 PDF Reports</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Export search results to a styled PDF for tickets, standup, or management.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📷 OCR + Screenshots</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Paste an error screenshot — Tesseract.js extracts text locally. Screenshot any result with html2canvas.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔍 AI Insights</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Static analysis with AI interpretation: architecture, critical files, service flow, code smells, and next steps.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">⚡ Bench</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Generate dummy data, run load tests, and export PDF/JSON/CSV reports — all in-browser.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">▶ Real browser runs</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Optional local runner drives Playwright + real HTTP, records WebM video, and produces a queryable session log.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔗 Share Link</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Every search is URL-encoded. Copy, send, reopen — same results.</div></div>
       </div>
@@ -260,13 +449,9 @@
         <a href="mailto:sai.varakala13@gmail.com" class="social-link"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/></svg><span>Email<span class="handle">sai.varakala13@gmail.com</span></span></a>
       </div>
     </div>
-    <div class="footer-note">
-      ERplorer · Error Resolution Explorer · v1.2<br>
-      Built with vanilla JavaScript. Zero build step. Zero servers. Zero cost.<br>
-      <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
-    </div>
   </section>
 
+  <!-- ============ SETTINGS ============ -->
   <section class="panel" id="panel-settings">
     <div class="hero">
       <div class="hero-eyebrow">Settings</div>
@@ -318,6 +503,48 @@
       <button class="btn danger full" onclick="ERplorer.resetAllLocalData()">Reset all local data</button>
     </div>
   </section>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="app-footer">
+    <div class="footer-brand">
+      <img src="erplorer-logo.png" alt="ERplorer" class="footer-logo">
+      <div class="footer-brand-text">
+        <div class="footer-title"><span class="er">ER</span>plorer</div>
+        <div class="footer-tagline">Error Resolution Explorer · v1.2</div>
+      </div>
+    </div>
+
+    <div class="footer-widgets">
+      <div class="footer-widget clock-widget">
+        <div class="widget-label">Local time</div>
+        <div class="widget-value" id="footer-clock">--:--:--</div>
+        <div class="widget-sub" id="footer-date">—</div>
+      </div>
+
+      <div class="footer-widget timer-widget">
+        <div class="widget-label">Session timer</div>
+        <div class="widget-value" id="footer-session-timer">00:00:00</div>
+        <div class="widget-sub">since you opened ERplorer</div>
+      </div>
+
+      <div class="footer-widget countdown-widget">
+        <div class="widget-label">Countdown</div>
+        <div class="widget-row">
+          <input type="number" id="countdown-minutes" value="5" min="1" max="120" class="countdown-input">
+          <span class="countdown-unit">min</span>
+          <button class="countdown-btn" id="countdown-start" onclick="ERplorer.startCountdown()">▶</button>
+          <button class="countdown-btn secondary" id="countdown-reset" onclick="ERplorer.resetCountdown()">↺</button>
+        </div>
+        <div class="widget-value" id="footer-countdown">00:00</div>
+      </div>
+    </div>
+
+    <div class="footer-meta">
+      <span>Built with vanilla JavaScript · Zero build step · Zero servers</span>
+      <a href="https://github.com/suryasticsai/erplorer" target="_blank">View source on GitHub</a>
+    </div>
+  </footer>
+
 </div>
 
 <div class="toast" id="toast"></div>
@@ -326,9 +553,109 @@
 <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.8.2/dist/flexsearch.bundle.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 
-<!-- App + config + runner client -->
+<!-- App + config + modules -->
 <script src="erplorer.config.js"></script>
 <script src="erplorer.js" defer></script>
+<script src="erplorer-insights.js" defer></script>
+<script src="erplorer-bench.js" defer></script>
+<script src="erplorer-bench-ai.js" defer></script>
 <script src="erplorer-runner-client.js" defer></script>
+
+<!-- Footer widgets (clock, session timer, countdown) -->
+<script>
+(function () {
+  'use strict';
+
+  // ---------- Live clock ----------
+  function updateClock() {
+    const now = new Date();
+    const timeEl = document.getElementById('footer-clock');
+    const dateEl = document.getElementById('footer-date');
+    if (timeEl) {
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      timeEl.textContent = `${hh}:${mm}:${ss}`;
+    }
+    if (dateEl) {
+      const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      dateEl.textContent = `${days[now.getDay()]} · ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+    }
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ---------- Session timer ----------
+  const sessionStart = Date.now();
+  function updateSessionTimer() {
+    const el = document.getElementById('footer-session-timer');
+    if (!el) return;
+    const elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+    const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+    const ss = String(elapsed % 60).padStart(2, '0');
+    el.textContent = `${hh}:${mm}:${ss}`;
+  }
+  updateSessionTimer();
+  setInterval(updateSessionTimer, 1000);
+
+  // ---------- Countdown ----------
+  let countdownEnd = 0;
+  let countdownTick = null;
+
+  function updateCountdownDisplay() {
+    const el = document.getElementById('footer-countdown');
+    if (!el) return;
+    if (!countdownEnd) { el.textContent = '00:00'; return; }
+    const remaining = Math.max(0, Math.floor((countdownEnd - Date.now()) / 1000));
+    const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
+    const ss = String(remaining % 60).padStart(2, '0');
+    el.textContent = `${mm}:${ss}`;
+
+    if (remaining === 0) {
+      clearInterval(countdownTick);
+      countdownTick = null;
+      countdownEnd = 0;
+      el.classList.add('countdown-done');
+      try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('ERplorer · Timer done', { body: 'Your countdown has finished.' });
+        }
+      } catch (e) { /* ignore */ }
+      const toast = document.getElementById('toast');
+      if (toast) {
+        toast.textContent = '⏰ Countdown finished';
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+    }
+  }
+
+  window.ERplorer = window.ERplorer || {};
+  window.ERplorer.startCountdown = function () {
+    const input = document.getElementById('countdown-minutes');
+    const mins = Math.max(1, Math.min(120, parseInt(input.value, 10) || 5));
+    countdownEnd = Date.now() + mins * 60 * 1000;
+    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    if (countdownTick) clearInterval(countdownTick);
+    countdownTick = setInterval(updateCountdownDisplay, 1000);
+    updateCountdownDisplay();
+    try {
+      if ('Notification' in window && Notification.permission === 'default') {
+        Notification.requestPermission();
+      }
+    } catch (e) { /* ignore */ }
+  };
+
+  window.ERplorer.resetCountdown = function () {
+    if (countdownTick) clearInterval(countdownTick);
+    countdownTick = null;
+    countdownEnd = 0;
+    document.getElementById('footer-countdown').classList.remove('countdown-done');
+    updateCountdownDisplay();
+  };
+})();
+</script>
 </body>
 </html>

@@ -1,238 +1,428 @@
 /**
- * erplorer-runner-client.js
+ * ERplorer Runner Client — bridge between the static browser app
+ * and the local Node service (erplorer-runner) at http://localhost:8787.
  *
- * Bridges the static ERplorer app to the local erplorer-runner Node
- * service (Playwright + Postman-style requests + session RAG).
+ * Loaded AFTER erplorer.js and erplorer-bench.js. Reads the runner URL
+ * from window.ERPLORER_CONFIG.runner.baseUrl.
  *
- * Reads its target from window.ERPLORER_CONFIG.runner.baseUrl
- * (set in erplorer.config.js). If that's missing, or the runner is
- * unreachable, this script disables itself quietly — it never blocks
- * or breaks the rest of the app, since the runner is optional local
- * infrastructure, not something every visitor will have running.
+ * Exposes window.ERplorerRunner with:
+ *   baseUrl                  — the resolved runner URL
+ *   isAvailable()            — alias for checkHealth()
+ *   checkHealth()            — probes /health, caches result for 30s
+ *   runCurrentRowsViaRunner(opts)  — sends rows from the Lab tab to the runner
+ *   startSession(opts)       — begin a new session
+ *   runUiSteps(steps, opts)  — execute UI steps via Playwright
+ *   runApiCollection(coll, vars)  — execute an API collection
+ *   finishSession(status)    — mark complete
+ *   promoteSession()         — keep beyond default TTL
+ *   askSession(question)     — query the session-scoped RAG
+ *   getVideoUrl()            — WebM recording URL for the active session
+ *   getFlowUrl()             — flow.md URL for the active session
+ *   activeSessionId()        — current session id or null
  *
- * Adds:
- *   - a "Run via Runner" button next to the existing Lab "Generate
- *     specs" flow, which starts a session, executes the UI + API
- *     steps for real, and shows the resulting video + an ask box
- *   - ERplorerRunner.* helper functions for other UI to call
+ * Every call returns a plain object. On failure it returns
+ * { ok: false, reason: '...' } and never throws — the caller decides
+ * what to do, and the app degrades gracefully when the runner is
+ * offline.
  */
 (function () {
   'use strict';
 
-  const RUNNER_CFG = (window.ERPLORER_CONFIG || {}).runner || {};
-  const BASE_URL = (RUNNER_CFG.baseUrl || '').replace(/\/$/, '');
+  // ============================================================
+  // CONFIG
+  // ============================================================
+  const CFG = (window.ERPLORER_CONFIG && window.ERPLORER_CONFIG.runner) || {};
+  const BASE = String(CFG.baseUrl || 'http://localhost:8787').replace(/\/$/, '');
+  const HEALTH_TIMEOUT_MS = 3500;
+  const HEALTH_CACHE_MS = 30000;
+  const ACTION_TIMEOUT_MS = 180000; // 3 minutes for long actions
 
-  if (!BASE_URL) {
-    console.log('[erplorer-runner-client] no runner.baseUrl configured — skipping.');
-    return;
+  // ============================================================
+  // STATE
+  // ============================================================
+  const STATE = {
+    lastHealthCheck: 0,
+    lastHealthResult: null,
+    activeSessionId: null,
+    activeSessionMeta: null
+  };
+
+  // ============================================================
+  // UTILITIES
+  // ============================================================
+  function toast(msg, dur) {
+    dur = dur || 2400;
+    const el = document.getElementById('toast');
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(function () { el.classList.remove('show'); }, dur);
   }
 
-  let runnerAvailable = false;
-
-  async function checkHealth() {
+  async function fetchJSON(url, options, timeoutMs) {
+    timeoutMs = timeoutMs || ACTION_TIMEOUT_MS;
+    const ctrl = new AbortController();
+    const timer = setTimeout(function () { ctrl.abort(); }, timeoutMs);
     try {
-      const res = await fetch(BASE_URL + '/health', { method: 'GET' });
-      runnerAvailable = res.ok;
-    } catch (e) {
-      runnerAvailable = false;
-    }
-    return runnerAvailable;
-  }
-
-  async function api(path, opts) {
-    const res = await fetch(BASE_URL + path, Object.assign({
-      headers: { 'Content-Type': 'application/json' }
-    }, opts));
-    if (!res.ok) {
-      let msg = res.statusText;
-      try { const d = await res.json(); if (d.error) msg = d.error; } catch (e) { /* ignore */ }
-      throw new Error(msg);
-    }
-    return res.json();
-  }
-
-  // ------------------------------------------------------------
-  // Splitting the Lab tab's currentRows (id/scenario/step/action/...)
-  // into UI steps vs API requests, same categorization erplorer.js
-  // already uses for Playwright vs pytest generation.
-  // ------------------------------------------------------------
-  const UI_ACTIONS = new Set(['goto', 'fill', 'click', 'expectText', 'expectVisible', 'expectUrl', 'wait']);
-  const API_ACTIONS = new Set(['apiRequest', 'expectStatus', 'expectJson', 'expectHeader']);
-
-  function rowsToUiSteps(rows) {
-    return rows.filter(r => UI_ACTIONS.has(r.action)).map(r => ({
-      action: r.action, selector: r.selector, value: r.value, url: r.url, expected: r.expected
-    }));
-  }
-
-  /**
-   * Rows come out of the Lab tab as a flat step list, but the runner's
-   * API collection wants request objects (one apiRequest + its trailing
-   * expectStatus/expectJson/expectHeader rows folded together). This
-   * folds sequential rows per test case into that shape.
-   */
-  function rowsToApiCollection(rows) {
-    const requests = [];
-    let current = null;
-    for (const r of rows) {
-      if (!API_ACTIONS.has(r.action)) continue;
-      if (r.action === 'apiRequest') {
-        current = { name: r.id + ':' + r.step, method: r.method || 'GET', url: r.url, headers: safeJson(r.headers), body: safeJson(r.body) };
-        requests.push(current);
-      } else if (current) {
-        if (r.action === 'expectStatus') current.expectStatus = Number(r.expected);
-        if (r.action === 'expectJson') {
-          current.expectJson = current.expectJson || {};
-          if (r.jsonpath) current.expectJson[r.jsonpath] = r.expected;
-        }
+      const res = await fetch(url, Object.assign({}, options || {}, { signal: ctrl.signal }));
+      if (!res.ok) {
+        let detail = '';
+        try { detail = (await res.text()).slice(0, 200); } catch (e) { /* ignore */ }
+        throw new Error('HTTP ' + res.status + (detail ? ': ' + detail : ''));
       }
+      return await res.json();
+    } finally {
+      clearTimeout(timer);
     }
-    return { requests };
   }
 
-  function safeJson(v) {
-    if (!v) return undefined;
-    if (typeof v === 'object') return v;
-    try { return JSON.parse(v); } catch (e) { return undefined; }
-  }
-
-  // ------------------------------------------------------------
-  // Run a whole Lab scenario set through the runner and render
-  // the result (video link, flow doc link, ask box) into the DOM.
-  // ------------------------------------------------------------
-  async function runCurrentRowsViaRunner() {
-    const rows = (window.ERplorer && window.ERplorer.state && window.ERplorer.state().currentRows) || window._erplorerCurrentRows;
-    const targetEl = document.getElementById('gen-output') || document.getElementById('ai-preview');
-    if (!rows || !rows.length) {
-      if (targetEl) targetEl.insertAdjacentHTML('afterbegin', runnerStatusHtml('err', 'No generated rows to run. Convert scenarios first.'));
-      return;
+  // ============================================================
+  // HEALTH CHECK
+  // ============================================================
+  async function checkHealth(force) {
+    const now = Date.now();
+    if (!force && STATE.lastHealthResult !== null && (now - STATE.lastHealthCheck) < HEALTH_CACHE_MS) {
+      return STATE.lastHealthResult;
     }
-    if (!(await checkHealth())) {
-      if (targetEl) targetEl.insertAdjacentHTML('afterbegin', runnerStatusHtml('err', 'Runner not reachable at ' + BASE_URL + '. Is `npm start` running?'));
-      return;
-    }
-
-    if (targetEl) targetEl.insertAdjacentHTML('afterbegin', runnerStatusHtml('info', 'Starting session…', 'runner-live-status'));
-    const setStatus = (kind, html) => {
-      const el = document.getElementById('runner-live-status');
-      if (el) el.outerHTML = runnerStatusHtml(kind, html, 'runner-live-status');
-    };
-
     try {
-      const testCaseId = rows[0].id || 'session';
-      const { sessionId } = await api('/session/start', {
-        method: 'POST',
-        body: JSON.stringify({ title: testCaseId, userStory: rows[0].scenario || null })
-      });
-
-      const uiSteps = rowsToUiSteps(rows);
-      const apiCollection = rowsToApiCollection(rows);
-
-      if (uiSteps.length) {
-        setStatus('info', `Running ${uiSteps.length} browser step(s)…`);
-        await api(`/session/${sessionId}/ui-run`, { method: 'POST', body: JSON.stringify({ steps: uiSteps, headless: true }) });
-      }
-      if (apiCollection.requests.length) {
-        setStatus('info', `Running ${apiCollection.requests.length} API request(s)…`);
-        await api(`/session/${sessionId}/api-run`, { method: 'POST', body: JSON.stringify({ collection: apiCollection }) });
-      }
-
-      await api(`/session/${sessionId}/finish`, { method: 'POST' });
-
-      setStatus('ok', renderSessionResultHtml(sessionId));
-      wireAskBox(sessionId);
-    } catch (e) {
-      setStatus('err', 'Run failed: ' + escapeHtml(e.message));
+      const res = await fetchJSON(BASE + '/health', { method: 'GET' }, HEALTH_TIMEOUT_MS);
+      STATE.lastHealthResult = !!(res && res.ok);
+      STATE.lastHealthCheck = now;
+      updateRunnerStatusUi();
+      return STATE.lastHealthResult;
+    } catch (err) {
+      STATE.lastHealthResult = false;
+      STATE.lastHealthCheck = now;
+      updateRunnerStatusUi();
+      return false;
     }
   }
 
-  function renderSessionResultHtml(sessionId) {
-    return `
-      Run complete.
-      <div class="row" style="margin-top:10px; flex-wrap:wrap;">
-        <a class="btn secondary" href="${BASE_URL}/session/${sessionId}/video" target="_blank" style="font-size:12px; padding:8px 14px;">▶ View recording</a>
-        <a class="btn secondary" href="${BASE_URL}/session/${sessionId}/flow.md" target="_blank" style="font-size:12px; padding:8px 14px;">📄 Flow doc</a>
-        <button class="btn secondary" onclick="ERplorerRunner.promoteSession('${sessionId}')" style="font-size:12px; padding:8px 14px;">📌 Keep permanently</button>
-      </div>
-      <div style="margin-top:12px;">
-        <input type="text" class="input" id="runner-ask-input-${sessionId}" placeholder="Ask about this run — e.g. 'why did step 3 fail?'" style="margin-bottom:8px;">
-        <button class="btn" id="runner-ask-btn-${sessionId}" style="font-size:12px; padding:8px 14px;">Ask</button>
-        <div id="runner-ask-answer-${sessionId}" style="margin-top:10px; font-size:13px; color:var(--ink-2);"></div>
-      </div>
-    `;
+  // Alias for code that expects isAvailable() naming
+  function isAvailable() {
+    return checkHealth();
   }
 
-  function wireAskBox(sessionId) {
-    const btn = document.getElementById('runner-ask-btn-' + sessionId);
-    if (!btn) return;
-    btn.addEventListener('click', async () => {
-      const input = document.getElementById('runner-ask-input-' + sessionId);
-      const out = document.getElementById('runner-ask-answer-' + sessionId);
-      const q = input ? input.value.trim() : '';
-      if (!q || !out) return;
-      out.textContent = 'Thinking…';
-      try {
-        const { answer } = await api(`/session/${sessionId}/ask`, { method: 'POST', body: JSON.stringify({ question: q }) });
-        out.textContent = answer;
-      } catch (e) {
-        out.textContent = 'Error: ' + e.message;
-      }
-    });
-  }
-
-  async function promoteSession(sessionId) {
-    try {
-      await api(`/session/${sessionId}/promote`, { method: 'POST' });
-      if (window.ERplorer && typeof window.ERplorer.state === 'function') {
-        // no direct toast hook exposed publicly; fall back to alert-free no-op
-      }
-      console.log('[erplorer-runner-client] session promoted:', sessionId);
-    } catch (e) {
-      console.warn('[erplorer-runner-client] promote failed:', e.message);
+  // ============================================================
+  // STATUS UI — updates the Settings tab's #runner-status element
+  // ============================================================
+  function updateRunnerStatusUi() {
+    const el = document.getElementById('runner-status');
+    if (!el) return;
+    if (STATE.lastHealthResult === true) {
+      el.className = 'status-line ok';
+      el.innerHTML = '✅ Connected to runner at <code>' + escapeHtml(BASE) + '</code>';
+    } else if (STATE.lastHealthResult === false) {
+      el.className = 'status-line warn';
+      el.innerHTML = '⚠️ Runner not running. Start it with <code>cd erplorer-runner &amp;&amp; npm start</code> to enable real browser runs and load testing.';
+    } else {
+      el.className = 'status-line';
+      el.textContent = 'Checking runner…';
     }
-  }
-
-  function runnerStatusHtml(kind, html, id) {
-    const cls = kind === 'ok' ? 'ok' : kind === 'err' ? 'err' : '';
-    return `<div class="status-line ${cls}"${id ? ` id="${id}"` : ''}>${html}</div>`;
   }
 
   function escapeHtml(s) {
-    return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  }
-
-  // ------------------------------------------------------------
-  // Inject a "Run via Runner" button next to the existing
-  // "Generate specs" button in the Lab tab, once the DOM is ready.
-  // ------------------------------------------------------------
-  function injectButton() {
-    // The button lives inside the dynamically-rendered scenario table
-    // (see renderScenarioTable in erplorer.js), so we watch for it.
-    const observer = new MutationObserver(() => {
-      const genBtn = document.querySelector('#ai-preview button[onclick="ERplorer.generateFromRows()"]');
-      if (genBtn && !document.getElementById('runner-run-btn')) {
-        const btn = document.createElement('button');
-        btn.id = 'runner-run-btn';
-        btn.className = 'btn accent';
-        btn.textContent = runnerAvailable ? '▶ Run via Runner' : '▶ Run via Runner (offline)';
-        btn.style.marginLeft = '8px';
-        btn.addEventListener('click', runCurrentRowsViaRunner);
-        genBtn.insertAdjacentElement('afterend', btn);
-      }
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
-    observer.observe(document.body, { childList: true, subtree: true });
   }
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    await checkHealth();
-    injectButton();
-  });
+  // ============================================================
+  // SESSION LIFECYCLE
+  // ============================================================
+  async function startSession(opts) {
+    opts = opts || {};
+    if (!(await isAvailable())) return { ok: false, reason: 'runner offline' };
+    try {
+      const data = await fetchJSON(BASE + '/session/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(opts)
+      });
+      STATE.activeSessionId = data.sessionId;
+      STATE.activeSessionMeta = data.meta || null;
+      return { ok: true, sessionId: data.sessionId, meta: data.meta };
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
 
-  // Public API, mirroring window.ERplorer's pattern
+  async function finishSession(status) {
+    if (!STATE.activeSessionId) return { ok: false, reason: 'no active session' };
+    try {
+      const data = await fetchJSON(BASE + '/session/' + STATE.activeSessionId + '/finish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: status || 'completed' })
+      });
+      return { ok: true, meta: data.meta };
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  async function promoteSession() {
+    if (!STATE.activeSessionId) return { ok: false, reason: 'no active session' };
+    try {
+      const data = await fetchJSON(BASE + '/session/' + STATE.activeSessionId + '/promote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      });
+      STATE.activeSessionMeta = data.meta || STATE.activeSessionMeta;
+      return { ok: true, meta: data.meta };
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  async function runUiSteps(steps, opts) {
+    if (!STATE.activeSessionId) return { ok: false, reason: 'no active session' };
+    opts = opts || {};
+    try {
+      const data = await fetchJSON(BASE + '/session/' + STATE.activeSessionId + '/ui-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          steps: steps,
+          headless: opts.headless !== false,
+          stopOnError: opts.stopOnError === true
+        })
+      });
+      return Object.assign({ ok: true }, data);
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  async function runApiCollection(collection, vars) {
+    if (!STATE.activeSessionId) return { ok: false, reason: 'no active session' };
+    try {
+      const data = await fetchJSON(BASE + '/session/' + STATE.activeSessionId + '/api-run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ collection: collection, vars: vars || {} })
+      });
+      return Object.assign({ ok: true }, data);
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  async function askSession(question) {
+    if (!STATE.activeSessionId) return { ok: false, reason: 'no active session' };
+    try {
+      const data = await fetchJSON(BASE + '/session/' + STATE.activeSessionId + '/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: question })
+      });
+      return Object.assign({ ok: true }, data);
+    } catch (err) {
+      return { ok: false, reason: err.message };
+    }
+  }
+
+  // ============================================================
+  // HIGH-LEVEL: run current Lab rows via the runner
+  // ============================================================
+  /**
+   * Reads the rows currently in the Lab tab (window.ERplorerBench? no —
+   * this is the test case table in erplorer.js's Lab panel, exposed via
+   * window.ERplorer.getCurrentRows? — we grab from the DOM directly).
+   *
+   * Splits them into UI steps and API requests, kicks off a runner
+   * session, executes both, and finishes the session. Returns a summary.
+   */
+  async function runCurrentRowsViaRunner(opts) {
+    opts = opts || {};
+
+    // Try several sources for the current rows
+    let rows = null;
+    if (window.ERplorer && typeof window.ERplorer.getCurrentRows === 'function') {
+      rows = window.ERplorer.getCurrentRows();
+    }
+    if (!rows) {
+      // Fall back: read from the rendered preview table
+      rows = readRowsFromDom();
+    }
+    if (!rows || !rows.length) {
+      return { ok: false, reason: 'no rows to run — generate scenarios first' };
+    }
+
+    const runnerOk = await isAvailable();
+    if (!runnerOk) {
+      toast('Runner offline — start it with: cd erplorer-runner && npm start');
+      return { ok: false, reason: 'runner offline' };
+    }
+
+    // Split into UI and API steps
+    const uiSteps = [];
+    const apiRequests = [];
+    for (const row of rows) {
+      const action = (row.action || '').trim();
+      if (['goto', 'fill', 'click', 'expectText', 'expectVisible', 'expectUrl', 'wait'].includes(action)) {
+        uiSteps.push({
+          action: action,
+          selector: row.selector || '',
+          value: row.value || '',
+          url: row.url || '',
+          expected: row.expected || ''
+        });
+      } else if (['apiRequest', 'expectStatus', 'expectJson', 'expectHeader'].includes(action)) {
+        // Group consecutive API actions into a single logical request
+        if (action === 'apiRequest') {
+          apiRequests.push({
+            name: row.scenario || 'API request',
+            method: (row.method || 'GET').toUpperCase(),
+            url: row.url || '',
+            headers: safeJsonParse(row.headers),
+            body: safeJsonParse(row.body),
+            expectStatus: null,
+            expectJson: {}
+          });
+        } else if (apiRequests.length) {
+          const last = apiRequests[apiRequests.length - 1];
+          if (action === 'expectStatus') last.expectStatus = Number(row.expected) || null;
+          else if (action === 'expectJson' && row.jsonpath) last.expectJson[row.jsonpath] = row.expected;
+        }
+      }
+    }
+
+    if (!uiSteps.length && !apiRequests.length) {
+      return { ok: false, reason: 'no runnable steps found' };
+    }
+
+    // Start session
+    const start = await startSession({
+      title: opts.title || 'ERplorer run · ' + new Date().toLocaleString(),
+      userStory: opts.userStory || null
+    });
+    if (!start.ok) return start;
+
+    const summary = { ok: true, sessionId: start.sessionId, ui: null, api: null };
+
+    // Run UI steps
+    if (uiSteps.length) {
+      const uiResult = await runUiSteps(uiSteps, { headless: opts.headless !== false });
+      summary.ui = {
+        ok: uiResult.ok,
+        stepCount: uiSteps.length,
+        errorCount: uiResult.errorCount || 0
+      };
+    }
+
+    // Run API collection
+    if (apiRequests.length) {
+      const apiResult = await runApiCollection(
+        { requests: apiRequests, stopOnError: opts.stopOnError === true },
+        opts.vars || {}
+      );
+      summary.api = {
+        ok: apiResult.ok,
+        passCount: apiResult.passCount || 0,
+        failCount: apiResult.failCount || 0
+      };
+    }
+
+    // Finish session
+    await finishSession(summary.ui && summary.ui.errorCount > 0 ? 'failed' : 'completed');
+
+    summary.videoUrl = getVideoUrl();
+    summary.flowUrl = getFlowUrl();
+
+    return summary;
+  }
+
+  function readRowsFromDom() {
+    // Fall back: parse the Lab preview table if it exists
+    const table = document.querySelector('#ai-preview .data-table');
+    if (!table) return null;
+    const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim());
+    const rows = [];
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const obj = {};
+      tr.querySelectorAll('td').forEach((td, i) => {
+        obj[headers[i]] = td.textContent.trim();
+      });
+      rows.push(obj);
+    });
+    return rows.length ? rows : null;
+  }
+
+  function safeJsonParse(str) {
+    if (!str) return undefined;
+    if (typeof str === 'object') return str;
+    try { return JSON.parse(str); } catch (e) { return undefined; }
+  }
+
+  // ============================================================
+  // ARTIFACT URLs
+  // ============================================================
+  function getVideoUrl() {
+    if (!STATE.activeSessionId) return null;
+    return BASE + '/session/' + STATE.activeSessionId + '/video';
+  }
+  function getFlowUrl() {
+    if (!STATE.activeSessionId) return null;
+    return BASE + '/session/' + STATE.activeSessionId + '/flow.md';
+  }
+  function activeSessionId() {
+    return STATE.activeSessionId;
+  }
+
+  // ============================================================
+  // PUBLIC API
+  // ============================================================
   window.ERplorerRunner = {
-    checkHealth,
-    runCurrentRowsViaRunner,
-    promoteSession,
-    baseUrl: BASE_URL
+    baseUrl: BASE,
+    isAvailable: isAvailable,
+    checkHealth: checkHealth,
+
+    // Lifecycle
+    startSession: startSession,
+    finishSession: finishSession,
+    promoteSession: promoteSession,
+
+    // Execution
+    runUiSteps: runUiSteps,
+    runApiCollection: runApiCollection,
+    runCurrentRowsViaRunner: runCurrentRowsViaRunner,
+
+    // RAG
+    askSession: askSession,
+
+    // Artifacts
+    getVideoUrl: getVideoUrl,
+    getFlowUrl: getFlowUrl,
+    activeSessionId: activeSessionId,
+
+    // Diagnostics
+    state: function () {
+      return {
+        baseUrl: BASE,
+        lastHealth: STATE.lastHealthResult,
+        lastHealthCheck: STATE.lastHealthCheck,
+        activeSessionId: STATE.activeSessionId,
+        activeSessionMeta: STATE.activeSessionMeta
+      };
+    }
   };
+
+  // ============================================================
+  // BOOT — probe once on load, update the settings card
+  // ============================================================
+  async function boot() {
+    // Give the settings panel time to render
+    updateRunnerStatusUi();
+    const ok = await checkHealth(true);
+    console.log('[erplorer-runner] ' + (ok ? 'connected at ' + BASE : 'not running — spec-generation-only mode'));
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
 })();

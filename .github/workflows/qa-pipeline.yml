@@ -1,30 +1,60 @@
-name: Build Search Index
+name: QA Pipeline
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'style.css'
+      - 'erplorer.js'
+      - 'erplorer.config.js'
+      - '.github/workflows/qa-pipeline.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+    timeout-minutes: 15
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Build index
+      # ----------------------------------------------------------
+      # 1. Build the search index
+      # ----------------------------------------------------------
+      - name: Build search index
         run: node scripts/build-index.js
+        env:
+          ERPLORER_VERBOSE: '0'
 
-      - name: Commit index back to main
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add search-index.json
-          git diff --quiet && git diff --staged --quiet || git commit -m "chore: rebuild search-index.json"
-          git push
+      # ----------------------------------------------------------
+      # 2. Deploy to GitHub Pages (gh-pages branch)
+      # ----------------------------------------------------------
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'chore: rebuild index and deploy'
+          exclude: |
+            node_modules
+            .git
+            .github
+            erplorer-runner
+            testcases
+            tests
+            *.zip

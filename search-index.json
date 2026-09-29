@@ -78,6 +78,13 @@
   },
   {
     "type": "error",
+    "text": "HTTP",
+    "file": "erplorer-quickfix.js",
+    "line": 327,
+    "context": "    const url = 'https://raw.githubusercontent.com/' + owner + '/' + repo + '/' + branch + '/' + filePath;\n    const res = await fetchWithTimeout(url, {}, RAW_FETCH_TIMEOUT);\n    if (!res.ok) throw new Error('HTTP ' + res.status + ' fetching ' + filePath);\n    return await res.text();\n  }"
+  },
+  {
+    "type": "error",
     "text": "expected text \"${expected || value}\" not found, got \"${txt}\"",
     "file": "erplorer-runner/lib/browser.js",
     "line": 58,

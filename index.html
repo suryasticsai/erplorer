@@ -430,6 +430,8 @@
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🧬 Error DNA</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Clusters similar errors with a "×N" badge. See one card instead of 47 near-duplicates.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">💥 Blast Radius</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Shows every other file that references the same identifier. Instant impact analysis.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Fix Recipe</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">16 curated rules for common errors. Deterministic, not AI guesswork.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🐛 Debugger Kit</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Turns any error into a debugging recipe — breakpoint condition, watch list, repro snippet, and likely fix — ready to paste into a ticket.</div></div>
+        <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔧 Quick Fix → PR</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">For a curated set of safe patterns, propose the fix and open a draft PR on GitHub in one tap — QA closes the loop.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📄 PDF Reports</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Export search results to a styled PDF for tickets, standup, or management.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">📷 OCR + Screenshots</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Paste an error screenshot — Tesseract.js extracts text locally. Screenshot any result with html2canvas.</div></div>
         <div><div style="font-size:14px; font-weight:700; margin-bottom:4px;">🔍 AI Insights</div><div style="font-size:13px; color:var(--muted); line-height:1.55;">Static analysis with AI interpretation: architecture, critical files, service flow, code smells, and next steps.</div></div>
@@ -480,13 +482,25 @@
     </div>
     <div class="card">
       <div class="card-title">GitHub token</div>
-      <div class="card-desc" style="margin-bottom:14px;">Optional. Enables scanning private repos. Stored in sessionStorage only.</div>
+      <div class="card-desc" style="margin-bottom:14px;">Optional. Enables scanning private repos and opening Quick Fix draft PRs. Stored in sessionStorage only.</div>
       <input type="password" class="input" id="token-input" placeholder="ghp_xxxxxxxxxxxx" style="margin-bottom:10px;">
       <div class="row">
         <button class="btn" onclick="ERplorer.saveToken()">Save</button>
         <button class="btn secondary" onclick="ERplorer.clearToken()">Clear</button>
       </div>
       <div id="token-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Quick Fix repository</div>
+      <div class="card-desc" style="margin-bottom:14px;">
+        The repo where ERplorer Quick Fix should open draft PRs. Requires the GitHub token above with <code style="background:var(--bg-alt);padding:1px 6px;border-radius:4px;">repo</code> scope (Contents: read &amp; write, Pull requests: read &amp; write).
+      </div>
+      <input type="text" class="input" id="quickfix-repo" placeholder="owner/repo" style="margin-bottom:10px;">
+      <div class="row">
+        <button class="btn" onclick="ERplorerQuickFixSaveRepo()">Save repo</button>
+        <button class="btn secondary" onclick="ERplorerQuickFixClearRepo()">Clear</button>
+      </div>
+      <div id="quickfix-repo-status" style="margin-top:12px; font-size:13px; color:var(--muted);"></div>
     </div>
     <div class="card">
       <div class="card-title">Config</div>
@@ -510,7 +524,7 @@
       <img src="erplorer-logo.png" alt="ERplorer" class="footer-logo">
       <div class="footer-brand-text">
         <div class="footer-title"><span class="er">ER</span>plorer</div>
-        <div class="footer-tagline">Error Resolution Explorer · v1.2</div>
+        <div class="footer-tagline">Error Resolution Explorer · v1.3</div>
       </div>
     </div>
 
@@ -561,6 +575,7 @@
 <script src="erplorer-bench-ai.js" defer></script>
 <script src="erplorer-runner-client.js" defer></script>
 <script src="erplorer-debugger.js" defer></script>
+<script src="erplorer-quickfix.js" defer></script>
 
 <!-- Footer widgets (clock, session timer, countdown) -->
 <script>
@@ -676,6 +691,35 @@
   document.addEventListener('DOMContentLoaded', attachToERplorer);
   window.addEventListener('load', attachToERplorer);
 })();
+</script>
+
+<!-- Quick Fix repository helper -->
+<script>
+  function ERplorerQuickFixSaveRepo() {
+    const input = document.getElementById('quickfix-repo');
+    const val = (input.value || '').trim();
+    if (!/^[\w.-]+\/[\w.-]+$/.test(val)) {
+      alert('Format: owner/repo');
+      return;
+    }
+    localStorage.setItem('erplorer_gh_repo', val);
+    document.getElementById('quickfix-repo-status').textContent = '✅ Saved: ' + val;
+    document.querySelectorAll('.qf-trigger').forEach(function (b) { b.title = ''; });
+  }
+  function ERplorerQuickFixClearRepo() {
+    localStorage.removeItem('erplorer_gh_repo');
+    document.getElementById('quickfix-repo').value = '';
+    document.getElementById('quickfix-repo-status').textContent = 'Cleared.';
+  }
+  (function () {
+    const saved = localStorage.getItem('erplorer_gh_repo');
+    if (saved) {
+      const el = document.getElementById('quickfix-repo');
+      if (el) el.value = saved;
+      const st = document.getElementById('quickfix-repo-status');
+      if (st) st.textContent = '✅ Loaded: ' + saved;
+    }
+  })();
 </script>
 </body>
 </html>
